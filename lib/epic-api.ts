@@ -69,7 +69,11 @@ export async function getFreeGames(): Promise<EpicGame[]> {
         promotionalOffers &&
         promotionalOffers.length > 0 &&
         promotionalOffers[0]?.promotionalOffers?.length > 0 &&
-        promotionalOffers[0]?.promotionalOffers[0]?.discountSetting?.discountPercentage === 0
+        game.price?.totalPrice?.originalPrice !== 0 &&
+        (
+          promotionalOffers[0]?.promotionalOffers[0]?.discountSetting?.discountPercentage === 0 ||
+          game.price?.totalPrice?.discountPrice === 0
+        )
       );
     });
 
