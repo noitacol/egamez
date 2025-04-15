@@ -4,12 +4,32 @@ const STEAM_API_KEY = '7939B44042A20BCD809BC41CBDDE75BF';
 const STEAM_API_URL = 'https://api.steampowered.com';
 const STEAM_STORE_API_URL = 'https://store.steampowered.com/api';
 
+export interface SteamGameImage {
+  id: number;
+  type: string;
+  url: string;
+}
+
 export interface SteamGame {
   appid: number;
   name: string;
   description?: string;
   header_image: string;
   background_image?: string;
+  screenshots?: SteamGameImage[];
+  movies?: {
+    id: number;
+    name: string;
+    thumbnail: string;
+    webm: {
+      480: string;
+      max: string;
+    };
+    mp4: {
+      480: string;
+      max: string;
+    };
+  }[];
   price: {
     isFree: boolean;
     initialPrice?: number;
@@ -160,13 +180,14 @@ export async function getTrendingSteamGames(): Promise<SteamGame[]> {
 /**
  * Belirli bir oyunun detaylarını getir
  */
-async function getGameDetails(appid: number): Promise<SteamGame | null> {
+export async function getGameDetails(appid: number): Promise<SteamGame | null> {
   try {
     const response = await axios.get(`${STEAM_STORE_API_URL}/appdetails`, {
       params: {
         appids: appid,
         cc: 'tr',
-        l: 'turkish'
+        l: 'turkish',
+        filters: 'basic,screenshots,movies,price_overview,platforms'
       }
     });
     
@@ -182,12 +203,25 @@ async function getGameDetails(appid: number): Promise<SteamGame | null> {
         currency: gameData.price_overview.currency
       } : { isFree: gameData.is_free };
       
+      // Ekran görüntülerini işle
+      const screenshots = gameData.screenshots ? 
+        gameData.screenshots.map((screenshot: any, index: number) => ({
+          id: screenshot.id || index,
+          type: 'screenshot',
+          url: screenshot.path_full
+        })) : [];
+      
+      // Videoları işle
+      const movies = gameData.movies || [];
+      
       const game: SteamGame = {
         appid: gameData.steam_appid,
         name: gameData.name,
         description: gameData.short_description,
         header_image: gameData.header_image,
-        background_image: gameData.background,
+        background_image: gameData.background || undefined,
+        screenshots: screenshots,
+        movies: movies,
         price,
         categories: gameData.categories,
         release_date: gameData.release_date,
@@ -294,6 +328,42 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
   const endDate = steamGame.isTemporaryFree 
     ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Varsayılan olarak 7 gün
     : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+  
+  // Tüm görselleri birleştir ve EpicGame formatına dönüştür
+  const keyImages = [
+    {
+      type: 'DieselStoreFrontWide',
+      url: steamGame.header_image
+    }
+  ];
+  
+  // Ekran görüntülerini ekle
+  if (steamGame.screenshots && steamGame.screenshots.length > 0) {
+    steamGame.screenshots.forEach(screenshot => {
+      keyImages.push({
+        type: `Screenshot_${screenshot.id}`,
+        url: screenshot.url
+      });
+    });
+  }
+  
+  // Arkaplan görselini ekle
+  if (steamGame.background_image) {
+    keyImages.push({
+      type: 'Background',
+      url: steamGame.background_image
+    });
+  }
+  
+  // Video thumbnaillerini ekle
+  if (steamGame.movies && steamGame.movies.length > 0) {
+    steamGame.movies.forEach(movie => {
+      keyImages.push({
+        type: `MovieThumbnail_${movie.id}`,
+        url: movie.thumbnail
+      });
+    });
+  }
     
   return {
     title: steamGame.name,
@@ -301,12 +371,7 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
     namespace: `steam_${steamGame.appid}`,
     description: steamGame.description || '',
     effectiveDate: steamGame.release_date?.date || new Date().toISOString(),
-    keyImages: [
-      {
-        type: 'DieselStoreFrontWide',
-        url: steamGame.header_image
-      }
-    ],
+    keyImages: keyImages,
     seller: {
       name: steamGame.publishers?.[0] || 'Steam'
     },
@@ -344,6 +409,21 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
     releaseYear: steamGame.releaseYear || null, // undefined yerine null değeri kullan
     metacritic: steamGame.metacritic?.score || null, // undefined yerine null değeri kullan
     productSlug: `${steamGame.url}`,
-    urlSlug: `${steamGame.url}`
+    urlSlug: `${steamGame.url}`,
+    videos: steamGame.movies ? steamGame.movies.map(movie => ({
+      id: movie.id,
+      name: movie.name,
+      thumbnail: movie.thumbnail,
+      urls: {
+        webm: {
+          '480': movie.webm['480'],
+          max: movie.webm.max
+        },
+        mp4: {
+          '480': movie.mp4['480'],
+          max: movie.mp4.max
+        }
+      }
+    })) : null
   };
 } 

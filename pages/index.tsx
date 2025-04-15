@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Layout from '../components/Layout';
@@ -28,9 +28,72 @@ export default function Home({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Filtreleme ve sıralama için state
+  const [filterSource, setFilterSource] = useState<'all' | 'epic' | 'steam'>('all');
+  const [sortOrder, setSortOrder] = useState<'default' | 'name' | 'date'>('default');
+  
+  // Filtrelenmiş oyun listeleri
+  const [filteredTrending, setFilteredTrending] = useState(steamTrendingGames);
+  const [filteredEpic, setFilteredEpic] = useState(epicFreeGames);
+  const [filteredSteam, setFilteredSteam] = useState(steamFreeGames);
+  const [filteredUpcoming, setFilteredUpcoming] = useState(epicUpcomingGames);
+  
+  // Filtre ve sıralama değişince oyun listelerini güncelle
+  useEffect(() => {
+    // Trend Steam oyunları
+    let trending = [...steamTrendingGames];
+    
+    // Epic oyunları
+    let epic = [...epicFreeGames];
+    
+    // Steam oyunları
+    let steam = [...steamFreeGames];
+    
+    // Yaklaşan Epic oyunları
+    let upcoming = [...epicUpcomingGames];
+    
+    // Kaynak filtresi uygula
+    if (filterSource === 'epic') {
+      trending = [];
+      steam = [];
+    } else if (filterSource === 'steam') {
+      epic = [];
+      upcoming = [];
+    }
+    
+    // Sıralama uygula
+    if (sortOrder === 'name') {
+      // İsme göre sırala (A-Z)
+      trending.sort((a, b) => a.title.localeCompare(b.title));
+      epic.sort((a, b) => a.title.localeCompare(b.title));
+      steam.sort((a, b) => a.title.localeCompare(b.title));
+      upcoming.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortOrder === 'date') {
+      // Ekleniş tarihine göre sırala (yeniden eskiye)
+      trending.sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+      epic.sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+      steam.sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+      upcoming.sort((a, b) => {
+        const dateA = a.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]?.startDate;
+        const dateB = b.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]?.startDate;
+        if (dateA && dateB) {
+          return new Date(dateA).getTime() - new Date(dateB).getTime();
+        }
+        return 0;
+      });
+    }
+    
+    // State'leri güncelle
+    setFilteredTrending(trending);
+    setFilteredEpic(epic);
+    setFilteredSteam(steam);
+    setFilteredUpcoming(upcoming);
+    
+  }, [filterSource, sortOrder, epicFreeGames, epicUpcomingGames, steamFreeGames, steamTrendingGames]);
+  
   // Tüm oyunlar
-  const totalGames = epicFreeGames.length + epicUpcomingGames.length + 
-                     steamFreeGames.length + steamTrendingGames.length;
+  const totalGames = filteredEpic.length + filteredUpcoming.length + 
+                     filteredSteam.length + filteredTrending.length;
   
   // Grid için responsive genişlik ayarlaması
   const getGridWidth = (count: number) => {
@@ -46,9 +109,44 @@ export default function Home({
         <h1 className="section-title text-4xl md:text-5xl font-bold mb-4">
           <span className="highlight">Ücretsiz Oyunlar</span>
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 max-w-2xl">
+        <p className="text-gray-600 dark:text-gray-400 max-w-2xl mb-6">
           Epic Games ve Steam'de şu anda ücretsiz olarak sunulan oyunları keşfedin. Hemen kütüphanenize ekleyin!
         </p>
+        
+        {/* Filtreleme ve Sıralama Kontrolleri */}
+        <div className="flex flex-wrap gap-4 mb-6">
+          <div className="bg-white dark:bg-epicgray p-2 rounded-lg shadow-sm">
+            <label htmlFor="filter-source" className="text-sm text-gray-600 dark:text-gray-400 mr-2">
+              Platform:
+            </label>
+            <select 
+              id="filter-source"
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value as any)}
+              className="bg-transparent border-none text-gray-700 dark:text-gray-300 focus:outline-none"
+            >
+              <option value="all">Tümü</option>
+              <option value="epic">Sadece Epic</option>
+              <option value="steam">Sadece Steam</option>
+            </select>
+          </div>
+          
+          <div className="bg-white dark:bg-epicgray p-2 rounded-lg shadow-sm">
+            <label htmlFor="sort-order" className="text-sm text-gray-600 dark:text-gray-400 mr-2">
+              Sıralama:
+            </label>
+            <select 
+              id="sort-order"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as any)}
+              className="bg-transparent border-none text-gray-700 dark:text-gray-300 focus:outline-none"
+            >
+              <option value="default">Önerilen</option>
+              <option value="name">İsim (A-Z)</option>
+              <option value="date">Tarih (Yeni-Eski)</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Site aktivitesini göster */}
@@ -64,7 +162,7 @@ export default function Home({
           </div>
           <div className="text-center p-4">
             <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
-              {epicFreeGames.length}
+              {filteredEpic.length}
             </div>
             <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
               Epic Games
@@ -72,7 +170,7 @@ export default function Home({
           </div>
           <div className="text-center p-4">
             <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
-              {steamFreeGames.length + steamTrendingGames.length}
+              {filteredSteam.length + filteredTrending.length}
             </div>
             <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
               Steam
@@ -80,7 +178,7 @@ export default function Home({
           </div>
           <div className="text-center p-4">
             <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
-              {epicUpcomingGames.length}
+              {filteredUpcoming.length}
             </div>
             <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
               Yakında Ücretsiz
@@ -107,20 +205,21 @@ export default function Home({
       )}
       
       {/* Steam Trend Oyunlar Bölümü */}
-      {steamTrendingGames.length > 0 && !isLoading && !error && (
+      {filteredTrending.length > 0 && !isLoading && !error && (
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-6">
             <span className="highlight">Steam'de Trend Ücretsiz Oyunlar</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{
-              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(steamTrendingGames.length)}, 1fr))`
+              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(filteredTrending.length)}, 1fr))`
             }}>
-            {steamTrendingGames.map((game) => (
+            {filteredTrending.map((game) => (
               <GameCard 
                 key={game.id} 
                 game={game} 
-                isFree={true} 
+                isFree={true}
+                isTrending={true}
               />
             ))}
           </div>
@@ -128,21 +227,21 @@ export default function Home({
       )}
 
       {/* Epic Games Ücretsiz Oyunlar Bölümü */}
-      {epicFreeGames.length > 0 && !isLoading && !error ? (
+      {filteredEpic.length > 0 && !isLoading && !error ? (
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-6">
             <span className="highlight">Epic Games'te Ücretsiz</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{
-              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(epicFreeGames.length)}, 1fr))`
+              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(filteredEpic.length)}, 1fr))`
             }}>
-            {epicFreeGames.map((game) => (
+            {filteredEpic.map((game) => (
               <GameCard key={game.id} game={game} isFree={true} />
             ))}
           </div>
         </div>
-      ) : !isLoading && !error && (
+      ) : !isLoading && !error && filterSource !== 'steam' && (
         <div className="glass-card p-8 text-center mb-16">
           <svg className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -154,21 +253,21 @@ export default function Home({
       )}
       
       {/* Steam Daima Ücretsiz Oyunlar Bölümü */}
-      {steamFreeGames.length > 0 && !isLoading && !error ? (
+      {filteredSteam.length > 0 && !isLoading && !error ? (
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-6">
             <span className="highlight">Steam'de Popüler Ücretsiz Oyunlar</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{
-              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(steamFreeGames.length)}, 1fr))`
+              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(filteredSteam.length)}, 1fr))`
             }}>
-            {steamFreeGames.map((game) => (
+            {filteredSteam.map((game) => (
               <GameCard key={game.id} game={game} isFree={true} />
             ))}
           </div>
         </div>
-      ) : !isLoading && !error && (
+      ) : !isLoading && !error && filterSource !== 'epic' && (
         <div className="glass-card p-8 text-center mb-16">
           <svg className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -180,17 +279,21 @@ export default function Home({
       )}
 
       {/* Yakında Ücretsiz Olacak Oyunlar Bölümü */}
-      {epicUpcomingGames.length > 0 && !isLoading && !error && (
+      {filteredUpcoming.length > 0 && !isLoading && !error && (
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-6">
             <span className="highlight">Yakında Ücretsiz Olacak</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{
-              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(epicUpcomingGames.length)}, 1fr))`
+              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(filteredUpcoming.length)}, 1fr))`
             }}>
-            {epicUpcomingGames.map((game) => (
-              <GameCard key={game.id} game={game} isUpcoming={true} />
+            {filteredUpcoming.map((game) => (
+              <GameCard 
+                key={game.id} 
+                game={game} 
+                isUpcoming={true} 
+              />
             ))}
           </div>
         </div>
@@ -252,8 +355,9 @@ export default function Home({
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
+    // Tüm API çağrılarını paralel olarak yap
     const [
-      epicFreeGames, 
+      epicGames, 
       epicUpcomingGames, 
       steamFreeGames,
       steamTrendingGames
@@ -264,12 +368,45 @@ export const getStaticProps: GetStaticProps = async () => {
       getTrendingSteamGames().then(games => games.map(convertSteamToEpicFormat))
     ]);
     
+    // Epic Games'teki ücretsiz oyunları sırala
+    const epicFreeGames = epicGames.sort((a, b) => {
+      // Epic Games adına göre sırala
+      return a.title.localeCompare(b.title);
+    });
+    
+    // Steam'deki trend oyunları sırala
+    const sortedSteamTrendingGames = steamTrendingGames
+      .filter(game => game.isTrending) // Sadece trend olanları al
+      .sort((a, b) => {
+        // Önce Metacritic puanına göre sırala (yüksekten düşüğe)
+        if (a.metacritic && b.metacritic) {
+          return b.metacritic - a.metacritic;
+        }
+        // Metacritic puanı yoksa çıkış yılına göre sırala (yeniden eskiye)
+        if (a.releaseYear && b.releaseYear) {
+          return b.releaseYear - a.releaseYear;
+        }
+        // Son çare olarak isme göre sırala
+        return a.title.localeCompare(b.title);
+      });
+      
+    // Steam'deki daima ücretsiz oyunları sırala
+    const sortedSteamFreeGames = steamFreeGames
+      .sort((a, b) => {
+        // Önce Metacritic puanına göre sırala (yüksekten düşüğe)
+        if (a.metacritic && b.metacritic) {
+          return b.metacritic - a.metacritic;
+        }
+        // Metacritic puanı yoksa isme göre sırala
+        return a.title.localeCompare(b.title);
+      });
+    
     return {
       props: {
         epicFreeGames,
         epicUpcomingGames,
-        steamFreeGames,
-        steamTrendingGames
+        steamFreeGames: sortedSteamFreeGames,
+        steamTrendingGames: sortedSteamTrendingGames
       },
       // Her 30 dakikada bir yeniden oluştur
       revalidate: 1800,
