@@ -6,6 +6,10 @@ import GameCard from '../components/GameCard';
 import { getFreeGames, getUpcomingFreeGames } from '../lib/epic-api';
 import { getFreeSteamGames, getTrendingSteamGames, convertSteamToEpicFormat } from '../lib/steam-api';
 import { ExtendedEpicGame } from '../components/GameCard';
+import { BsThermometerHigh } from 'react-icons/bs';
+import { FaSteam } from 'react-icons/fa';
+import { SiEpicgames } from 'react-icons/si';
+import { MdUpcoming } from 'react-icons/md';
 
 interface HomeProps {
   epicFreeGames: ExtendedEpicGame[];
@@ -96,24 +100,24 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
   return (
     <Layout>
       <div className="mb-12">
-        <h1 className="section-title text-4xl md:text-5xl font-bold mb-4">
-          <span className="highlight">Ücretsiz Oyunlar</span>
+        <h1 className="section-title text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-epicblue to-epicaccent bg-clip-text text-transparent">
+          Ücretsiz Oyunlar Platformu
         </h1>
         <p className="text-gray-600 dark:text-gray-400 max-w-2xl mb-6">
-          Epic Games ve Steam'de şu anda ücretsiz olarak sunulan oyunları keşfedin. Hemen kütüphanenize ekleyin!
+          Epic Games ve Steam'de şu anda ücretsiz olarak sunulan tüm oyunları keşfedin ve fırsatları kaçırmayın. Hemen kütüphanenize ekleyin!
         </p>
         
         {/* Filtreleme ve Sıralama Kontrolleri */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          <div className="bg-white dark:bg-epicgray p-2 rounded-lg shadow-sm">
-            <label htmlFor="filter-source" className="text-sm text-gray-600 dark:text-gray-400 mr-2">
+        <div className="flex flex-wrap gap-4 mb-8">
+          <div className="bg-white/80 dark:bg-epicgray/80 p-3 rounded-lg shadow-sm backdrop-blur-sm transition-all hover:shadow-md">
+            <label htmlFor="filter-source" className="text-sm text-gray-600 dark:text-gray-400 mr-3 font-medium">
               Platform:
             </label>
             <select 
               id="filter-source"
               value={filterSource}
               onChange={(e) => setFilterSource(e.target.value as any)}
-              className="bg-transparent border-none text-gray-700 dark:text-gray-300 focus:outline-none"
+              className="bg-transparent border-none text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-epicblue/50 rounded px-2 py-1"
             >
               <option value="all">Tümü</option>
               <option value="epic">Sadece Epic</option>
@@ -121,15 +125,15 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
             </select>
           </div>
           
-          <div className="bg-white dark:bg-epicgray p-2 rounded-lg shadow-sm">
-            <label htmlFor="sort-order" className="text-sm text-gray-600 dark:text-gray-400 mr-2">
+          <div className="bg-white/80 dark:bg-epicgray/80 p-3 rounded-lg shadow-sm backdrop-blur-sm transition-all hover:shadow-md">
+            <label htmlFor="sort-order" className="text-sm text-gray-600 dark:text-gray-400 mr-3 font-medium">
               Sıralama:
             </label>
             <select 
               id="sort-order"
               value={sortOrder}
               onChange={(e) => setSortOrder(e.target.value as any)}
-              className="bg-transparent border-none text-gray-700 dark:text-gray-300 focus:outline-none"
+              className="bg-transparent border-none text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-epicblue/50 rounded px-2 py-1"
             >
               <option value="default">Önerilen</option>
               <option value="name">İsim (A-Z)</option>
@@ -140,37 +144,37 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
       </div>
 
       {/* Site aktivitesini göster */}
-      <div className="bg-gradient-to-r from-epicblue/10 to-epicaccent/10 dark:from-epicblue/20 dark:to-epicaccent/20 mb-10 py-6 px-6 rounded-xl">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
+      <div className="bg-gradient-to-r from-epicblue/10 to-epicaccent/10 dark:from-epicblue/20 dark:to-epicaccent/20 mb-10 py-6 px-6 rounded-xl backdrop-blur-sm shadow-lg">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center p-4 transform transition-transform hover:scale-105">
+            <div className="text-3xl font-bold text-epicblue dark:text-epicaccent mb-2">
               {totalGames}
             </div>
-            <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
+            <div className="text-gray-700 dark:text-gray-300 text-sm mt-1 font-medium">
               Toplam Oyun
             </div>
           </div>
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
+          <div className="text-center p-4 transform transition-transform hover:scale-105">
+            <div className="text-3xl font-bold text-epicblue dark:text-epicaccent mb-2">
               {filteredEpic.length}
             </div>
-            <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
+            <div className="text-gray-700 dark:text-gray-300 text-sm mt-1 font-medium">
               Epic Games
             </div>
           </div>
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
+          <div className="text-center p-4 transform transition-transform hover:scale-105">
+            <div className="text-3xl font-bold text-epicblue dark:text-epicaccent mb-2">
               {filteredSteam.length + filteredTrending.length}
             </div>
-            <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
+            <div className="text-gray-700 dark:text-gray-300 text-sm mt-1 font-medium">
               Steam
             </div>
           </div>
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
+          <div className="text-center p-4 transform transition-transform hover:scale-105">
+            <div className="text-3xl font-bold text-epicblue dark:text-epicaccent mb-2">
               {filteredUpcoming.length}
             </div>
-            <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
+            <div className="text-gray-700 dark:text-gray-300 text-sm mt-1 font-medium">
               Yakında Ücretsiz
             </div>
           </div>
@@ -197,8 +201,13 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
       {/* Steam Trend Oyunlar Bölümü */}
       {filteredTrending.length > 0 && !isLoading && !error && (
         <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-6">
-            <span className="highlight">Steam'de Trend Ücretsiz Oyunlar</span>
+          <h2 className="text-2xl font-bold mb-6 flex items-center">
+            <span className="bg-gradient-to-r from-orange-500 to-epicaccent p-1.5 mr-2 rounded text-white">
+              <BsThermometerHigh className="h-5 w-5" />
+            </span>
+            <span className="bg-gradient-to-r from-orange-500/80 to-epicaccent/80 bg-clip-text text-transparent">
+              Steam'de Trend Ücretsiz Oyunlar
+            </span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{
@@ -219,8 +228,13 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
       {/* Epic Games Ücretsiz Oyunlar Bölümü */}
       {filteredEpic.length > 0 && !isLoading && !error ? (
         <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-6">
-            <span className="highlight">Epic Games'te Ücretsiz</span>
+          <h2 className="text-2xl font-bold mb-6 flex items-center">
+            <span className="bg-gradient-to-r from-epicblue to-blue-600 p-1.5 mr-2 rounded text-white">
+              <SiEpicgames className="h-5 w-5" />
+            </span>
+            <span className="bg-gradient-to-r from-epicblue/80 to-blue-600/80 bg-clip-text text-transparent">
+              Epic Games'te Ücretsiz
+            </span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{
@@ -245,8 +259,13 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
       {/* Steam Daima Ücretsiz Oyunlar Bölümü */}
       {filteredSteam.length > 0 && !isLoading && !error ? (
         <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-6">
-            <span className="highlight">Steam'de Popüler Ücretsiz Oyunlar</span>
+          <h2 className="text-2xl font-bold mb-6 flex items-center">
+            <span className="bg-gradient-to-r from-gray-700 to-gray-900 p-1.5 mr-2 rounded text-white">
+              <FaSteam className="h-5 w-5" />
+            </span>
+            <span className="bg-gradient-to-r from-gray-700/80 to-gray-900/80 bg-clip-text text-transparent">
+              Steam'de Popüler Ücretsiz Oyunlar
+            </span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{
@@ -271,8 +290,13 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
       {/* Yakında Ücretsiz Olacak Oyunlar Bölümü */}
       {filteredUpcoming.length > 0 && !isLoading && !error && (
         <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-6">
-            <span className="highlight">Yakında Ücretsiz Olacak</span>
+          <h2 className="text-2xl font-bold mb-6 flex items-center">
+            <span className="bg-gradient-to-r from-purple-600 to-purple-800 p-1.5 mr-2 rounded text-white">
+              <MdUpcoming className="h-5 w-5" />
+            </span>
+            <span className="bg-gradient-to-r from-purple-600/80 to-purple-800/80 bg-clip-text text-transparent">
+              Yakında Ücretsiz Olacak
+            </span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{

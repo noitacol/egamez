@@ -146,7 +146,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   const PlayCircleIcon = FaRegPlayCircle as React.FC<React.SVGProps<SVGSVGElement>>;
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border border-gray-700">
+    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] hover:bg-gray-750 border border-gray-700 group">
       {/* Kapak Görseli */}
       <div className="relative aspect-video overflow-hidden">
         {imgError ? (
@@ -161,7 +161,8 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
             layout="fill"
             objectFit="cover"
             onError={() => setImgError(true)}
-            className="transition-transform duration-500 hover:scale-110"
+            className="transition-transform duration-500 group-hover:scale-110"
+            loading="lazy"
           />
         )}
         
