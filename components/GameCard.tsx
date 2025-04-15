@@ -9,7 +9,7 @@ import { EpicGame } from '../lib/epic-api';
 import { IconType } from 'react-icons';
 
 // EpicGame tipini genişletiyoruz ve export ediyoruz
-export interface ExtendedEpicGame extends EpicGame {
+export interface ExtendedEpicGame extends Omit<EpicGame, 'promotions'> {
   videos?: Array<{
     id: string;
     thumbnail: string;
@@ -28,6 +28,26 @@ export interface ExtendedEpicGame extends EpicGame {
   isTrending?: boolean;
   releaseYear?: number;
   isTemporaryFree?: boolean; // Steam'de geçici olarak ücretsiz oyunlar için
+  promotions?: {
+    promotionalOffers?: Array<{
+      promotionalOffers?: Array<{
+        startDate: string;
+        endDate: string;
+        discountSetting?: {
+          discountPercentage: number;
+        };
+      }>;
+    }>;
+    upcomingPromotionalOffers?: Array<{
+      promotionalOffers?: Array<{
+        startDate: string;
+        endDate: string;
+        discountSetting?: {
+          discountPercentage: number;
+        };
+      }>;
+    }>;
+  };
 }
 
 interface GameCardProps {
@@ -51,7 +71,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   // Steam oyunu mu Epic oyunu mu kontrolü
   const isSteamGame = game.id?.toString().startsWith('steam_');
   // Çıkış yılı
-  const releaseYear = (game as any).releaseYear;
+  const releaseYear = game.releaseYear;
   // Metacritic puanı
   const metacriticScore = game.metacritic;
   
@@ -83,7 +103,8 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
     : null;
 
   // Ücretsiz oyun mu kontrolü
-  const isFreeGame = isFree || (game.promotions?.promotionalOffers?.length > 0 &&
+  const isFreeGame = isFree || (game.promotions?.promotionalOffers && 
+    game.promotions.promotionalOffers.length > 0 &&
     game.promotions.promotionalOffers[0]?.promotionalOffers?.some(
       (offer) => offer.discountSetting?.discountPercentage === 100
     ));

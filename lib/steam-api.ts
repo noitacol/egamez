@@ -106,74 +106,55 @@ const POPULAR_GAME_APPIDS = [
 const STEAM_TRENDING_URL = 'https://store.steampowered.com/api/featuredcategories';
 
 /**
- * Trend olan oyunları getir
+ * Steam'deki trend olan oyunları getirir
  */
 export async function getTrendingSteamGames(): Promise<SteamGame[]> {
   try {
-    // Steam'in trend sayfasından veri çek
-    const response = await axios.get(STEAM_TRENDING_URL, {
-      params: {
-        cc: 'tr',
-        l: 'turkish'
-      }
-    });
-
-    // Trendler, yeni çıkanlar ve ücretsiz oyunlar kategorileri
-    const trendingItems = [
-      ...(response.data.specials?.items || []),
-      ...(response.data.new_releases?.items || []),
-      ...(response.data.top_sellers?.items || []),
-      ...(response.data.coming_soon?.items || [])
+    // Steam'in öne çıkan oyunlarını getir
+    const response = await axios.get(`${STEAM_API_URL}/ISteamApps/GetAppList/v2/`);
+    const appList = response.data?.applist?.apps || [];
+    
+    // Sabit bir trending oyun listesi - Normalde Steam API'den alınabilir
+    // ama API sınırlamaları nedeniyle şu an için sabit bir liste kullanıyoruz
+    const trendingAppIds = [
+      730,    // Counter-Strike 2
+      440,    // Team Fortress 2
+      570,    // Dota 2
+      252490, // Rust
+      578080, // PUBG: BATTLEGROUNDS
+      1172470, // Apex Legends
+      1599340, // Lost Ark
+      431960,  // Wallpaper Engine
+      230410,  // Warframe
+      304930,  // Unturned
     ];
     
-    // Appid listesi oluştur
-    const appIds = trendingItems.map(item => item.id);
+    // Trend oyunların detaylarını al
+    const trendingGames = await Promise.all(
+      trendingAppIds
+        .filter(appId => appId > 0)
+        .map(async (appId) => {
+          try {
+            const details = await getGameDetails(appId);
+            // Sadece ücretsiz olan trending oyunları al
+            if (details && details.is_free === true) {
+              return {
+                ...details,
+                isTrending: true
+              };
+            }
+            return null;
+          } catch (error) {
+            console.error(`Error fetching details for app ID ${appId}:`, error);
+            return null;
+          }
+        })
+    );
     
-    // Eğer trending kategorisinde oyun bulunamazsa popüler listeye geri dön
-    if (appIds.length === 0) {
-      return getAllSteamGames().then(games => 
-        games.filter(game => game?.price?.isFree || game?.isTemporaryFree)
-             .slice(0, 10)
-      );
-    }
-    
-    // Her oyun için detayları al
-    const promises = appIds.map(appid => getGameDetails(appid));
-    const games = await Promise.all(promises);
-    
-    // null değerleri filtrele
-    const validGames = games.filter(game => game !== null) as SteamGame[];
-    
-    // Ücretsiz olan oyunları filtrele ve trend olarak işaretle
-    const trendingFreeGames = validGames
-      .filter(game => game.price?.isFree || game.isTemporaryFree)
-      .map(game => ({ 
-        ...game, 
-        isTrending: true 
-      } as SteamGame));
-    
-    // Yalnızca son 1 yıl içinde çıkan oyunları getir (yeni oyunlar)
-    const currentYear = new Date().getFullYear();
-    const recentGames = trendingFreeGames.filter(game => {
-      // Çıkış tarihini kontrol et
-      if (!game.release_date?.date) return true;
-      
-      const releaseDate = new Date(game.release_date.date);
-      const releaseYear = releaseDate.getFullYear();
-      
-      // TypeScript uyumluluğu için güvenli bir şekilde atama yap
-      const updatedGame = game as SteamGame;
-      updatedGame.releaseYear = releaseYear;
-      
-      return currentYear - releaseYear <= 1; // Son 1 yıl içinde çıkan oyunlar
-    });
-    
-    // Yeni oyun yoksa, tüm trend oyunlarını döndür
-    return recentGames.length > 0 ? recentGames : trendingFreeGames;
+    return trendingGames.filter(game => game !== null) as SteamGame[];
   } catch (error) {
-    console.error('Error fetching trending Steam games:', error);
-    // Hata durumunda normal getFreeSteamGames fonksiyonuna geri dön
-    return getTemporaryFreeSteamGames();
+    console.error('Steam trending API error:', error);
+    return [];
   }
 }
 
@@ -288,13 +269,139 @@ export async function getTemporaryFreeSteamGames(): Promise<SteamGame[]> {
  * Steam'deki indirimli oyunları getirir
  */
 export async function getDiscountedSteamGames(): Promise<SteamGame[]> {
-  const allGames = await getAllSteamGames();
-  return allGames.filter(game => 
-    game?.price && 
-    !game.price.isFree && // Ücretsiz oyun değil
-    (game.price.discount ?? 0) > 0 && // İndirimde
-    (game.price.finalPrice ?? 0) > 0 // Hala bir fiyatı var
-  );
+  try {
+    // Steam'in indirimli oyunlarını getirmek için özel bir API olmadığından
+    // manuel olarak populer indirimli oyunları listeliyoruz
+    const discountedAppIds = [
+      1172470, // Apex Legends
+      1938090, // EA SPORTS FC™ 24 
+      1716740, // Far Cry® 6
+      814380,  // Sekiro: Shadows Die Twice
+      1245620, // ELDEN RING
+      1904540, // The Last of Us Part I
+      1817070, // Cyberpunk 2077: Phantom Liberty
+      1286680, // The Last of Us™ Part II
+      601150,  // Devil May Cry 5
+      1245620, // ELDEN RING
+    ];
+    
+    // İndirimli oyunların detaylarını al
+    const discountedGames = await Promise.all(
+      discountedAppIds
+        .filter(appId => appId > 0)
+        .map(async (appId) => {
+          try {
+            const details = await getGameDetails(appId);
+            if (details && details.price_overview && details.price_overview.discount_percent > 0) {
+              return {
+                ...details,
+                isDiscounted: true
+              };
+            }
+            return null;
+          } catch (error) {
+            console.error(`Error fetching details for app ID ${appId}:`, error);
+            return null;
+          }
+        })
+    );
+    
+    return discountedGames.filter(game => game !== null) as SteamGame[];
+  } catch (error) {
+    console.error('Steam discounted API error:', error);
+    return [];
+  }
+}
+
+/**
+ * Steam'deki yeni çıkan oyunları getirir
+ */
+export async function getNewReleasesSteamGames(): Promise<SteamGame[]> {
+  try {
+    // Steam'in yeni çıkan oyunlarını getirmek için özel bir API olmadığından
+    // manuel olarak yeni çıkan oyunları listeliyoruz
+    const newReleaseAppIds = [
+      2730790, // Still Wakes the Deep
+      2346010, // Palworld
+      2795010, // Lunar Strain
+      2689000, // Once Human
+      1716450, // CONCORD
+      2089020, // StarGlave
+      2788830, // Stormlight
+      2720900, // Arco
+      2758610, // Shadows of Doubt: Black Label
+      2734580, // Stormgate
+    ];
+    
+    // Yeni oyunların detaylarını al
+    const newGames = await Promise.all(
+      newReleaseAppIds
+        .filter(appId => appId > 0)
+        .map(async (appId) => {
+          try {
+            const details = await getGameDetails(appId);
+            // Son 3 ay içinde çıkan oyunları yeni olarak kabul et
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            
+            if (details && details.release_date) {
+              const releaseDate = new Date(details.release_date.date);
+              if (releaseDate >= threeMonthsAgo) {
+                return {
+                  ...details,
+                  isNewRelease: true
+                };
+              }
+            }
+            return null;
+          } catch (error) {
+            console.error(`Error fetching details for app ID ${appId}:`, error);
+            return null;
+          }
+        })
+    );
+    
+    return newGames.filter(game => game !== null) as SteamGame[];
+  } catch (error) {
+    console.error('Steam new releases API error:', error);
+    return [];
+  }
+}
+
+/**
+ * Steam'deki en çok satan oyunları getirir
+ */
+export async function getTopSellerSteamGames(): Promise<SteamGame[]> {
+  try {
+    // Steam'in en çok satan oyunlar sayfasından veri çek
+    const response = await axios.get(STEAM_TRENDING_URL, {
+      params: {
+        cc: 'tr',
+        l: 'turkish'
+      }
+    });
+    
+    // En çok satan oyunlar kategorisini al
+    const topSellerItems = response.data.top_sellers?.items || [];
+    
+    // Appid listesi oluştur
+    const appIds = topSellerItems.map((item: { id: number }) => item.id);
+    
+    // Her oyun için detayları al
+    const promises = appIds.map((appid: number) => getGameDetails(appid));
+    const games = await Promise.all(promises);
+    
+    // null değerleri filtrele
+    const validGames = games.filter(game => game !== null) as SteamGame[];
+    
+    // En çok satan oyunları al (en fazla 12 tane)
+    const topSellers = validGames.slice(0, 12);
+    
+    return topSellers;
+  } catch (error) {
+    console.error('Error fetching top seller Steam games:', error);
+    return [];
+  }
 }
 
 /**
