@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { EpicGame } from '@/lib/epic-api';
+import { EpicGame } from '../lib/epic-api';
 
 interface GameCardProps {
   game: EpicGame;
@@ -14,21 +14,37 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
 
   // Tarih kontrolü
   const currentDate = new Date();
-  const endDate = game.promotions?.promotionalOffers?.[0]?.promotionalOffers?.[0]?.endDate
-    ? new Date(game.promotions.promotionalOffers[0].promotionalOffers[0].endDate)
-    : null;
+  let startDate = null;
+  let endDate = null;
+  
+  if (isUpcoming) {
+    // Yakında ücretsiz olacak oyunlar için
+    const upcomingOffers = game.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers;
+    startDate = upcomingOffers?.[0]?.startDate ? new Date(upcomingOffers[0].startDate) : null;
+    endDate = upcomingOffers?.[0]?.endDate ? new Date(upcomingOffers[0].endDate) : null;
+  } else {
+    // Şu anda ücretsiz olan oyunlar için
+    const currentOffers = game.promotions?.promotionalOffers?.[0]?.promotionalOffers;
+    startDate = currentOffers?.[0]?.startDate ? new Date(currentOffers[0].startDate) : null;
+    endDate = currentOffers?.[0]?.endDate ? new Date(currentOffers[0].endDate) : null;
+  }
   
   // Kalan günleri hesapla
   const remainingDays = endDate
     ? Math.ceil((endDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+    
+  // Başlamasına kalan günleri hesapla (yakında gelecek oyunlar için)
+  const daysUntilStart = startDate && isUpcoming
+    ? Math.ceil((startDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
     : null;
 
   // Ücretsiz oyun mu kontrolü
   const isFreeGame = game.price?.totalPrice?.discountPrice === 0;
 
   return (
-    <Link href={`https://store.epicgames.com/en-US/p/${game.urlSlug || game.productSlug}`} target="_blank">
-      <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:bg-gray-700 h-full flex flex-col">
+    <Link href={`https://store.epicgames.com/tr/p/${game.urlSlug || game.productSlug}`} target="_blank">
+      <div className={`rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105 h-full flex flex-col ${isUpcoming ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-800 hover:bg-gray-700'}`}>
         <div className="relative h-48 w-full">
           {!imageError ? (
             <Image
@@ -44,8 +60,20 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
               No Image Available
             </div>
           )}
-          {isFreeGame && remainingDays !== null && (
-            <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold p-2 m-2 rounded">
+          
+          {/* Durum etiketi */}
+          {isUpcoming ? (
+            <div className="absolute top-0 right-0 bg-epicaccent text-white text-xs font-bold p-2 m-2 rounded">
+              {daysUntilStart === null
+                ? "Yakında"
+                : daysUntilStart === 0
+                ? "Bugün Başlıyor!"
+                : daysUntilStart > 0
+                ? `${daysUntilStart} Gün Sonra`
+                : "Yakında"}
+            </div>
+          ) : isFreeGame && remainingDays !== null && (
+            <div className="absolute top-0 right-0 bg-epicorange text-white text-xs font-bold p-2 m-2 rounded animate-pulse-slow">
               {remainingDays === 0
                 ? "Son Gün!"
                 : remainingDays > 0
@@ -58,14 +86,23 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
           <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">{game.title}</h3>
           
           <div className="mt-auto">
-            {isFreeGame ? (
+            {isUpcoming ? (
               <div className="flex items-center space-x-2">
                 <span className="line-through text-gray-400">
                   {game.price?.totalPrice?.originalPrice
                     ? `₺${(game.price.totalPrice.originalPrice / 100).toFixed(2)}`
                     : ""}
                 </span>
-                <span className="bg-green-600 text-white px-2 py-1 rounded font-bold">ÜCRETSİZ</span>
+                <span className="bg-epicaccent text-white px-2 py-1 rounded font-bold">YAKINDA</span>
+              </div>
+            ) : isFreeGame ? (
+              <div className="flex items-center space-x-2">
+                <span className="line-through text-gray-400">
+                  {game.price?.totalPrice?.originalPrice
+                    ? `₺${(game.price.totalPrice.originalPrice / 100).toFixed(2)}`
+                    : ""}
+                </span>
+                <span className="bg-epicgreen text-white px-2 py-1 rounded font-bold">ÜCRETSİZ</span>
               </div>
             ) : (
               <span className="text-white">
@@ -75,6 +112,20 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
               </span>
             )}
           </div>
+          
+          {/* Tarih bilgisi */}
+          {(startDate || endDate) && (
+            <div className="text-sm text-gray-400 mt-2 flex items-center">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {startDate && endDate 
+                ? `${startDate.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}`
+                : startDate 
+                ? `${startDate.toLocaleDateString('tr-TR')}'den itibaren` 
+                : `${endDate?.toLocaleDateString('tr-TR')}'e kadar`}
+            </div>
+          )}
         </div>
       </div>
     </Link>

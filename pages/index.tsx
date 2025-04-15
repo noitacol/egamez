@@ -3,15 +3,27 @@ import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Layout from '../components/Layout';
 import GameCard from '../components/GameCard';
-import { EpicGame, getFreeGames } from '../lib/epic-api';
+import { EpicGame, getFreeGames, getUpcomingFreeGames } from '../lib/epic-api';
 
 interface HomeProps {
   freeGames: EpicGame[];
+  upcomingGames: EpicGame[];
 }
 
-export default function Home({ freeGames }: HomeProps) {
+export default function Home({ freeGames, upcomingGames }: HomeProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Tüm oyunlar (ücretsiz + yakında)
+  const totalGames = freeGames.length + upcomingGames.length;
+  
+  // Grid için responsive genişlik ayarlaması
+  const getGridWidth = (count: number) => {
+    if (count === 1) return '100%';
+    if (count === 2) return '45%';
+    if (count === 3) return '30%';
+    return '260px';
+  };
   
   return (
     <Layout>
@@ -29,6 +41,14 @@ export default function Home({ freeGames }: HomeProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center p-4">
             <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
+              {totalGames}
+            </div>
+            <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
+              Toplam Oyun
+            </div>
+          </div>
+          <div className="text-center p-4">
+            <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
               {freeGames.length}
             </div>
             <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
@@ -37,18 +57,10 @@ export default function Home({ freeGames }: HomeProps) {
           </div>
           <div className="text-center p-4">
             <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
-              Her gün
+              {upcomingGames.length}
             </div>
             <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
-              Güncelleme
-            </div>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
-              100%
-            </div>
-            <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
-              Ücretsiz
+              Yakında Ücretsiz
             </div>
           </div>
         </div>
@@ -71,8 +83,23 @@ export default function Home({ freeGames }: HomeProps) {
         </div>
       )}
       
-      {freeGames.length === 0 && !isLoading && !error ? (
-        <div className="glass-card p-8 text-center">
+      {/* Ücretsiz Oyunlar Bölümü */}
+      {freeGames.length > 0 && !isLoading && !error ? (
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold mb-6">
+            <span className="highlight">Şu anda Ücretsiz</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
+            style={{
+              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(freeGames.length)}, 1fr))`
+            }}>
+            {freeGames.map((game) => (
+              <GameCard key={game.id} game={game} isFree={true} />
+            ))}
+          </div>
+        </div>
+      ) : !isLoading && !error && (
+        <div className="glass-card p-8 text-center mb-16">
           <svg className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -83,63 +110,78 @@ export default function Home({ freeGames }: HomeProps) {
             Daha sonra tekrar kontrol edin veya yakında ücretsiz olacak oyunlara göz atın.
           </p>
         </div>
-      ) : (
-        <div>
-          {!isLoading && !error && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
-              style={{
-                gridTemplateColumns: `repeat(auto-fill, minmax(${freeGames.length === 1 ? '100%' : freeGames.length === 2 ? '45%' : freeGames.length === 3 ? '30%' : '260px'}, 1fr))`
-              }}>
-              {freeGames.map((game) => (
-                <GameCard key={game.id} game={game} />
-              ))}
-            </div>
-          )}
+      )}
+
+      {/* Yakında Ücretsiz Olacak Oyunlar Bölümü */}
+      {upcomingGames.length > 0 && !isLoading && !error && (
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold mb-6">
+            <span className="highlight">Yakında Ücretsiz Olacak</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
+            style={{
+              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(upcomingGames.length)}, 1fr))`
+            }}>
+            {upcomingGames.map((game) => (
+              <GameCard key={game.id} game={game} isUpcoming={true} />
+            ))}
+          </div>
         </div>
       )}
       
-      {/* Yakında Ücretsiz Olacak Oyunlar için çağrı */}
-      <div className="mt-16">
-        <div className="glass-card p-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-epicaccent/10 rounded-full -mr-20 -mt-20"></div>
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-epicblue/10 rounded-full -ml-10 -mb-10"></div>
-          <div className="relative">
-            <h2 className="text-2xl font-bold mb-4">Diğer Ücretsiz Oyunları Kaçırmayın!</h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Epic Games Store, her hafta yeni ücretsiz oyunlar sunuyor. Yakında ücretsiz olacak oyunları görmek ve fırsatları kaçırmak için takipte kalın.
-            </p>
-            <a
-              href="/upcoming"
-              className="btn btn-accent inline-flex items-center"
-            >
-              <span>Yakında Ücretsiz</span>
-              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </a>
+      {/* Hizmetlerimiz hakkında bilgi kutusu */}
+      {!isLoading && !error && (
+        <div className="mt-16">
+          <div className="glass-card p-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-epicaccent/10 rounded-full -mr-20 -mt-20"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-epicblue/10 rounded-full -ml-10 -mb-10"></div>
+            <div className="relative">
+              <h2 className="text-2xl font-bold mb-4">Epic Games Ücretsiz Oyunlar Takibi</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Epic Games Store, her hafta yeni ücretsiz oyunlar sunuyor. Bu sitede, mevcut ücretsiz oyunları ve gelecekte ücretsiz olacak oyunları kolayca takip edebilirsiniz. Fırsatları kaçırmayın!
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <a
+                  href="https://store.epicgames.com/tr/free-games"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary inline-flex items-center"
+                >
+                  <span>Epic Games Store'u Ziyaret Et</span>
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </Layout>
   );
 }
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    const freeGames = await getFreeGames();
+    const [freeGames, upcomingGames] = await Promise.all([
+      getFreeGames(),
+      getUpcomingFreeGames()
+    ]);
     
     return {
       props: {
         freeGames,
+        upcomingGames
       },
       // Her 30 dakikada bir yeniden oluştur
       revalidate: 1800,
     };
   } catch (error) {
-    console.error('Error fetching free games:', error);
+    console.error('Error fetching games:', error);
     return {
       props: {
         freeGames: [],
+        upcomingGames: []
       },
       // Hata durumunda 5 dakikada bir yeniden dene
       revalidate: 300,
