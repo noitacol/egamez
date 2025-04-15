@@ -339,10 +339,10 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
         name: 'Base Game'
       }
     ],
-    isTemporaryFree: steamGame.isTemporaryFree, // Özel alan
-    isTrending: steamGame.isTrending, // Trend mi?
-    releaseYear: steamGame.releaseYear, // Çıkış yılı
-    metacritic: steamGame.metacritic?.score, // Metacritic puanı
+    isTemporaryFree: steamGame.isTemporaryFree || false, // undefined yerine false değeri kullan
+    isTrending: steamGame.isTrending || false, // undefined yerine false değeri kullan
+    releaseYear: steamGame.releaseYear || null, // undefined yerine null değeri kullan
+    metacritic: steamGame.metacritic?.score || null, // undefined yerine null değeri kullan
     productSlug: `${steamGame.url}`,
     urlSlug: `${steamGame.url}`
   };
