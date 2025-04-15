@@ -32,11 +32,12 @@ export interface SteamGame {
   developers?: string[];
   publishers?: string[];
   url?: string;
+  isTemporaryFree?: boolean; // Dönemsel olarak ücretsiz mi?
 }
 
-// Ücretsiz oyunların appID'lerini manuel olarak belirliyoruz
-// Bu liste güncellenerek daha fazla oyun eklenebilir
-const FREE_GAME_APPIDS = [
+// Popüler oyunların appID'leri
+// Bu liste güncellenebilir veya genişletilebilir
+const POPULAR_GAME_APPIDS = [
   570,    // Dota 2
   440,    // Team Fortress 2
   730,    // CS:GO
@@ -49,17 +50,38 @@ const FREE_GAME_APPIDS = [
   1245620, // Elden Ring
   1091500, // Cyberpunk 2077
   1716740, // Palworld
+  292030,  // The Witcher 3
+  814380,  // Sekiro
+  1174180, // Red Dead Redemption 2
+  686810,  // Hell Let Loose
+  594570,  // Total War: WARHAMMER II
+  306130,  // The Elder Scrolls® Online
+  346110,  // ARK: Survival Evolved
+  1506830, // FIFA 23
+  648800,  // Raft
+  550,     // Left 4 Dead 2
+  377160,  // Fallout 4
+  1174370, // STAR WARS: Jedi Fallen Order
+  1811260, // EA Sports FC 24
+  1938010, // Call of Duty
+  289070,  // Civ VI
+  1237970, // Titanfall 2
+  1222140, // The Sims 4
+  582010,  // Monster Hunter: World
+  976730,  // Halo: The Master Chief Collection
+  1167410, // Grand Theft Auto V Premium Edition
+  1091500, // Cyberpunk 2077
+  1449560, // High on Life
+  975150,  // Dying Light 2 Stay Human
 ];
 
 /**
- * Steam'deki ücretsiz oyunları getirir
+ * Steam'den tüm oyunları getirir
  */
-export async function getFreeSteamGames(): Promise<SteamGame[]> {
+export async function getAllSteamGames(): Promise<SteamGame[]> {
   try {
-    const freeGames: SteamGame[] = [];
-    
     // Her oyun için detayları al
-    const promises = FREE_GAME_APPIDS.map(async (appid) => {
+    const promises = POPULAR_GAME_APPIDS.map(async (appid) => {
       try {
         const response = await axios.get(`${STEAM_STORE_API_URL}/appdetails`, {
           params: {
@@ -81,25 +103,23 @@ export async function getFreeSteamGames(): Promise<SteamGame[]> {
             currency: gameData.price_overview.currency
           } : { isFree: gameData.is_free };
           
-          // Sadece ücretsiz veya tamamen indirimdeki oyunları ekle
-          if (gameData.is_free || (price.finalPrice === 0 && price.discount > 0)) {
-            const game: SteamGame = {
-              appid: gameData.steam_appid,
-              name: gameData.name,
-              description: gameData.short_description,
-              header_image: gameData.header_image,
-              background_image: gameData.background,
-              price,
-              categories: gameData.categories,
-              release_date: gameData.release_date,
-              platforms: gameData.platforms,
-              developers: gameData.developers,
-              publishers: gameData.publishers,
-              url: `https://store.steampowered.com/app/${gameData.steam_appid}`
-            };
-            
-            return game;
-          }
+          const game: SteamGame = {
+            appid: gameData.steam_appid,
+            name: gameData.name,
+            description: gameData.short_description,
+            header_image: gameData.header_image,
+            background_image: gameData.background,
+            price,
+            categories: gameData.categories,
+            release_date: gameData.release_date,
+            platforms: gameData.platforms,
+            developers: gameData.developers,
+            publishers: gameData.publishers,
+            url: `https://store.steampowered.com/app/${gameData.steam_appid}`,
+            isTemporaryFree: !gameData.is_free && price.finalPrice === 0 && price.discount > 0
+          };
+          
+          return game;
         }
         return null;
       } catch (error) {
@@ -116,6 +136,41 @@ export async function getFreeSteamGames(): Promise<SteamGame[]> {
     console.error('Steam API error:', error);
     return [];
   }
+}
+
+/**
+ * Steam'deki ücretsiz oyunları getirir
+ */
+export async function getFreeSteamGames(): Promise<SteamGame[]> {
+  const allGames = await getAllSteamGames();
+  return allGames.filter(game => game?.price?.isFree);
+}
+
+/**
+ * Steam'de normalde ücretli olup şu anda tamamen ücretsiz olan oyunları getirir
+ */
+export async function getTemporaryFreeSteamGames(): Promise<SteamGame[]> {
+  const allGames = await getAllSteamGames();
+  return allGames.filter(game => 
+    game?.price && 
+    !game.price.isFree && // Normalde ücretsiz değil
+    game.price.finalPrice === 0 && // Şu an fiyatı 0
+    (game.price.discount ?? 0) > 0 && // İndirimde
+    game.isTemporaryFree // İşaretlenmiş
+  );
+}
+
+/**
+ * Steam'deki indirimli oyunları getirir
+ */
+export async function getDiscountedSteamGames(): Promise<SteamGame[]> {
+  const allGames = await getAllSteamGames();
+  return allGames.filter(game => 
+    game?.price && 
+    !game.price.isFree && // Ücretsiz oyun değil
+    (game.price.discount ?? 0) > 0 && // İndirimde
+    (game.price.finalPrice ?? 0) > 0 // Hala bir fiyatı var
+  );
 }
 
 /**
@@ -145,6 +200,11 @@ export async function getSteamGameNews(appid: number, count: number = 3): Promis
  * Bu fonksiyon, Steam Game'i EpicGame formatına çevirerek UI'da tutarlı bir gösterim sağlar
  */
 export function convertSteamToEpicFormat(steamGame: SteamGame): any {
+  // Normalde ücretli olup şu an ücretsiz olan oyunlar için bitiş tarihi
+  const endDate = steamGame.isTemporaryFree 
+    ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Varsayılan olarak 7 gün
+    : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+    
   return {
     title: steamGame.name,
     id: `steam_${steamGame.appid}`,
@@ -162,25 +222,25 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
     },
     price: {
       totalPrice: {
-        discountPrice: 0,
+        discountPrice: steamGame.price.finalPrice ? steamGame.price.finalPrice * 100 : 0,
         originalPrice: steamGame.price.initialPrice ? steamGame.price.initialPrice * 100 : 0,
-        discount: steamGame.price.discount || 100
+        discount: steamGame.price.discount || 0
       }
     },
     promotions: {
-      promotionalOffers: [
+      promotionalOffers: steamGame.isTemporaryFree ? [
         {
           promotionalOffers: [
             {
               startDate: new Date().toISOString(),
-              endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 gün sonrası
+              endDate: endDate.toISOString(),
               discountSetting: {
                 discountPercentage: 100
               }
             }
           ]
         }
-      ],
+      ] : [],
       upcomingPromotionalOffers: []
     },
     categories: [
@@ -189,6 +249,7 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
         name: 'Base Game'
       }
     ],
+    isTemporaryFree: steamGame.isTemporaryFree, // Özel alan
     productSlug: `${steamGame.url}`,
     urlSlug: `${steamGame.url}`
   };

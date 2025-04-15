@@ -4,20 +4,32 @@ import Head from 'next/head';
 import Layout from '../components/Layout';
 import GameCard from '../components/GameCard';
 import { EpicGame, getFreeGames, getUpcomingFreeGames } from '../lib/epic-api';
-import { SteamGame, getFreeSteamGames, convertSteamToEpicFormat } from '../lib/steam-api';
+import { 
+  SteamGame, 
+  getFreeSteamGames, 
+  getTemporaryFreeSteamGames, 
+  convertSteamToEpicFormat 
+} from '../lib/steam-api';
 
 interface HomeProps {
   epicFreeGames: EpicGame[];
   epicUpcomingGames: EpicGame[];
-  steamFreeGames: EpicGame[]; // Steam oyunları Epic formatına dönüştürülüyor
+  steamFreeGames: EpicGame[]; // Daima ücretsiz Steam oyunları
+  steamTemporaryFreeGames: EpicGame[]; // Normalde ücretli olup şu anda ücretsiz olan Steam oyunları
 }
 
-export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames }: HomeProps) {
+export default function Home({ 
+  epicFreeGames, 
+  epicUpcomingGames, 
+  steamFreeGames, 
+  steamTemporaryFreeGames 
+}: HomeProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Tüm oyunlar (epic + steam)
-  const totalGames = epicFreeGames.length + epicUpcomingGames.length + steamFreeGames.length;
+  // Tüm oyunlar
+  const totalGames = epicFreeGames.length + epicUpcomingGames.length + 
+                     steamFreeGames.length + steamTemporaryFreeGames.length;
   
   // Grid için responsive genişlik ayarlaması
   const getGridWidth = (count: number) => {
@@ -59,7 +71,7 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames 
           </div>
           <div className="text-center p-4">
             <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
-              {steamFreeGames.length}
+              {steamFreeGames.length + steamTemporaryFreeGames.length}
             </div>
             <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
               Steam
@@ -93,6 +105,23 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames 
         </div>
       )}
       
+      {/* Dönemsel Ücretsiz Steam Oyunları Bölümü */}
+      {steamTemporaryFreeGames.length > 0 && !isLoading && !error && (
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold mb-6">
+            <span className="highlight">Steam'de Dönemsel Ücretsiz Oyunlar</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
+            style={{
+              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(steamTemporaryFreeGames.length)}, 1fr))`
+            }}>
+            {steamTemporaryFreeGames.map((game) => (
+              <GameCard key={game.id} game={game} isFree={true} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Epic Games Ücretsiz Oyunlar Bölümü */}
       {epicFreeGames.length > 0 && !isLoading && !error ? (
         <div className="mb-16">
@@ -119,11 +148,11 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames 
         </div>
       )}
       
-      {/* Steam Ücretsiz Oyunlar Bölümü */}
+      {/* Steam Daima Ücretsiz Oyunlar Bölümü */}
       {steamFreeGames.length > 0 && !isLoading && !error ? (
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-6">
-            <span className="highlight">Steam'de Ücretsiz</span>
+            <span className="highlight">Steam'de Daima Ücretsiz</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{
@@ -218,20 +247,24 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames 
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    const [epicFreeGames, epicUpcomingGames, steamGames] = await Promise.all([
+    const [
+      epicFreeGames, 
+      epicUpcomingGames, 
+      steamFreeGames, 
+      steamTemporaryFreeGames
+    ] = await Promise.all([
       getFreeGames(),
       getUpcomingFreeGames(),
-      getFreeSteamGames() // Steam'deki ücretsiz oyunları getir
+      getFreeSteamGames().then(games => games.map(convertSteamToEpicFormat)),
+      getTemporaryFreeSteamGames().then(games => games.map(convertSteamToEpicFormat))
     ]);
-    
-    // Steam oyunlarını Epic Games formatına dönüştür
-    const steamFreeGames = steamGames.map(game => convertSteamToEpicFormat(game));
     
     return {
       props: {
         epicFreeGames,
         epicUpcomingGames,
-        steamFreeGames
+        steamFreeGames,
+        steamTemporaryFreeGames
       },
       // Her 30 dakikada bir yeniden oluştur
       revalidate: 1800,
@@ -242,7 +275,8 @@ export const getStaticProps: GetStaticProps = async () => {
       props: {
         epicFreeGames: [],
         epicUpcomingGames: [],
-        steamFreeGames: []
+        steamFreeGames: [],
+        steamTemporaryFreeGames: []
       },
       // Hata durumunda 5 dakikada bir yeniden dene
       revalidate: 300,
