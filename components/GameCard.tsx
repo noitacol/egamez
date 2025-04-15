@@ -4,12 +4,17 @@ import Link from 'next/link';
 import { BsThermometerHigh } from 'react-icons/bs';
 import { RxExternalLink } from 'react-icons/rx';
 import { HiOutlinePhotograph } from 'react-icons/hi';
-import { FaRegPlayCircle } from 'react-icons/fa';
+import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { EpicGame } from '../lib/epic-api';
 import { IconType } from 'react-icons';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
-// EpicGame tipini genişletiyoruz ve export ediyoruz
-export interface ExtendedEpicGame extends Omit<EpicGame, 'promotions'> {
+// EpicGame tipini genişletiyoruz
+export interface ExtendedEpicGame extends EpicGame {
   videos?: Array<{
     id: string;
     thumbnail: string;
@@ -28,26 +33,7 @@ export interface ExtendedEpicGame extends Omit<EpicGame, 'promotions'> {
   isTrending?: boolean;
   releaseYear?: number;
   isTemporaryFree?: boolean; // Steam'de geçici olarak ücretsiz oyunlar için
-  promotions?: {
-    promotionalOffers?: Array<{
-      promotionalOffers?: Array<{
-        startDate: string;
-        endDate: string;
-        discountSetting?: {
-          discountPercentage: number;
-        };
-      }>;
-    }>;
-    upcomingPromotionalOffers?: Array<{
-      promotionalOffers?: Array<{
-        startDate: string;
-        endDate: string;
-        discountSetting?: {
-          discountPercentage: number;
-        };
-      }>;
-    }>;
-  };
+  isFromSteam?: boolean; // Steam'den gelen oyunlar için
 }
 
 interface GameCardProps {
@@ -60,7 +46,7 @@ interface GameCardProps {
 const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = false, isTrending = false }) => {
   const [imgError, setImgError] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
-  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const isTrendingGame = isTrending || game.isTrending || false;
 
   // Tarih kontrolü
@@ -69,7 +55,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   let endDate = null;
   
   // Steam oyunu mu Epic oyunu mu kontrolü
-  const isSteamGame = game.id?.toString().startsWith('steam_');
+  const isSteamGame = game.id?.toString().startsWith('steam_') || game.isFromSteam;
   // Çıkış yılı
   const releaseYear = game.releaseYear;
   // Metacritic puanı
@@ -139,6 +125,25 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
     }))
   ];
 
+  // Find thumbnail image
+  const thumbnailImage = game.keyImages?.find(
+    (img) => img.type === "Thumbnail" || img.type === "OfferImageTall"
+  );
+
+  const tall = game.keyImages?.find((img) => img.type === "OfferImageTall");
+  const wide = game.keyImages?.find((img) => img.type === "OfferImageWide");
+
+  // Gallery media (images and videos)
+  const galleryMedia = [
+    ...(game.keyImages?.filter(
+      (img) =>
+        img.type === "Screenshot" ||
+        img.type === "DieselGameBoxTall" ||
+        img.type === "DieselGameBoxWide"
+    ) || []),
+    ...(game.videos || []),
+  ];
+
   // Galeride gösterilen öğeyi kapat
   const handleCloseGallery = () => {
     setShowGallery(false);
@@ -147,16 +152,16 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   // Galeriden sonraki öğeye geç
   const handleNextGalleryItem = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setGalleryIndex((prevIndex) => (prevIndex + 1) % allMedia.length);
+    setCurrentMediaIndex((prevIndex) => (prevIndex + 1) % allMedia.length);
   };
 
   // Galeriden önceki öğeye geç
   const handlePrevGalleryItem = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setGalleryIndex((prevIndex) => (prevIndex - 1 + allMedia.length) % allMedia.length);
+    setCurrentMediaIndex((prevIndex) => (prevIndex - 1 + allMedia.length) % allMedia.length);
   };
 
-  const isFromSteam = game.id.toString().includes("steam");
+  const isFromSteam = game.id.toString().includes("steam") || game.isFromSteam;
   const slugUrl = game.productSlug || game.urlSlug;
   const detailUrl = isFromSteam && slugUrl ? slugUrl : `https://store.epicgames.com/en-US/p/${slugUrl}`;
 
@@ -167,70 +172,68 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   const PlayCircleIcon = FaRegPlayCircle as React.FC<React.SVGProps<SVGSVGElement>>;
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.03] hover:bg-gray-750 border border-gray-700 group">
-      {/* Kapak Görseli */}
-      <div className="relative aspect-video overflow-hidden">
-        {imgError ? (
-          <div className="flex items-center justify-center h-full bg-gray-900">
-            <PhotoIcon className="w-20 h-20 text-gray-600" />
-            <span className="absolute bottom-2 right-2 text-xs text-gray-500">{game.title}</span>
+    <div
+      className={`relative rounded-xl border overflow-hidden shadow-lg transition-transform hover:scale-[1.02] hover:z-10 bg-white dark:bg-gray-800 h-full flex flex-col ${
+        isTrending ? "border-red-400" : "border-gray-200 dark:border-gray-700"
+      }`}
+    >
+      {/* Promotional Labels */}
+      <div className="absolute top-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+        <div className="flex items-end justify-between">
+          <div>
+            {isFreeGame ? (
+              <span className="bg-blue-600 text-white px-2 py-1 rounded-md text-xs font-bold">
+                ÜCRETSİZ AL
+              </span>
+            ) : isUpcoming ? (
+              <span className="bg-purple-600 text-white px-2 py-1 rounded-md text-xs font-bold">
+                YAKINDA ÜCRETSİZ
+              </span>
+            ) : null}
           </div>
-        ) : (
-          <Image
-            src={mainImage?.url || "/placeholder.jpg"}
-            alt={game.title}
-            layout="fill"
-            objectFit="cover"
-            onError={() => setImgError(true)}
-            className="transition-transform duration-500 group-hover:scale-110"
-            loading="lazy"
-          />
-        )}
-        
-        {/* Trend etiketi */}
-        {isTrendingGame && (
-          <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center">
-            <ThermometerIcon className="mr-1" /> Trend
-          </div>
-        )}
-
-        {/* Medya Galerisi Butonu */}
-        {hasMedia && (
-          <button 
-            onClick={() => setShowGallery(true)}
-            className="absolute top-2 right-2 bg-gray-800/70 text-white p-2 rounded-full hover:bg-gray-700 transition-colors"
-            aria-label="Medya galerisini göster"
-          >
-            <PhotoIcon className="w-5 h-5" />
-          </button>
-        )}
-
-        {/* Promosyon Etiketi */}
-        {(isFreeGame || isUpcoming) && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-            <div className="flex items-end justify-between">
-              <div>
-                {isFreeGame ? (
-                  <span className="bg-blue-600 text-white px-2 py-1 rounded-md text-xs font-bold">
-                    ÜCRETSİZ AL
-                  </span>
-                ) : isUpcoming ? (
-                  <span className="bg-purple-600 text-white px-2 py-1 rounded-md text-xs font-bold">
-                    YAKINDA ÜCRETSİZ
-                  </span>
-                ) : null}
-              </div>
-              {remainingDays !== null && (
-                <span className="text-white text-xs font-semibold">
-                  {remainingDays} gün kaldı
-                </span>
-              )}
-            </div>
-          </div>
-        )}
+          {remainingDays !== null && (
+            <span className="text-white text-xs font-semibold">
+              {remainingDays} gün kaldı
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Oyun Bilgileri */}
+      {/* Game Image */}
+      <div className="relative overflow-hidden aspect-[3/4] w-full">
+        <div className="absolute inset-0 transition-opacity duration-200 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10"></div>
+        
+        <button
+          className="absolute top-2 right-2 z-20 bg-black/50 hover:bg-black/70 p-2 rounded-full transition-colors"
+          onClick={(e) => {
+            e.preventDefault();
+            setShowGallery(true);
+          }}
+          aria-label="View gallery"
+        >
+          <FaWindowMaximize className="text-white" />
+        </button>
+        
+        <Link href={`/game/${game.id}`} passHref>
+          {imgError || !thumbnailImage ? (
+            <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+              <span className="text-gray-400 text-sm">Image not available</span>
+            </div>
+          ) : (
+            <Image
+              src={thumbnailImage.url}
+              alt={game.title}
+              className="object-cover hover:scale-105 transition-transform duration-300"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority={isFreeGame || isUpcoming}
+              onError={() => setImgError(true)}
+            />
+          )}
+        </Link>
+      </div>
+      
+      {/* Game Details */}
       <div className="p-4">
         <h3 className="text-lg font-bold text-white mb-1 truncate" title={game.title}>
           {game.title}
@@ -292,109 +295,66 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
         </div>
       </div>
 
-      {/* Galeri Modal */}
+      {/* Media Gallery Modal */}
       {showGallery && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
-          onClick={handleCloseGallery}
+          onClick={() => setShowGallery(false)}
         >
-          <div className="relative w-full max-w-4xl mx-auto">
-            {/* Mevcut medya öğesi */}
-            <div className="relative aspect-video bg-black flex items-center justify-center">
-              {allMedia[galleryIndex]?.type === "Video" ? (
-                // Video ise
-                <div className="w-full h-full relative">
-                  <Image
-                    src={allMedia[galleryIndex].url}
-                    alt="Video önizleme"
-                    layout="fill"
-                    objectFit="contain"
-                    className="max-h-[80vh]"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                    <PlayCircleIcon className="w-16 h-16 text-white opacity-80" />
-                  </div>
-                </div>
-              ) : (
-                // Görsel ise
-                <Image
-                  src={allMedia[galleryIndex].url}
-                  alt={`${game.title} görsel ${galleryIndex + 1}`}
-                  layout="fill"
-                  objectFit="contain"
-                  className="max-h-[80vh]"
-                />
-              )}
-              
-              {/* Galeri Kontrolleri */}
-              <button 
-                onClick={handlePrevGalleryItem}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full hover:bg-black/70 transition-colors"
-                aria-label="Önceki görsel"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              
-              <button 
-                onClick={handleNextGalleryItem}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full hover:bg-black/70 transition-colors"
-                aria-label="Sonraki görsel"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-              
-              <button 
-                onClick={handleCloseGallery}
-                className="absolute right-4 top-4 bg-black/50 p-2 rounded-full hover:bg-black/70 transition-colors"
-                aria-label="Galeriyi kapat"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              
-              {/* İlerleme Göstergesi */}
-              <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                <div className="bg-black/50 rounded-full px-3 py-1 text-sm text-white">
-                  {galleryIndex + 1} / {allMedia.length}
-                </div>
-              </div>
-            </div>
+          <div
+            className="relative w-full max-w-4xl p-4 max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-4 right-4 z-30 bg-black/50 hover:bg-black/70 p-2 rounded-full transition-colors"
+              onClick={() => setShowGallery(false)}
+              aria-label="Close gallery"
+            >
+              <FaTimes className="text-white text-xl" />
+            </button>
             
-            {/* Küçük resim önizleme şeridi */}
-            {allMedia.length > 1 && (
-              <div className="flex gap-2 mt-2 overflow-x-auto p-2 bg-gray-900/80 rounded-lg">
-                {allMedia.map((media, index) => (
-                  <button
-                    key={index}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setGalleryIndex(index);
-                    }}
-                    className={`flex-shrink-0 relative w-20 h-12 overflow-hidden rounded-md ${
-                      index === galleryIndex ? "ring-2 ring-blue-500" : ""
-                    }`}
-                    aria-label={`${game.title} görsel ${index + 1}`}
-                  >
+            <Swiper
+              modules={[Navigation, Pagination]}
+              navigation
+              pagination={{ clickable: true }}
+              loop={galleryMedia.length > 1}
+              initialSlide={currentMediaIndex}
+              className="w-full h-full rounded-xl overflow-hidden"
+              onSlideChange={(swiper) => setCurrentMediaIndex(swiper.activeIndex)}
+            >
+              {galleryMedia.map((media, index) => (
+                <SwiperSlide key={index} className="flex items-center justify-center">
+                  {'url' in media ? (
                     <Image
                       src={media.url}
-                      alt={`Küçük resim ${index + 1}`}
-                      layout="fill"
-                      objectFit="cover"
+                      alt={`${game.title} - Image ${index + 1}`}
+                      width={1280}
+                      height={720}
+                      className="object-contain max-h-[80vh]"
                     />
-                    {media.type === "Video" && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                        <PlayCircleIcon className="w-4 h-4 text-white" />
-                      </div>
-                    )}
-                  </button>
-                ))}
+                  ) : (
+                    <div className="relative w-full aspect-video">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${media.id}`}
+                        title={`${game.title} - Video ${index + 1}`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                      ></iframe>
+                    </div>
+                  )}
+                </SwiperSlide>
+              ))}
+            </Swiper>
+            
+            <div className="mt-4 flex justify-between items-center text-white">
+              <div>
+                <h3 className="text-xl font-bold">{game.title}</h3>
+                <p className="text-sm text-gray-300">
+                  {currentMediaIndex + 1} / {galleryMedia.length}
+                </p>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}

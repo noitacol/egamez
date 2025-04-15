@@ -437,18 +437,50 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
     : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
   
   // Tüm görselleri birleştir ve EpicGame formatına dönüştür
-  const keyImages = [
-    {
+  const keyImages = [];
+  
+  // Oyun kapak görselini ekle - varsayılan görsel veya placeholder
+  if (steamGame.header_image) {
+    keyImages.push({
       type: 'DieselStoreFrontWide',
       url: steamGame.header_image
-    }
-  ];
+    });
+  } else {
+    keyImages.push({
+      type: 'DieselStoreFrontWide',
+      url: 'https://via.placeholder.com/460x215/12131a/FFFFFF?text=Steam+Game'
+    });
+  }
+  
+  // Dikey kapak görseli ekle (thumbnail)
+  if (steamGame.header_image) {
+    // Dikey kapak görseli için kapak görselini kırparak kullan
+    keyImages.push({
+      type: 'Thumbnail',
+      url: steamGame.header_image
+    });
+    
+    // OfferImageTall için de aynı görseli kullan
+    keyImages.push({
+      type: 'OfferImageTall',
+      url: steamGame.header_image
+    });
+  } else {
+    keyImages.push({
+      type: 'Thumbnail',
+      url: 'https://via.placeholder.com/300x400/12131a/FFFFFF?text=Steam+Game'
+    });
+    keyImages.push({
+      type: 'OfferImageTall',
+      url: 'https://via.placeholder.com/300x400/12131a/FFFFFF?text=Steam+Game'
+    });
+  }
   
   // Ekran görüntülerini ekle
   if (steamGame.screenshots && steamGame.screenshots.length > 0) {
-    steamGame.screenshots.forEach(screenshot => {
+    steamGame.screenshots.forEach((screenshot, index) => {
       keyImages.push({
-        type: `Screenshot_${screenshot.id}`,
+        type: `Screenshot_${index}`,
         url: screenshot.url
       });
     });
@@ -464,9 +496,9 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
   
   // Video thumbnaillerini ekle
   if (steamGame.movies && steamGame.movies.length > 0) {
-    steamGame.movies.forEach(movie => {
+    steamGame.movies.forEach((movie, index) => {
       keyImages.push({
-        type: `MovieThumbnail_${movie.id}`,
+        type: `MovieThumbnail_${index}`,
         url: movie.thumbnail
       });
     });
