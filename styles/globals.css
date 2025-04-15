@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-100 dark:bg-epicdark text-gray-900 dark:text-white transition-colors duration-200;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-semibold transition-colors duration-200;
+  }
+  
+  .btn-primary {
+    @apply bg-epicblue hover:bg-blue-700 text-white;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 dark:bg-epicgray dark:hover:bg-gray-700 text-gray-900 dark:text-white;
+  }
+  
+  .card {
+    @apply bg-white dark:bg-epicgray rounded-lg shadow-md overflow-hidden transition-shadow duration-200 hover:shadow-lg;
+  }
+  
+  .input {
+    @apply bg-white dark:bg-epicgray border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-epicblue dark:focus:ring-blue-500 transition-colors;
+  }
+} 

@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/free-games",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/upcoming-games",
+      "schedule": "0 */12 * * *"
+    }
+  ]
+} 
