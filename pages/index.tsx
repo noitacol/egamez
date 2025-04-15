@@ -1,30 +1,20 @@
 import { useState, useEffect } from 'react';
-import { GetStaticProps } from 'next';
+import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Layout from '../components/Layout';
 import GameCard from '../components/GameCard';
-import { EpicGame, getFreeGames, getUpcomingFreeGames } from '../lib/epic-api';
-import { 
-  SteamGame, 
-  getFreeSteamGames, 
-  getTemporaryFreeSteamGames,
-  getTrendingSteamGames,
-  convertSteamToEpicFormat 
-} from '../lib/steam-api';
+import { getFreeGames, getUpcomingFreeGames } from '../lib/epic-api';
+import { getFreeSteamGames, getTrendingSteamGames, convertSteamToEpicFormat } from '../lib/steam-api';
+import { ExtendedEpicGame } from '../components/GameCard';
 
 interface HomeProps {
-  epicFreeGames: EpicGame[];
-  epicUpcomingGames: EpicGame[];
-  steamFreeGames: EpicGame[]; // Daima ücretsiz Steam oyunları
-  steamTrendingGames: EpicGame[]; // Trend olan yeni ücretsiz Steam oyunları
+  epicFreeGames: ExtendedEpicGame[];
+  epicUpcomingGames: ExtendedEpicGame[];
+  steamFreeGames: ExtendedEpicGame[];
+  steamTrendingGames: ExtendedEpicGame[];
 }
 
-export default function Home({ 
-  epicFreeGames, 
-  epicUpcomingGames, 
-  steamFreeGames,
-  steamTrendingGames
-}: HomeProps) {
+export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames, steamTrendingGames }: HomeProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -353,75 +343,38 @@ export default function Home({
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps<HomeProps> = async () => {
   try {
-    // Tüm API çağrılarını paralel olarak yap
-    const [
-      epicGames, 
-      epicUpcomingGames, 
-      steamFreeGames,
-      steamTrendingGames
-    ] = await Promise.all([
+    // Paralel olarak tüm API isteklerini yapıyoruz
+    const [epicFreeGamesData, epicUpcomingGamesData, steamFreeGamesData, steamTrendingGamesData] = await Promise.all([
       getFreeGames(),
       getUpcomingFreeGames(),
       getFreeSteamGames().then(games => games.map(convertSteamToEpicFormat)),
-      getTrendingSteamGames().then(games => games.map(convertSteamToEpicFormat))
+      getTrendingSteamGames().then(games => games.map(convertSteamToEpicFormat)),
     ]);
-    
-    // Epic Games'teki ücretsiz oyunları sırala
-    const epicFreeGames = epicGames.sort((a, b) => {
-      // Epic Games adına göre sırala
-      return a.title.localeCompare(b.title);
-    });
-    
-    // Steam'deki trend oyunları sırala
-    const sortedSteamTrendingGames = steamTrendingGames
-      .filter(game => game.isTrending) // Sadece trend olanları al
-      .sort((a, b) => {
-        // Önce Metacritic puanına göre sırala (yüksekten düşüğe)
-        if (a.metacritic && b.metacritic) {
-          return b.metacritic - a.metacritic;
-        }
-        // Metacritic puanı yoksa çıkış yılına göre sırala (yeniden eskiye)
-        if (a.releaseYear && b.releaseYear) {
-          return b.releaseYear - a.releaseYear;
-        }
-        // Son çare olarak isme göre sırala
-        return a.title.localeCompare(b.title);
-      });
-      
-    // Steam'deki daima ücretsiz oyunları sırala
-    const sortedSteamFreeGames = steamFreeGames
-      .sort((a, b) => {
-        // Önce Metacritic puanına göre sırala (yüksekten düşüğe)
-        if (a.metacritic && b.metacritic) {
-          return b.metacritic - a.metacritic;
-        }
-        // Metacritic puanı yoksa isme göre sırala
-        return a.title.localeCompare(b.title);
-      });
-    
+
+    // Tüm verileri bir araya getiriyoruz
     return {
       props: {
-        epicFreeGames,
-        epicUpcomingGames,
-        steamFreeGames: sortedSteamFreeGames,
-        steamTrendingGames: sortedSteamTrendingGames
+        epicFreeGames: epicFreeGamesData as ExtendedEpicGame[],
+        epicUpcomingGames: epicUpcomingGamesData as ExtendedEpicGame[],
+        steamFreeGames: steamFreeGamesData as ExtendedEpicGame[],
+        steamTrendingGames: steamTrendingGamesData as ExtendedEpicGame[],
       },
-      // Her 30 dakikada bir yeniden oluştur
-      revalidate: 1800,
+      revalidate: 1800, // 30 dakikada bir yeniden oluştur
     };
   } catch (error) {
-    console.error('Error fetching games:', error);
+    console.error('API istekleri sırasında hata:', error);
+    
+    // Hata durumunda boş dizilerle devam et
     return {
       props: {
-        epicFreeGames: [],
-        epicUpcomingGames: [],
-        steamFreeGames: [],
-        steamTrendingGames: []
+        epicFreeGames: [] as ExtendedEpicGame[],
+        epicUpcomingGames: [] as ExtendedEpicGame[],
+        steamFreeGames: [] as ExtendedEpicGame[],
+        steamTrendingGames: [] as ExtendedEpicGame[],
       },
-      // Hata durumunda 5 dakikada bir yeniden dene
-      revalidate: 300,
+      revalidate: 300, // Hata durumunda 5 dakika sonra tekrar dene
     };
   }
 }; 

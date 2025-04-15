@@ -8,27 +8,40 @@ import { FaRegPlayCircle } from 'react-icons/fa';
 import { EpicGame } from '../lib/epic-api';
 import { IconType } from 'react-icons';
 
-// EpicGame tipini genişletiyoruz
-interface ExtendedEpicGame extends EpicGame {
+// EpicGame tipini genişletiyoruz ve export ediyoruz
+export interface ExtendedEpicGame extends EpicGame {
   videos?: Array<{
     id: string;
     thumbnail: string;
+    urls?: {
+      webm: {
+        '480': string;
+        max: string;
+      };
+      mp4: {
+        '480': string;
+        max: string;
+      };
+    };
   }>;
   metacritic?: number;
   isTrending?: boolean;
+  releaseYear?: number;
+  isTemporaryFree?: boolean; // Steam'de geçici olarak ücretsiz oyunlar için
 }
 
 interface GameCardProps {
   game: ExtendedEpicGame;
   isFree?: boolean;
   isUpcoming?: boolean;
+  isTrending?: boolean; // Trend oyunlar için bayrak
 }
 
-const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = false }) => {
+const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = false, isTrending = false }) => {
   const [imgError, setImgError] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
-  const isTrending = game.isTrending || false;
+  const isTrendingGame = isTrending || game.isTrending || false;
 
   // Tarih kontrolü
   const currentDate = new Date();
@@ -79,20 +92,6 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   const storeUrl = isSteamGame 
     ? game.productSlug || `https://store.steampowered.com/app/${game.id.toString().replace('steam_', '')}`
     : `https://store.epicgames.com/tr/p/${game.urlSlug || game.productSlug}`;
-
-  // Geri kalan gün sayısını hesapla
-  const calculateRemainingDays = () => {
-    if (!game.promotions?.promotionalOffers?.[0]?.promotionalOffers?.[0]?.endDate) {
-      return null;
-    }
-
-    const endDate = new Date(game.promotions.promotionalOffers[0].promotionalOffers[0].endDate);
-    const now = new Date();
-    const diffTime = endDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays > 0 ? diffDays : 0;
-  };
 
   // Oyunun ana kapak görselini bul
   const mainImage = game.keyImages?.find(
@@ -167,7 +166,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
         )}
         
         {/* Trend etiketi */}
-        {isTrending && (
+        {isTrendingGame && (
           <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center">
             <ThermometerIcon className="mr-1" /> Trend
           </div>
