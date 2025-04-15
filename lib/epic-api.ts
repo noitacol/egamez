@@ -52,6 +52,7 @@ export interface EpicGame {
 
 export async function getFreeGames(): Promise<EpicGame[]> {
   try {
+    console.log('Fetching free games from Epic API...');
     const response = await axios.get(EPIC_API_URL, {
       params: {
         locale: 'tr',
@@ -61,21 +62,50 @@ export async function getFreeGames(): Promise<EpicGame[]> {
     });
 
     const games = response.data?.data?.Catalog?.searchStore?.elements || [];
+    console.log(`Found ${games.length} total games from Epic API`);
     
     // Şu anda ücretsiz olan oyunlar
     const currentFreeGames = games.filter((game: EpicGame) => {
-      const promotionalOffers = game.promotions?.promotionalOffers;
-      return (
-        promotionalOffers &&
-        promotionalOffers.length > 0 &&
-        promotionalOffers[0]?.promotionalOffers?.length > 0 &&
-        game.price?.totalPrice?.originalPrice !== 0 &&
-        (
-          promotionalOffers[0]?.promotionalOffers[0]?.discountSetting?.discountPercentage === 0 ||
-          game.price?.totalPrice?.discountPrice === 0
-        )
-      );
+      // Oyun fiyat ve promosyon bilgilerini kontrol et
+      const promotionalOffers = game.promotions?.promotionalOffers || [];
+      const offers = promotionalOffers[0]?.promotionalOffers || [];
+      const price = game.price?.totalPrice;
+      
+      // Oyun zaten tamamen ücretsiz mi?
+      if (price?.originalPrice === 0) {
+        return false;
+      }
+      
+      // Aktif promosyon var mı?
+      if (promotionalOffers.length === 0 || offers.length === 0) {
+        return false;
+      }
+      
+      // Promosyon süresini kontrol et
+      const now = new Date();
+      const startDate = new Date(offers[0]?.startDate);
+      const endDate = new Date(offers[0]?.endDate);
+      
+      if (now < startDate || now > endDate) {
+        return false;
+      }
+      
+      // Tamamen ücretsiz mi?
+      const isFreeByDiscount = offers[0]?.discountSetting?.discountPercentage === 100;
+      const isFreeByPrice = price?.discountPrice === 0;
+      
+      return isFreeByDiscount || isFreeByPrice;
     });
+
+    console.log(`Found ${currentFreeGames.length} free games`);
+    
+    if (currentFreeGames.length > 0) {
+      currentFreeGames.forEach((game: EpicGame) => {
+        console.log(`Free game: ${game.title}`);
+      });
+    } else {
+      console.log('No free games found');
+    }
 
     return currentFreeGames;
   } catch (error) {
@@ -86,6 +116,7 @@ export async function getFreeGames(): Promise<EpicGame[]> {
 
 export async function getUpcomingFreeGames(): Promise<EpicGame[]> {
   try {
+    console.log('Fetching upcoming free games from Epic API...');
     const response = await axios.get(EPIC_API_URL, {
       params: {
         locale: 'tr',
@@ -95,16 +126,36 @@ export async function getUpcomingFreeGames(): Promise<EpicGame[]> {
     });
 
     const games = response.data?.data?.Catalog?.searchStore?.elements || [];
+    console.log(`Total games from API: ${games.length}`);
     
     // Yakında ücretsiz olacak oyunlar
     const upcomingFreeGames = games.filter((game: EpicGame) => {
-      const upcomingPromotionalOffers = game.promotions?.upcomingPromotionalOffers;
-      return (
-        upcomingPromotionalOffers &&
-        upcomingPromotionalOffers.length > 0 &&
-        upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0
-      );
+      const upcomingOffers = game.promotions?.upcomingPromotionalOffers || [];
+      const offers = upcomingOffers[0]?.promotionalOffers || [];
+      
+      if (upcomingOffers.length === 0 || offers.length === 0) {
+        return false;
+      }
+      
+      // Yakında ücretsiz olacak mı?
+      const price = game.price?.totalPrice;
+      if (price?.originalPrice === 0) {
+        return false; // Zaten ücretsiz
+      }
+      
+      const discountPercentage = offers[0]?.discountSetting?.discountPercentage;
+      return discountPercentage === 100 || discountPercentage === 0;
     });
+
+    console.log(`Found ${upcomingFreeGames.length} upcoming free games`);
+    
+    if (upcomingFreeGames.length > 0) {
+      upcomingFreeGames.forEach((game: EpicGame) => {
+        console.log(`Upcoming free game: ${game.title}`);
+      });
+    } else {
+      console.log('No upcoming free games found');
+    }
 
     return upcomingFreeGames;
   } catch (error) {
