@@ -137,7 +137,7 @@ export async function getTrendingSteamGames(): Promise<SteamGame[]> {
           try {
             const details = await getGameDetails(appId);
             // Sadece ücretsiz olan trending oyunları al
-            if (details && details.is_free === true) {
+            if (details && details.price?.isFree === true) {
               return {
                 ...details,
                 isTrending: true
@@ -292,7 +292,7 @@ export async function getDiscountedSteamGames(): Promise<SteamGame[]> {
         .map(async (appId) => {
           try {
             const details = await getGameDetails(appId);
-            if (details && details.price_overview && details.price_overview.discount_percent > 0) {
+            if (details && details.price && details.price.discount && details.price.discount > 0) {
               return {
                 ...details,
                 isDiscounted: true
