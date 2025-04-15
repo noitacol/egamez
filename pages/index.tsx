@@ -86,7 +86,10 @@ export default function Home({ freeGames }: HomeProps) {
       ) : (
         <div>
           {!isLoading && !error && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
+              style={{
+                gridTemplateColumns: `repeat(auto-fill, minmax(${freeGames.length === 1 ? '100%' : freeGames.length === 2 ? '45%' : freeGames.length === 3 ? '30%' : '260px'}, 1fr))`
+              }}>
               {freeGames.map((game) => (
                 <GameCard key={game.id} game={game} />
               ))}
