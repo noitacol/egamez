@@ -17,16 +17,24 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   let startDate = null;
   let endDate = null;
   
-  if (isUpcoming) {
+  // Steam oyunu mu Epic oyunu mu kontrolü
+  const isSteamGame = game.id?.startsWith('steam_');
+  
+  if (isUpcoming && !isSteamGame) {
     // Yakında ücretsiz olacak oyunlar için
     const upcomingOffers = game.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers;
     startDate = upcomingOffers?.[0]?.startDate ? new Date(upcomingOffers[0].startDate) : null;
     endDate = upcomingOffers?.[0]?.endDate ? new Date(upcomingOffers[0].endDate) : null;
-  } else {
-    // Şu anda ücretsiz olan oyunlar için
+  } else if (!isSteamGame) {
+    // Şu anda ücretsiz olan oyunlar için (Epic Games)
     const currentOffers = game.promotions?.promotionalOffers?.[0]?.promotionalOffers;
     startDate = currentOffers?.[0]?.startDate ? new Date(currentOffers[0].startDate) : null;
     endDate = currentOffers?.[0]?.endDate ? new Date(currentOffers[0].endDate) : null;
+  } else if (isSteamGame && game.promotions) {
+    // Steam oyunları için tarih (Steam oyunları için promotions manuel olarak ayarlanıyor)
+    const steamOffers = game.promotions?.promotionalOffers?.[0]?.promotionalOffers;
+    startDate = steamOffers?.[0]?.startDate ? new Date(steamOffers[0].startDate) : null;
+    endDate = steamOffers?.[0]?.endDate ? new Date(steamOffers[0].endDate) : null;
   }
   
   // Kalan günleri hesapla
@@ -40,10 +48,15 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
     : null;
 
   // Ücretsiz oyun mu kontrolü
-  const isFreeGame = game.price?.totalPrice?.discountPrice === 0;
+  const isFreeGame = isFree || game.price?.totalPrice?.discountPrice === 0;
+
+  // Oyunun mağaza URL'ini belirle
+  const storeUrl = isSteamGame 
+    ? game.productSlug || `https://store.steampowered.com/app/${game.id.replace('steam_', '')}`
+    : `https://store.epicgames.com/tr/p/${game.urlSlug || game.productSlug}`;
 
   return (
-    <Link href={`https://store.epicgames.com/tr/p/${game.urlSlug || game.productSlug}`} target="_blank">
+    <Link href={storeUrl} target="_blank">
       <div className={`rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105 h-full flex flex-col ${isUpcoming ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-800 hover:bg-gray-700'}`}>
         <div className="relative h-48 w-full">
           {!imageError ? (
@@ -60,6 +73,11 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
               No Image Available
             </div>
           )}
+          
+          {/* Platform etiketi */}
+          <div className="absolute top-0 left-0 bg-black bg-opacity-70 text-white text-xs font-bold p-1 m-2 rounded">
+            {isSteamGame ? 'STEAM' : 'EPIC'}
+          </div>
           
           {/* Durum etiketi */}
           {isUpcoming ? (
@@ -126,6 +144,11 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
                 : `${endDate?.toLocaleDateString('tr-TR')}'e kadar`}
             </div>
           )}
+          
+          {/* Oyun sağlayıcı bilgisi */}
+          <div className="text-xs text-gray-500 mt-2">
+            {game.seller?.name || (isSteamGame ? 'Steam' : 'Epic Games')}
+          </div>
         </div>
       </div>
     </Link>
