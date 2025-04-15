@@ -19,6 +19,12 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   
   // Steam oyunu mu Epic oyunu mu kontrolü
   const isSteamGame = game.id?.startsWith('steam_');
+  // Trend oyun mu kontrolü
+  const isTrending = (game as any).isTrending === true;
+  // Çıkış yılı
+  const releaseYear = (game as any).releaseYear;
+  // Metacritic puanı
+  const metacriticScore = (game as any).metacritic;
   
   if (isUpcoming && !isSteamGame) {
     // Yakında ücretsiz olacak oyunlar için
@@ -57,7 +63,12 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
 
   return (
     <Link href={storeUrl} target="_blank">
-      <div className={`rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105 h-full flex flex-col ${isUpcoming ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-800 hover:bg-gray-700'}`}>
+      <div className={`rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105 h-full flex flex-col 
+        ${isUpcoming 
+            ? 'bg-gray-700 hover:bg-gray-600' 
+            : isTrending 
+              ? 'bg-epicblue/20 hover:bg-epicblue/30 dark:bg-epicblue/30 dark:hover:bg-epicblue/40 border border-epicblue/50' 
+              : 'bg-gray-800 hover:bg-gray-700'}`}>
         <div className="relative h-48 w-full">
           {!imageError ? (
             <Image
@@ -78,6 +89,13 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
           <div className="absolute top-0 left-0 bg-black bg-opacity-70 text-white text-xs font-bold p-1 m-2 rounded">
             {isSteamGame ? 'STEAM' : 'EPIC'}
           </div>
+          
+          {/* Trend etiketi */}
+          {isTrending && (
+            <div className="absolute top-0 left-16 bg-epicaccent text-white text-xs font-bold p-1 m-2 rounded animate-pulse">
+              TREND
+            </div>
+          )}
           
           {/* Durum etiketi */}
           {isUpcoming ? (
@@ -102,6 +120,13 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
         </div>
         <div className="p-4 flex flex-col flex-grow">
           <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">{game.title}</h3>
+          
+          {/* Yeni çıkan oyun bilgisi */}
+          {releaseYear && releaseYear === new Date().getFullYear() && (
+            <div className="bg-epicaccent/20 text-epicaccent dark:text-white text-xs px-2 py-1 rounded mb-2 inline-block">
+              <span>Yeni • {releaseYear}</span>
+            </div>
+          )}
           
           <div className="mt-auto">
             {isUpcoming ? (
@@ -145,9 +170,25 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
             </div>
           )}
           
-          {/* Oyun sağlayıcı bilgisi */}
-          <div className="text-xs text-gray-500 mt-2">
-            {game.seller?.name || (isSteamGame ? 'Steam' : 'Epic Games')}
+          {/* Alt bilgi bölümü */}
+          <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+            {/* Oyun sağlayıcı bilgisi */}
+            <div>
+              {game.seller?.name || (isSteamGame ? 'Steam' : 'Epic Games')}
+            </div>
+            
+            {/* Metacritic puanı */}
+            {metacriticScore && (
+              <div className={`px-1.5 py-0.5 rounded ${
+                metacriticScore >= 80 
+                  ? 'bg-green-700 text-white' 
+                  : metacriticScore >= 50 
+                    ? 'bg-yellow-700 text-white' 
+                    : 'bg-red-700 text-white'
+              }`}>
+                {metacriticScore}
+              </div>
+            )}
           </div>
         </div>
       </div>

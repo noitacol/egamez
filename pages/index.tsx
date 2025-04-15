@@ -7,7 +7,8 @@ import { EpicGame, getFreeGames, getUpcomingFreeGames } from '../lib/epic-api';
 import { 
   SteamGame, 
   getFreeSteamGames, 
-  getTemporaryFreeSteamGames, 
+  getTemporaryFreeSteamGames,
+  getTrendingSteamGames,
   convertSteamToEpicFormat 
 } from '../lib/steam-api';
 
@@ -15,21 +16,21 @@ interface HomeProps {
   epicFreeGames: EpicGame[];
   epicUpcomingGames: EpicGame[];
   steamFreeGames: EpicGame[]; // Daima ücretsiz Steam oyunları
-  steamTemporaryFreeGames: EpicGame[]; // Normalde ücretli olup şu anda ücretsiz olan Steam oyunları
+  steamTrendingGames: EpicGame[]; // Trend olan yeni ücretsiz Steam oyunları
 }
 
 export default function Home({ 
   epicFreeGames, 
   epicUpcomingGames, 
-  steamFreeGames, 
-  steamTemporaryFreeGames 
+  steamFreeGames,
+  steamTrendingGames
 }: HomeProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Tüm oyunlar
   const totalGames = epicFreeGames.length + epicUpcomingGames.length + 
-                     steamFreeGames.length + steamTemporaryFreeGames.length;
+                     steamFreeGames.length + steamTrendingGames.length;
   
   // Grid için responsive genişlik ayarlaması
   const getGridWidth = (count: number) => {
@@ -71,7 +72,7 @@ export default function Home({
           </div>
           <div className="text-center p-4">
             <div className="text-3xl font-bold text-epicblue dark:text-epicaccent">
-              {steamFreeGames.length + steamTemporaryFreeGames.length}
+              {steamFreeGames.length + steamTrendingGames.length}
             </div>
             <div className="text-gray-700 dark:text-gray-300 text-sm mt-1">
               Steam
@@ -105,18 +106,22 @@ export default function Home({
         </div>
       )}
       
-      {/* Dönemsel Ücretsiz Steam Oyunları Bölümü */}
-      {steamTemporaryFreeGames.length > 0 && !isLoading && !error && (
+      {/* Steam Trend Oyunlar Bölümü */}
+      {steamTrendingGames.length > 0 && !isLoading && !error && (
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-6">
-            <span className="highlight">Steam'de Dönemsel Ücretsiz Oyunlar</span>
+            <span className="highlight">Steam'de Trend Ücretsiz Oyunlar</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{
-              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(steamTemporaryFreeGames.length)}, 1fr))`
+              gridTemplateColumns: `repeat(auto-fill, minmax(${getGridWidth(steamTrendingGames.length)}, 1fr))`
             }}>
-            {steamTemporaryFreeGames.map((game) => (
-              <GameCard key={game.id} game={game} isFree={true} />
+            {steamTrendingGames.map((game) => (
+              <GameCard 
+                key={game.id} 
+                game={game} 
+                isFree={true} 
+              />
             ))}
           </div>
         </div>
@@ -152,7 +157,7 @@ export default function Home({
       {steamFreeGames.length > 0 && !isLoading && !error ? (
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-6">
-            <span className="highlight">Steam'de Daima Ücretsiz</span>
+            <span className="highlight">Steam'de Popüler Ücretsiz Oyunlar</span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8" 
             style={{
@@ -250,13 +255,13 @@ export const getStaticProps: GetStaticProps = async () => {
     const [
       epicFreeGames, 
       epicUpcomingGames, 
-      steamFreeGames, 
-      steamTemporaryFreeGames
+      steamFreeGames,
+      steamTrendingGames
     ] = await Promise.all([
       getFreeGames(),
       getUpcomingFreeGames(),
       getFreeSteamGames().then(games => games.map(convertSteamToEpicFormat)),
-      getTemporaryFreeSteamGames().then(games => games.map(convertSteamToEpicFormat))
+      getTrendingSteamGames().then(games => games.map(convertSteamToEpicFormat))
     ]);
     
     return {
@@ -264,7 +269,7 @@ export const getStaticProps: GetStaticProps = async () => {
         epicFreeGames,
         epicUpcomingGames,
         steamFreeGames,
-        steamTemporaryFreeGames
+        steamTrendingGames
       },
       // Her 30 dakikada bir yeniden oluştur
       revalidate: 1800,
@@ -276,7 +281,7 @@ export const getStaticProps: GetStaticProps = async () => {
         epicFreeGames: [],
         epicUpcomingGames: [],
         steamFreeGames: [],
-        steamTemporaryFreeGames: []
+        steamTrendingGames: []
       },
       // Hata durumunda 5 dakikada bir yeniden dene
       revalidate: 300,
