@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { ExtendedEpicGame } from './GameCard';
 import GameCard from './GameCard';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -27,6 +27,37 @@ const GameSlider: React.FC<GameSliderProps> = ({
   isUpcoming = false,
   isTrending = false,
 }) => {
+  const [slidesPerView, setSlidesPerView] = useState<{[key: string]: number}>({
+    base: 1.2,
+    sm: 2.2,
+    md: 3.2,
+    lg: 4.2,
+    xl: 5.2
+  });
+
+  // Oyun sayısına göre slidesPerView değerlerini ayarla
+  useEffect(() => {
+    // Eğer oyun sayısı az ise, ekrandaki tüm alanı dolduracak şekilde ayarla
+    if (games.length <= 3) {
+      setSlidesPerView({
+        base: Math.min(games.length, 1),
+        sm: Math.min(games.length, 2),
+        md: Math.min(games.length, 3),
+        lg: Math.min(games.length, 3),
+        xl: Math.min(games.length, 3)
+      });
+    } else if (games.length <= 5) {
+      setSlidesPerView({
+        base: 1,
+        sm: 2,
+        md: Math.min(games.length, 3),
+        lg: Math.min(games.length, 4),
+        xl: Math.min(games.length, 5)
+      });
+    }
+    // games.length > 5 ise, varsayılan slidesPerView değerlerini kullan
+  }, [games.length]);
+
   if (!games || games.length === 0) {
     return (
       <div className="my-8 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg text-center">
@@ -64,7 +95,7 @@ const GameSlider: React.FC<GameSliderProps> = ({
         <Swiper
           modules={[Navigation, Pagination, Autoplay]}
           spaceBetween={16}
-          slidesPerView={1.2}
+          slidesPerView={slidesPerView.base}
           navigation={{
             nextEl: '.swiper-button-next',
             prevEl: '.swiper-button-prev',
@@ -76,45 +107,52 @@ const GameSlider: React.FC<GameSliderProps> = ({
           }}
           breakpoints={{
             640: {
-              slidesPerView: 2.2,
+              slidesPerView: slidesPerView.sm,
               spaceBetween: 16,
             },
             768: {
-              slidesPerView: 3.2,
+              slidesPerView: slidesPerView.md,
               spaceBetween: 16,
             },
             1024: {
-              slidesPerView: 4.2,
+              slidesPerView: slidesPerView.lg,
               spaceBetween: 16,
             },
             1280: {
-              slidesPerView: 5.2,
+              slidesPerView: slidesPerView.xl,
               spaceBetween: 16,
             },
           }}
           className="game-slider"
         >
           {games.map((game) => (
-            <SwiperSlide key={game.id}>
-              <GameCard 
-                game={game} 
-                isFree={isFree} 
-                isUpcoming={isUpcoming} 
-                isTrending={isTrending} 
-              />
+            <SwiperSlide key={game.id} className="h-auto">
+              <div className={`h-full ${games.length <= 3 ? 'max-w-lg mx-auto' : ''}`}>
+                <GameCard 
+                  game={game} 
+                  isFree={isFree} 
+                  isUpcoming={isUpcoming} 
+                  isTrending={isTrending} 
+                />
+              </div>
             </SwiperSlide>
           ))}
         </Swiper>
         
         <div className="swiper-pagination mt-4"></div>
         
-        <button className="swiper-button-prev absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 dark:bg-gray-800/80 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity transform -translate-x-4 hover:bg-white dark:hover:bg-gray-800">
-          <FiChevronLeft className="text-gray-800 dark:text-gray-200" />
-        </button>
-        
-        <button className="swiper-button-next absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 dark:bg-gray-800/80 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-4 hover:bg-white dark:hover:bg-gray-800">
-          <FiChevronRight className="text-gray-800 dark:text-gray-200" />
-        </button>
+        {/* Eğer oyun sayısı 1'den fazla ise navigasyon butonlarını göster */}
+        {games.length > 1 && (
+          <>
+            <button className="swiper-button-prev absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 dark:bg-gray-800/80 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity transform -translate-x-4 hover:bg-white dark:hover:bg-gray-800">
+              <FiChevronLeft className="text-gray-800 dark:text-gray-200" />
+            </button>
+            
+            <button className="swiper-button-next absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 dark:bg-gray-800/80 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-4 hover:bg-white dark:hover:bg-gray-800">
+              <FiChevronRight className="text-gray-800 dark:text-gray-200" />
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

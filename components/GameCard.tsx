@@ -150,7 +150,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
 
   return (
     <div
-      className={`group relative h-full rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl ${
+      className={`group relative h-full flex flex-col rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl ${
         isTrendingGame 
           ? "border-2 border-red-500/50 hover:border-red-500" 
           : isFreeGame 
@@ -183,22 +183,51 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
       </div>
 
       {/* Oyun görüntüsü */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-800">
+      <div className="relative w-full overflow-hidden bg-gray-800 sm:aspect-[4/3] md:aspect-[3/4]">
         <Link href={`/game/${game.id}`} className="block relative h-full w-full">
           {imgError || !thumbnailImage ? (
-            <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-500">
+            <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-500 aspect-[3/4]">
               {game.title.charAt(0).toUpperCase()}
             </div>
           ) : (
-            <Image
-              src={thumbnailImage.url}
-              alt={game.title}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority={isFreeGame || isUpcoming}
-              onError={() => setImgError(true)}
-              className="object-cover transition-transform duration-300 group-hover:scale-110"
-            />
+            <>
+              {/* Mobil ve tablette yatay, masaüstünde dikey görüntüler */}
+              <div className="hidden md:block relative aspect-[3/4] w-full h-full">
+                <Image
+                  src={thumbnailImage.url}
+                  alt={game.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  priority={isFreeGame || isUpcoming}
+                  onError={() => setImgError(true)}
+                  className="object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+              </div>
+
+              <div className="md:hidden relative aspect-[16/9] w-full">
+                {wide ? (
+                  <Image
+                    src={wide.url}
+                    alt={game.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw"
+                    priority={isFreeGame || isUpcoming}
+                    onError={() => setImgError(true)}
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                ) : (
+                  <Image
+                    src={thumbnailImage.url}
+                    alt={game.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw"
+                    priority={isFreeGame || isUpcoming}
+                    onError={() => setImgError(true)}
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                )}
+              </div>
+            </>
           )}
           
           {/* Görsel üzerindeki kaplama */}
@@ -221,7 +250,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
       </div>
       
       {/* Oyun bilgileri */}
-      <div className="p-4 bg-white dark:bg-gray-800">
+      <div className="p-4 bg-white dark:bg-gray-800 flex-grow">
         <Link href={`/game/${game.id}`} className="block">
           <h3 className="font-bold text-gray-900 dark:text-white mb-1 line-clamp-1 hover:text-epicblue dark:hover:text-epicaccent transition-colors duration-200">
             {game.title}
