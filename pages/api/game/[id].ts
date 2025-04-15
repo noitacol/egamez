@@ -8,7 +8,7 @@ export default async function handler(
   const { id } = req.query;
   
   if (!id || typeof id !== 'string') {
-    return res.status(400).json({ error: 'Geçerli bir oyun ID'si belirtilmedi' });
+    return res.status(400).json({ error: 'Geçerli bir oyun ID\'si belirtilmedi' });
   }
   
   try {
