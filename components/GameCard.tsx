@@ -18,7 +18,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   let endDate = null;
   
   // Steam oyunu mu Epic oyunu mu kontrolü
-  const isSteamGame = game.id?.startsWith('steam_');
+  const isSteamGame = game.id?.toString().startsWith('steam_');
   // Trend oyun mu kontrolü
   const isTrending = (game as any).isTrending === true;
   // Çıkış yılı
@@ -26,12 +26,12 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   // Metacritic puanı
   const metacriticScore = (game as any).metacritic;
   
-  if (isUpcoming && !isSteamGame) {
+  if (isUpcoming && !isSteamGame && game.promotions) {
     // Yakında ücretsiz olacak oyunlar için
     const upcomingOffers = game.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers;
     startDate = upcomingOffers?.[0]?.startDate ? new Date(upcomingOffers[0].startDate) : null;
     endDate = upcomingOffers?.[0]?.endDate ? new Date(upcomingOffers[0].endDate) : null;
-  } else if (!isSteamGame) {
+  } else if (!isSteamGame && game.promotions) {
     // Şu anda ücretsiz olan oyunlar için (Epic Games)
     const currentOffers = game.promotions?.promotionalOffers?.[0]?.promotionalOffers;
     startDate = currentOffers?.[0]?.startDate ? new Date(currentOffers[0].startDate) : null;
@@ -58,7 +58,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
 
   // Oyunun mağaza URL'ini belirle
   const storeUrl = isSteamGame 
-    ? game.productSlug || `https://store.steampowered.com/app/${game.id.replace('steam_', '')}`
+    ? game.productSlug || `https://store.steampowered.com/app/${game.id.toString().replace('steam_', '')}`
     : `https://store.epicgames.com/tr/p/${game.urlSlug || game.productSlug}`;
 
   return (
