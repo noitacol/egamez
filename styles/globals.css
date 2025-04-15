@@ -2,30 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap');
+
 @layer base {
   body {
-    @apply bg-gray-100 dark:bg-epicdark text-gray-900 dark:text-white transition-colors duration-200;
+    @apply bg-epiclight dark:bg-epicdark text-gray-900 dark:text-white transition-colors duration-200 font-sans;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
   }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-md font-semibold transition-colors duration-200;
+    @apply px-4 py-2 rounded-md font-semibold transition-all duration-300 transform hover:-translate-y-1;
   }
   
   .btn-primary {
-    @apply bg-epicblue hover:bg-blue-700 text-white;
+    @apply bg-epicblue hover:bg-blue-700 text-white shadow-md hover:shadow-lg;
   }
   
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 dark:bg-epicgray dark:hover:bg-gray-700 text-gray-900 dark:text-white;
+    @apply bg-gray-200 hover:bg-gray-300 dark:bg-epicgray dark:hover:bg-gray-700 text-gray-900 dark:text-white shadow-md hover:shadow-lg;
+  }
+  
+  .btn-accent {
+    @apply bg-epicaccent hover:bg-purple-700 text-white shadow-md hover:shadow-lg;
   }
   
   .card {
-    @apply bg-white dark:bg-epicgray rounded-lg shadow-md overflow-hidden transition-shadow duration-200 hover:shadow-lg;
+    @apply bg-white dark:bg-epicgray rounded-xl shadow-epic overflow-hidden transition-all duration-300 hover:shadow-card-hover;
   }
   
   .input {
-    @apply bg-white dark:bg-epicgray border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-epicblue dark:focus:ring-blue-500 transition-colors;
+    @apply bg-white dark:bg-epicgray border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-epicblue dark:focus:ring-epicaccent transition-colors;
+  }
+  
+  .section-title {
+    @apply text-3xl md:text-4xl font-bold mb-6 relative inline-block;
+  }
+  
+  .section-title::after {
+    @apply content-[''] absolute left-0 -bottom-2 h-1 w-1/3 bg-epicblue dark:bg-epicaccent rounded-full;
+  }
+  
+  .glass-card {
+    @apply bg-white/90 dark:bg-epicgray/90 backdrop-blur-sm rounded-xl shadow-epic;
+  }
+  
+  .highlight {
+    @apply relative inline-block;
+  }
+  
+  .highlight::before {
+    @apply content-[''] absolute w-full h-3 -z-10 bottom-0 left-0 bg-epicblue/20 dark:bg-epicaccent/30 rounded;
   }
 } 
