@@ -187,21 +187,33 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
         <Link href={`/game/${game.id}${game.source ? `?source=${game.source}` : ''}`}>
           <div className="relative w-full h-full">
             {!imgError ? (
-              <Image
-                src={coverImage || '/img/placeholder.jpg'}
-                alt={game.title}
-                layout="fill"
-                objectFit="cover"
-                onError={() => setImgError(true)}
-                className="transition-transform duration-300 group-hover:scale-105"
-              />
+              coverImage ? (
+                <Image
+                  src={coverImage}
+                  alt={game.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  priority={true}
+                  onError={() => setImgError(true)}
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  unoptimized={game.source === 'steam'} // Steam görselleri için optimizasyonu devre dışı bırak
+                />
+              ) : (
+                <Image
+                  src="/img/placeholder.jpg"
+                  alt={game.title}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              )
             ) : (
               <Image
                 src="/img/placeholder.jpg"
                 alt={game.title}
-                layout="fill"
-                objectFit="cover"
-                className="transition-transform duration-300 group-hover:scale-105"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
             )}
           </div>
@@ -336,8 +348,10 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
                       <Image
                         src={media.url}
                         alt={`${game.title} görsel ${index}`}
-                        layout="fill"
-                        objectFit="contain"
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 1024px"
+                        className="object-contain"
+                        unoptimized={game.source === 'steam'} // Steam görselleri için optimizasyonu devre dışı bırak
                       />
                     </div>
                   )}
