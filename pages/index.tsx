@@ -396,16 +396,23 @@ export const getStaticProps: GetStaticProps = async () => {
     // Epic ve Steam'den sınırlı süreli ücretsiz oyunları birleştir
     const temporaryFreeGames = [
       ...tempFreeEpic.map(game => ({ ...game, source: 'epic' })),
-      ...tempFreeSteam.map(game => ({ ...game, source: 'steam' }))
+      ...tempFreeSteam.map(game => convertSteamToEpicFormat({ ...game, source: 'steam' }))
     ];
+    
+    // JSON serileştirme sırasında hata oluşmaması için undefined değerleri null'a dönüştür
+    const safeJsonSerialize = (obj: any): any => {
+      return JSON.parse(JSON.stringify(obj, (key, value) => 
+        value === undefined ? null : value
+      ));
+    };
 
     return {
       props: {
-        epicFreeGames,
-        steamFreeGames,
-        upcomingGames,
-        trendingGames: [...epicTrending, ...steamTrending],
-        temporaryFreeGames,
+        epicFreeGames: safeJsonSerialize(epicFreeGames),
+        steamFreeGames: safeJsonSerialize(steamFreeGames),
+        upcomingGames: safeJsonSerialize(upcomingGames),
+        trendingGames: safeJsonSerialize([...epicTrending, ...steamTrending]),
+        temporaryFreeGames: safeJsonSerialize(temporaryFreeGames),
       },
       // 1 saatte bir yeniden oluştur
       revalidate: 3600,
