@@ -9,25 +9,24 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import { motion } from 'framer-motion';
+import { FiClock, FiX, FiChevronLeft, FiChevronRight, FiExternalLink } from 'react-icons/fi';
+import { SiEpicgames, SiSteam } from 'react-icons/si';
 
 // EpicGame tipini genişletiyoruz
 export interface ExtendedEpicGame extends EpicGame {
   videos?: Array<{
     id: string;
-    thumbnail: string;
-    urls?: {
-      webm: {
-        '480': string;
-        max: string;
-      };
-      mp4: {
-        '480': string;
-        max: string;
-      };
-    };
+    url: string;
+    thumbnailUrl?: string;
   }>;
-  metacritic?: number;
-  isTrending?: boolean;
+  metacritic?: {
+    score: number;
+    url: string;
+  };
+  isTrendingGame?: boolean;
+  isTemporaryFreeGame?: boolean;
+  source?: 'epic' | 'steam';
   releaseYear?: number;
   isTemporaryFree?: boolean; // Steam'de geçici olarak ücretsiz oyunlar için
   isFromSteam?: boolean; // Steam'den gelen oyunlar için
@@ -44,7 +43,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   const [imgError, setImgError] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
-  const isTrendingGame = isTrending || game.isTrending || false;
+  const isTrendingGame = isTrending || game.isTrendingGame || false;
 
   // Tarih kontrolü
   const currentDate = new Date();
@@ -58,7 +57,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
   const releaseYear = game.releaseYear;
   
   // Metacritic puanı
-  const metacriticScore = game.metacritic;
+  const metacriticScore = game.metacritic?.score;
   
   if (isUpcoming && !isSteamGame && game.promotions) {
     // Yakında ücretsiz olacak oyunlar için
@@ -127,8 +126,8 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
     ...galleryImages,
     ...videos.map((video) => ({
       type: "Video",
-      url: video.thumbnail || "",
-      videoId: video.id
+      url: video.url || "",
+      videoId: video.id || ""
     }))
   ];
 

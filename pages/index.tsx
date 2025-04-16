@@ -2,478 +2,262 @@ import { useState, useEffect } from 'react';
 import type { GetStaticProps, NextPage } from 'next';
 import Head from 'next/head';
 import Layout from '../components/Layout';
-import GameCard from '../components/GameCard';
-import Slider from '../components/Slider';
+import GameCard, { ExtendedEpicGame } from '../components/GameCard';
+import GameSlider from '../components/GameSlider';
 import { getFreeGames, getUpcomingFreeGames, EpicGame } from '../lib/epic-api';
 import { getFreeSteamGames, getTrendingSteamGames, convertSteamToEpicFormat } from '../lib/steam-api';
-import { ExtendedEpicGame } from '../components/GameCard';
-import { FiTrendingUp, FiFilter, FiArrowDown, FiArrowUp, FiBarChart2, FiGift, FiCalendar, FiClock, FiArrowRight } from 'react-icons/fi';
-import { SiEpicgames } from 'react-icons/si';
-import { FaSteam } from 'react-icons/fa';
-import GameSlider from '../components/GameSlider';
-
-interface HomeProps {
-  epicFreeGames: ExtendedEpicGame[];
-  epicUpcomingGames: ExtendedEpicGame[];
-  steamFreeGames: ExtendedEpicGame[];
-  steamTrendingGames: ExtendedEpicGame[];
-}
+import { FiFilter, FiBarChart2, FiArrowUp, FiArrowDown, FiGift, FiCalendar, FiTrendingUp } from 'react-icons/fi';
+import { SiEpicgames, SiSteam } from 'react-icons/si';
 
 type SortOption = 'title' | 'date';
 type SortDirection = 'asc' | 'desc';
+type FilterSource = 'all' | 'epic' | 'steam';
 
-export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames, steamTrendingGames }: HomeProps) {
-  const [isLoading, setIsLoading] = useState(false);
+interface HomeProps {
+  epicFreeGames: EpicGame[];
+  steamFreeGames: EpicGame[];
+  upcomingFreeGames: EpicGame[];
+  trendingGames: EpicGame[];
+}
+
+const Home: NextPage<HomeProps> = ({ epicFreeGames, steamFreeGames, upcomingFreeGames, trendingGames }) => {
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Filtreleme ve sıralama için state
-  const [filterSource, setFilterSource] = useState<'all' | 'epic' | 'steam'>('all');
+  const [filterSource, setFilterSource] = useState<FilterSource>('all');
   const [sortBy, setSortBy] = useState<SortOption>('title');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  
-  // Filtrelenmiş oyun listeleri
-  const [filteredTrending, setFilteredTrending] = useState(steamTrendingGames);
-  const [filteredEpic, setFilteredEpic] = useState(epicFreeGames);
-  const [filteredSteam, setFilteredSteam] = useState(steamFreeGames);
-  const [filteredUpcoming, setFilteredUpcoming] = useState(epicUpcomingGames);
-  
-  // Filtre ve sıralama değişince oyun listelerini güncelle
+  const [freeGames, setFreeGames] = useState<ExtendedEpicGame[]>([]);
+
+  // Ücretsiz oyunları Epic ve Steam'den birleştir ve filtrele
   useEffect(() => {
-    // Trend Steam oyunları
-    let trending = [...steamTrendingGames];
-    
-    // Epic oyunları
-    let epic = [...epicFreeGames];
-    
-    // Steam oyunları
-    let steam = [...steamFreeGames];
-    
-    // Yaklaşan Epic oyunları
-    let upcoming = [...epicUpcomingGames];
-    
-    // Kaynak filtresi uygula
-    if (filterSource === 'epic') {
-      trending = [];
-      steam = [];
-    } else if (filterSource === 'steam') {
-      epic = [];
-      upcoming = [];
-    }
-    
-    // Sıralama uygula
-    const sortGames = (games: ExtendedEpicGame[], isUpcoming = false) => {
-      return [...games].sort((a, b) => {
+    try {
+      let combinedGames: ExtendedEpicGame[] = [];
+      
+      // Kaynak filtresine göre oyunları ekle
+      if (filterSource === 'all' || filterSource === 'epic') {
+        combinedGames = [...combinedGames, ...epicFreeGames as ExtendedEpicGame[]];
+      }
+      
+      if (filterSource === 'all' || filterSource === 'steam') {
+        combinedGames = [...combinedGames, ...steamFreeGames as ExtendedEpicGame[]];
+      }
+      
+      // Sıralamayı uygula
+      const sortedGames = [...combinedGames].sort((a, b) => {
         if (sortBy === 'title') {
           return sortDirection === 'asc' 
             ? a.title.localeCompare(b.title)
             : b.title.localeCompare(a.title);
         } else if (sortBy === 'date') {
-          let dateA, dateB;
-          
-          if (isUpcoming) {
-            dateA = a.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]?.startDate 
-              ? new Date(a.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]?.startDate).getTime()
-              : 0;
-            dateB = b.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]?.startDate
-              ? new Date(b.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]?.startDate).getTime()
-              : 0;
-          } else {
-            dateA = new Date(a.effectiveDate || 0).getTime();
-            dateB = new Date(b.effectiveDate || 0).getTime();
-          }
-          
+          const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : 0;
+          const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : 0;
           return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
         }
         return 0;
       });
-    };
-    
-    // Sıralanmış listeleri ayarla
-    setFilteredTrending(sortGames(trending));
-    setFilteredEpic(sortGames(epic));
-    setFilteredSteam(sortGames(steam));
-    setFilteredUpcoming(sortGames(upcoming, true));
-    
-  }, [filterSource, sortBy, sortDirection, epicFreeGames, epicUpcomingGames, steamFreeGames, steamTrendingGames]);
-  
-  // Tüm oyunlar
-  const totalGames = filteredEpic.length + filteredUpcoming.length + 
-                     filteredSteam.length + filteredTrending.length;
+      
+      setFreeGames(sortedGames);
+    } catch (err) {
+      console.error('Oyunları filtreleme ve sıralama hatası:', err);
+      setError('Oyunlar yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [epicFreeGames, steamFreeGames, filterSource, sortBy, sortDirection]);
 
   return (
     <Layout>
       <Head>
-        <title>Ücretsiz Oyunlar | Epic ve Steam</title>
-        <meta name="description" content="Epic Games ve Steam platformlarından ücretsiz oyunlar" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>EpicAPI - Ücretsiz Oyunlar Keşfedin</title>
+        <meta name="description" content="Epic Games ve Steam'den ücretsiz ve indirimli oyunları keşfedin." />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {/* Hero Banner */}
-      <section className="relative mb-12 py-16 rounded-2xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-epicblue/90 to-epicpurple/90 z-10"></div>
-        <div className="absolute inset-0 bg-[url('/images/hero-pattern.png')] opacity-10 mix-blend-overlay"></div>
-        
-        <div className="relative z-20 container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-white">
-            Ücretsiz <span className="text-epicaccent">Oyunlar</span>
+      <div className="container mx-auto px-4 py-8">
+        {/* Trendler Slider */}
+        <section className="mb-16">
+          <GameSlider 
+            games={trendingGames as ExtendedEpicGame[]} 
+            title="Trend Oyunlar" 
+            icon={<FiTrendingUp size={20} />} 
+            isTrending={true}
+            emptyMessage="Şu anda trend oyun bulunmuyor."
+          />
+        </section>
+
+        {/* Toplam oyun sayısı*/}
+        <div className="flex flex-wrap items-center justify-between mb-8 gap-4">
+          <h1 className="text-3xl font-bold">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-epicblue to-epicaccent">
+              Ücretsiz Oyunlar
+            </span>
           </h1>
-          <p className="text-gray-200 md:text-lg max-w-2xl mx-auto mb-8">
-            Epic Games ve Steam platformlarından güncel ücretsiz oyunları keşfedin.
-          </p>
-          
-          {/* İstatistik kartları */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center shadow-lg transform transition-transform hover:scale-105">
-              <div className="text-3xl font-bold text-white mb-1">{totalGames}</div>
-              <div className="text-gray-200 text-sm">Toplam Oyun</div>
+          <div className="flex gap-4 items-center">
+            <div className="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow flex items-center gap-2">
+              <SiEpicgames className="text-epicblue" />
+              <span className="font-semibold">{epicFreeGames.length}</span>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center shadow-lg transform transition-transform hover:scale-105">
-              <div className="text-3xl font-bold text-white mb-1">{filteredEpic.length}</div>
-              <div className="text-gray-200 text-sm">Epic Ücretsiz</div>
+            <div className="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow flex items-center gap-2">
+              <SiSteam className="text-epicblue" />
+              <span className="font-semibold">{steamFreeGames.length}</span>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center shadow-lg transform transition-transform hover:scale-105">
-              <div className="text-3xl font-bold text-white mb-1">{filteredSteam.length + filteredTrending.length}</div>
-              <div className="text-gray-200 text-sm">Steam Ücretsiz</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center shadow-lg transform transition-transform hover:scale-105">
-              <div className="text-3xl font-bold text-white mb-1">{filteredUpcoming.length}</div>
-              <div className="text-gray-200 text-sm">Yakında Ücretsiz</div>
+            <div className="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow flex items-center gap-2">
+              <span className="font-semibold">Toplam: {epicFreeGames.length + steamFreeGames.length}</span>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Filtreleme ve sıralama kontrolleri */}
-      <div className="sticky top-16 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md py-3 px-4 rounded-lg shadow-md mb-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <FiFilter className="text-epicblue dark:text-epicaccent" />
-            <select 
-              value={filterSource}
-              onChange={(e) => setFilterSource(e.target.value as any)}
-              className="bg-transparent border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 text-sm py-1 px-2 focus:ring-2 focus:ring-epicblue dark:focus:ring-epicaccent focus:outline-none"
+        {/* Filtreleme ve sıralama kontrolleri */}
+        <div className="sticky top-16 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md py-3 px-4 rounded-lg shadow-md mb-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <FiFilter className="text-epicblue dark:text-epicaccent" />
+                <select 
+                  value={filterSource}
+                  onChange={(e) => setFilterSource(e.target.value as FilterSource)}
+                  className="bg-transparent border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 text-sm py-1 px-2 focus:ring-2 focus:ring-epicblue dark:focus:ring-epicaccent focus:outline-none"
+                >
+                  <option value="all">Tüm Platformlar</option>
+                  <option value="epic">Epic Games</option>
+                  <option value="steam">Steam</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <FiBarChart2 className="text-epicblue dark:text-epicaccent" />
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="bg-transparent border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 text-sm py-1 px-2 focus:ring-2 focus:ring-epicblue dark:focus:ring-epicaccent focus:outline-none"
+                >
+                  <option value="title">İsim</option>
+                  <option value="date">Tarih</option>
+                </select>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+              className="p-2 rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1"
+              aria-label={sortDirection === 'asc' ? 'Artan sıralama' : 'Azalan sıralama'}
             >
-              <option value="all">Tüm Platformlar</option>
-              <option value="epic">Epic Games</option>
-              <option value="steam">Steam</option>
-            </select>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <select 
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="bg-transparent border border-gray-300 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 text-sm py-1 px-2 focus:ring-2 focus:ring-epicblue dark:focus:ring-epicaccent focus:outline-none"
-              >
-                <option value="title">İsim</option>
-                <option value="date">Tarih</option>
-              </select>
-              <button 
-                onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-                className="p-1.5 rounded-md border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                aria-label={sortDirection === 'asc' ? 'Artan sıralama' : 'Azalan sıralama'}
-              >
-                {sortDirection === 'asc' ? <FiArrowUp size={16} /> : <FiArrowDown size={16} />}
-              </button>
-            </div>
+              {sortDirection === 'asc' ? (
+                <>
+                  <FiArrowUp size={16} /> 
+                  <span className="hidden sm:inline text-sm">Artan</span>
+                </>
+              ) : (
+                <>
+                  <FiArrowDown size={16} /> 
+                  <span className="hidden sm:inline text-sm">Azalan</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
-      </div>
-      
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-8 text-red-700 dark:text-red-300">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{error}</span>
+
+        {/* Yükleme ve hata durumları */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-epicblue"></div>
           </div>
-        </div>
-      )}
-      
-      {/* Ana İçerik */}
-      <div className="space-y-16">
-        {/* Trend Oyunlar */}
-        {filteredTrending.length > 0 && !isLoading && !error && (
-          <section>
-            <GameSlider 
-              games={filteredTrending} 
-              title="Trend Oyunlar" 
-              icon={<FiTrendingUp />}
-              isTrending={true}
-            />
-          </section>
         )}
 
-        {/* Epic Games Ücretsiz Oyunlar - YENİDEN TASARLANDI */}
-        {filteredEpic.length > 0 && !isLoading && !error ? (
-          <section className="relative">
-            {/* Dekoratif arka plan elementleri */}
-            <div className="absolute -right-20 -top-10 w-40 h-40 bg-epicblue opacity-5 rounded-full blur-3xl"></div>
-            
-            {/* İçerik konteyner */}
-            <div className="bg-gradient-to-r from-white/50 to-epicblue/5 dark:from-gray-800/50 dark:to-epicblue/10 rounded-xl shadow-md overflow-hidden">
-              <div className="flex flex-col md:flex-row">
-                {/* Başlık ve Info Bölümü - Left Side */}
-                <div className="w-full md:w-1/4 bg-gradient-to-br from-epicblue to-epicpurple p-4 flex items-center md:items-start md:flex-col">
-                  <div className="flex items-center mb-0 md:mb-2">
-                    <SiEpicgames className="text-white text-lg mr-2" />
-                    <h2 className="text-xl font-bold text-white">Epic Ücretsiz</h2>
-                  </div>
-                  <p className="hidden md:block text-xs text-blue-100 mt-1 mb-3">Şu anda Epic Games'de ücretsiz</p>
-                  
-                  {filteredEpic[0]?.promotions?.promotionalOffers?.[0]?.promotionalOffers?.[0]?.endDate && (
-                    <div className="md:mt-auto hidden md:flex items-center text-white/80 text-xs">
-                      <FiClock className="mr-1" />
-                      <span>
-                        {new Date(filteredEpic[0].promotions.promotionalOffers[0].promotionalOffers[0].endDate).toLocaleDateString('tr-TR', {
-                          day: 'numeric',
-                          month: 'short'
-                        })}
-                        'e kadar
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Oyun Kartları - Right Side */}
-                <div className="w-full md:w-3/4 p-3">
-                  <div className="flex justify-between items-center mb-3">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 md:hidden">Şu anda Epic Games'de ücretsiz</p>
-                    <a 
-                      href="https://store.epicgames.com/tr/free-games" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-epicblue dark:text-epicaccent hover:underline text-xs flex items-center ml-auto"
-                    >
-                      <span>Tüm ücretsiz oyunları gör</span>
-                      <FiArrowRight className="ml-1 h-3 w-3" />
-                    </a>
-                  </div>
-                  <GameSlider 
-                    games={filteredEpic} 
-                    title="Epic Games'te Ücretsiz"
-                    isFree={true}
-                  />
-                  
-                  {/* Mobil için zaman bilgisi */}
-                  {filteredEpic[0]?.promotions?.promotionalOffers?.[0]?.promotionalOffers?.[0]?.endDate && (
-                    <div className="mt-2 md:hidden flex items-center justify-end">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                        <FiClock className="mr-1 text-epicblue dark:text-epicaccent" />
-                        {new Date(filteredEpic[0].promotions.promotionalOffers[0].promotionalOffers[0].endDate).toLocaleDateString('tr-TR', {
-                          day: 'numeric',
-                          month: 'short'
-                        })}
-                        'e kadar ücretsiz
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-        ) : !isLoading && !error && filterSource !== 'steam' && (
-          <section className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-xl p-4 text-center">
-            <div className="flex items-center justify-center">
-              <SiEpicgames className="w-6 h-6 text-gray-400 dark:text-gray-600 mr-2" />
-              <p className="text-gray-600 dark:text-gray-400">
-                Epic Games'te şu anda ücretsiz oyun bulunmuyor.
-              </p>
-            </div>
-          </section>
-        )}
-        
-        {/* Steam Ücretsiz Oyunlar */}
-        {filteredSteam.length > 0 && !isLoading && !error ? (
-          <section>
-            <GameSlider 
-              games={filteredSteam} 
-              title="Steam'de Popüler Ücretsiz Oyunlar" 
-              icon={<FaSteam />}
-              isFree={true}
-            />
-          </section>
-        ) : !isLoading && !error && filterSource !== 'epic' && (
-          <section className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
-            <div className="flex items-center justify-center">
-              <FaSteam className="w-6 h-6 text-gray-400 dark:text-gray-600 mr-2" />
-              <p className="text-gray-600 dark:text-gray-400">
-                Steam'de şu anda ücretsiz oyun bilgisi çekilemiyor.
-              </p>
-            </div>
-          </section>
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg mb-8">
+            {error}
+          </div>
         )}
 
-        {/* Yakında Ücretsiz Olacak Oyunlar - YENİDEN TASARLANDI */}
-        {filteredUpcoming.length > 0 && !isLoading && !error && (
-          <section className="relative">
-            {/* Dekoratif elementler */}
-            <div className="absolute -right-10 top-10 w-20 h-20 bg-purple-600 opacity-5 rounded-full blur-2xl"></div>
-            
-            {/* Başlık ve içerik konteyner */}
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/10 dark:to-indigo-900/10 rounded-xl shadow-md overflow-hidden">
-              <div className="flex flex-col md:flex-row">
-                {/* Sol bilgi bölümü */}
-                <div className="w-full md:w-1/4 p-4 bg-gradient-to-br from-purple-600 to-indigo-700 text-white flex items-center md:items-start md:flex-col">
-                  <div className="flex items-center mb-0 md:mb-2">
-                    <FiCalendar className="text-white text-lg mr-2" />
-                    <h2 className="text-xl font-bold">Yakında Ücretsiz</h2>
-                  </div>
-                  <p className="hidden md:block text-xs text-purple-100 mt-1 mb-0">Epic Store'da yakında ücretsiz olacak oyunlar</p>
-                  
-                  {filteredUpcoming[0]?.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]?.startDate && (
-                    <div className="md:mt-auto hidden md:flex items-center text-white/80 text-xs">
-                      <FiClock className="mr-1" />
-                      <span>
-                        {new Date(filteredUpcoming[0].promotions.upcomingPromotionalOffers[0].promotionalOffers[0].startDate).toLocaleDateString('tr-TR', {
-                          day: 'numeric',
-                          month: 'short'
-                        })}
-                        'de başlıyor
-                      </span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Sağ oyun kartları bölümü */}
-                <div className="w-full md:w-3/4 p-3">
-                  <div className="flex justify-between items-center mb-3">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 md:hidden">Epic Store'da yakında ücretsiz</p>
-                    <a 
-                      href="https://store.epicgames.com/tr/free-games"
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-purple-600 dark:text-purple-400 hover:underline text-xs flex items-center ml-auto"
-                    >
-                      <span>Epic Store'da görüntüle</span>
-                      <FiArrowRight className="ml-1 h-3 w-3" />
-                    </a>
-                  </div>
-                  
-                  <GameSlider 
-                    games={filteredUpcoming} 
-                    title="Yakında Ücretsiz Olacak"
-                    isUpcoming={true}
-                  />
-                  
-                  {/* Mobil için tarih bilgisi */}
-                  {filteredUpcoming[0]?.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]?.startDate && (
-                    <div className="mt-2 md:hidden flex items-center justify-end">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                        <FiClock className="mr-1 text-purple-600 dark:text-purple-400" />
-                        {new Date(filteredUpcoming[0].promotions.upcomingPromotionalOffers[0].promotionalOffers[0].startDate).toLocaleDateString('tr-TR', {
-                          day: 'numeric',
-                          month: 'short'
-                        })}
-                        'de ücretsiz olacak
-                      </span>
-                    </div>
-                  )}
-                </div>
+        {/* Epic ve Steam'den ücretsiz oyunlar */}
+        {!isLoading && !error && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
+            {freeGames.length > 0 ? (
+              freeGames.map((game) => (
+                <GameCard 
+                  key={`${game.id}-${game.source || 'epic'}`} 
+                  game={game} 
+                  isFree={true}
+                />
+              ))
+            ) : (
+              <div className="col-span-full py-8 text-center">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Seçilen filtrelere uygun ücretsiz oyun bulunamadı.
+                </p>
               </div>
-            </div>
-          </section>
+            )}
+          </div>
         )}
+
+        {/* Yakında ücretsiz olacak oyunlar */}
+        <section className="mb-16">
+          <GameSlider 
+            games={upcomingFreeGames as ExtendedEpicGame[]} 
+            title="Yakında Ücretsiz Olacak Oyunlar" 
+            icon={<FiCalendar size={20} />}
+            isUpcoming={true} 
+            emptyMessage="Yakında ücretsiz olacak oyun bulunmuyor."
+          />
+        </section>
       </div>
-      
-      {/* Platform Bilgi Kutuları */}
-      <section className="mt-20 mb-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Epic Games Kutusu */}
-          <div className="relative overflow-hidden rounded-xl group">
-            <div className="absolute inset-0 bg-gradient-to-r from-epicblue to-epicpurple opacity-90 group-hover:opacity-100 transition-opacity"></div>
-            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-10 -mb-10"></div>
-            
-            <div className="relative z-10 p-8">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                <SiEpicgames className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-3">Epic Games Ücretsiz Oyunlar</h2>
-              <p className="text-gray-100 mb-6 max-w-md">
-                Epic Games Store, her hafta yeni ücretsiz oyunlar sunuyor. Bu sitede, mevcut ücretsiz oyunları ve gelecekte ücretsiz olacak oyunları kolayca takip edebilirsiniz.
-              </p>
-              <a
-                href="https://store.epicgames.com/tr/free-games"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white font-medium transition-colors"
-              >
-                <span>Epic Games Store'u Ziyaret Et</span>
-                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
-          </div>
-          
-          {/* Steam Kutusu */}
-          <div className="relative overflow-hidden rounded-xl group">
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-900 opacity-90 group-hover:opacity-100 transition-opacity"></div>
-            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-10 -mb-10"></div>
-            
-            <div className="relative z-10 p-8">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
-                <FaSteam className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-3">Steam Ücretsiz Oyunlar</h2>
-              <p className="text-gray-100 mb-6 max-w-md">
-                Steam'de her zaman oynayabileceğiniz ücretsiz oyunlar ve dönemsel olarak ücretsiz hale gelen oyunlar bulunmaktadır. Fırsatları kaçırmamak için takipte kalın!
-              </p>
-              <a
-                href="https://store.steampowered.com/genre/Free%20to%20Play/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 text-white font-medium transition-colors"
-              >
-                <span>Steam Store'u Ziyaret Et</span>
-                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
     </Layout>
   );
-}
+};
 
-export const getStaticProps: GetStaticProps<HomeProps> = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
-    // Paralel olarak tüm API isteklerini yapıyoruz
-    const [epicFreeGamesData, epicUpcomingGamesData, steamFreeGamesData, steamTrendingGamesData] = await Promise.all([
-      getFreeGames(),
-      getUpcomingFreeGames(),
-      getFreeSteamGames().then(games => games.map(convertSteamToEpicFormat)),
-      getTrendingSteamGames().then(games => games.map(convertSteamToEpicFormat)),
-    ]);
-
-    // Tüm verileri bir araya getiriyoruz
+    // Epic Games API'sinden ücretsiz oyunları al
+    const epicFreeGames = await getFreeGames();
+    
+    // Epic Games API'sinden yakında ücretsiz olacak oyunları al
+    const upcomingFreeGames = await getUpcomingFreeGames();
+    
+    // Steam API'sinden ücretsiz oyunları al
+    const steamFreeGames = await getFreeSteamGames();
+    
+    // Steam API'sinden trend oyunları al
+    const trendingGames = await getTrendingSteamGames();
+    
+    // Epic Games için kaynak bilgisini ekle
+    const epicGamesWithSource = epicFreeGames.map(game => ({
+      ...game,
+      source: 'epic'
+    }));
+    
+    // Steam oyunları için kaynak bilgisini ekle
+    const steamGamesWithSource = steamFreeGames.map(game => ({
+      ...game,
+      source: 'steam'
+    }));
+    
+    // Tüm veriyi prop olarak döndür
     return {
       props: {
-        epicFreeGames: epicFreeGamesData as ExtendedEpicGame[],
-        epicUpcomingGames: epicUpcomingGamesData as ExtendedEpicGame[],
-        steamFreeGames: steamFreeGamesData as ExtendedEpicGame[],
-        steamTrendingGames: steamTrendingGamesData as ExtendedEpicGame[],
+        epicFreeGames: epicGamesWithSource,
+        steamFreeGames: steamGamesWithSource,
+        upcomingFreeGames,
+        trendingGames
       },
-      revalidate: 1800, // 30 dakikada bir yeniden oluştur
+      // 1 saat (3600 saniye) sonra sayfayı yeniden oluştur
+      revalidate: 3600
     };
   } catch (error) {
-    console.error('API istekleri sırasında hata:', error);
+    console.error('getStaticProps error:', error);
     
-    // Hata durumunda boş dizilerle devam et
+    // Hata durumunda boş veri ile devam et
     return {
       props: {
-        epicFreeGames: [] as ExtendedEpicGame[],
-        epicUpcomingGames: [] as ExtendedEpicGame[],
-        steamFreeGames: [] as ExtendedEpicGame[],
-        steamTrendingGames: [] as ExtendedEpicGame[],
+        epicFreeGames: [],
+        steamFreeGames: [],
+        upcomingFreeGames: [],
+        trendingGames: []
       },
-      revalidate: 300, // Hata durumunda 5 dakika sonra tekrar dene
+      // Hata durumunda 15 dakika (900 saniye) sonra tekrar dene
+      revalidate: 900
     };
   }
-}; 
+};
+
+export default Home; 
