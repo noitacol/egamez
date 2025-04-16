@@ -48,9 +48,10 @@ interface GameCardProps {
   game: ExtendedEpicGame;
   isFree?: boolean;
   isUpcoming?: boolean;
+  isTrending?: boolean;
 }
 
-export const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = false }) => {
+export const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = false, isTrending = false }) => {
   const [imageError, setImageError] = useState<boolean>(false);
   const [showGallery, setShowGallery] = useState<boolean>(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState<number>(0);
