@@ -22,6 +22,8 @@ export interface ExtendedEpicGame extends Omit<EpicGame, 'price'> {
   metacritic?: { score: number; url: string };
   isTemporaryFree?: boolean;
   isTrending?: boolean;
+  isUpcoming?: boolean;
+  isFree?: boolean;
   platform?: 'epic' | 'steam';
   distributionPlatform?: 'epic' | 'steam';
   price?: {

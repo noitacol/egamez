@@ -45,25 +45,25 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
   useEffect(() => {
     const epic = epicFreeGames.map(game => ({
       ...game,
-      platform: 'epic',
+      platform: 'epic' as const,
       isFree: true
     }));
     
     const upcoming = epicUpcomingGames.map(game => ({
       ...game,
-      platform: 'epic',
+      platform: 'epic' as const,
       isUpcoming: true
     }));
     
     const steam = steamFreeGames.map(game => ({
       ...game,
-      platform: 'steam',
+      platform: 'steam' as const,
       isFree: true
     }));
     
     const trending = steamTrendingGames.map(game => ({
       ...game,
-      platform: 'steam',
+      platform: 'steam' as const,
       isTrending: true
     }));
     
