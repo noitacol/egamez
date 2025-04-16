@@ -7,7 +7,7 @@ import Slider from '../components/Slider';
 import { getFreeGames, getUpcomingFreeGames, EpicGame } from '../lib/epic-api';
 import { getFreeSteamGames, getTrendingSteamGames, convertSteamToEpicFormat } from '../lib/steam-api';
 import { ExtendedEpicGame } from '../components/GameCard';
-import { FiTrendingUp, FiFilter, FiArrowDown, FiArrowUp, FiBarChart2, FiGift, FiCalendar } from 'react-icons/fi';
+import { FiTrendingUp, FiFilter, FiArrowDown, FiArrowUp, FiBarChart2, FiGift, FiCalendar, FiClock, FiArrowRight } from 'react-icons/fi';
 import { SiEpicgames } from 'react-icons/si';
 import { FaSteam } from 'react-icons/fa';
 import GameSlider from '../components/GameSlider';
@@ -206,18 +206,67 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
           </section>
         )}
 
-        {/* Epic Games Ücretsiz Oyunlar */}
+        {/* Epic Games Ücretsiz Oyunlar - YENİDEN TASARLANDI */}
         {filteredEpic.length > 0 && !isLoading && !error ? (
-          <section>
-            <GameSlider 
-              games={filteredEpic} 
-              title="Epic Games'te Ücretsiz" 
-              icon={<SiEpicgames />}
-              isFree={true}
-            />
+          <section className="relative">
+            {/* Dekoratif arka plan elementleri */}
+            <div className="absolute -right-20 -top-20 w-64 h-64 bg-epicblue opacity-5 rounded-full blur-3xl"></div>
+            <div className="absolute -left-20 -bottom-20 w-48 h-48 bg-epicaccent opacity-5 rounded-full blur-3xl"></div>
+            
+            {/* İçerik başlık bölümü */}
+            <div className="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between">
+              <div className="flex items-center mb-4 md:mb-0">
+                <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-r from-epicblue to-epicpurple rounded-xl shadow-lg mr-4">
+                  <SiEpicgames className="text-white text-xl" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-epicblue to-epicpurple">
+                    Epic Ücretsiz Oyunlar
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Şu anda Epic Games'de ücretsiz alınabilir
+                  </p>
+                </div>
+              </div>
+              
+              <a 
+                href="https://store.epicgames.com/tr/free-games" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-epicblue dark:text-epicaccent hover:underline text-sm flex items-center"
+              >
+                <span>Tüm ücretsiz oyunları gör</span>
+                <FiArrowRight className="ml-1" />
+              </a>
+            </div>
+            
+            {/* Oyun kartları */}
+            <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 shadow-xl">
+              <GameSlider 
+                games={filteredEpic} 
+                icon={<SiEpicgames />}
+                isFree={true}
+                title="Epic Games'te Ücretsiz"
+              />
+              
+              {/* Zaman bilgisi */}
+              {filteredEpic[0]?.promotions?.promotionalOffers?.[0]?.promotionalOffers?.[0]?.endDate && (
+                <div className="mt-4 flex items-center justify-center">
+                  <FiClock className="text-epicblue dark:text-epicaccent mr-2" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {new Date(filteredEpic[0].promotions.promotionalOffers[0].promotionalOffers[0].endDate).toLocaleDateString('tr-TR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })} 
+                    tarihine kadar ücretsiz
+                  </span>
+                </div>
+              )}
+            </div>
           </section>
         ) : !isLoading && !error && filterSource !== 'steam' && (
-          <section className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-8 text-center">
+          <section className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-sm rounded-2xl p-8 text-center">
             <div className="max-w-md mx-auto">
               <SiEpicgames className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
               <p className="text-xl text-gray-600 dark:text-gray-400 mb-4">
@@ -248,15 +297,70 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
           </section>
         )}
 
-        {/* Yakında Ücretsiz Olacak Oyunlar */}
+        {/* Yakında Ücretsiz Olacak Oyunlar - YENİDEN TASARLANDI */}
         {filteredUpcoming.length > 0 && !isLoading && !error && (
-          <section>
-            <GameSlider 
-              games={filteredUpcoming} 
-              title="Yakında Ücretsiz Olacak" 
-              icon={<FiCalendar />}
-              isUpcoming={true}
-            />
+          <section className="relative">
+            {/* Dekoratif elementler */}
+            <div className="absolute -right-10 top-40 w-40 h-40 bg-purple-600 opacity-5 rounded-full blur-3xl"></div>
+            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-300 opacity-5 rounded-full blur-3xl"></div>
+            
+            {/* Başlık ve içerik konteyner */}
+            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl shadow-xl overflow-hidden">
+              <div className="flex flex-col md:flex-row">
+                {/* Sol bilgi bölümü */}
+                <div className="w-full md:w-1/3 lg:w-1/4 p-6 md:p-8 bg-gradient-to-br from-purple-600/90 to-indigo-700/90 text-white flex flex-col justify-center">
+                  <div className="w-12 h-12 flex items-center justify-center bg-white/20 rounded-xl mb-4">
+                    <FiCalendar className="text-white text-xl" />
+                  </div>
+                  
+                  <h2 className="text-2xl md:text-3xl font-bold mb-3">Yakında Ücretsiz</h2>
+                  
+                  <p className="text-purple-100 mb-6">
+                    Bu oyunlar yakında Epic Games Store'da ücretsiz olarak sunulacak. Takvimlerinize ekleyin ve fırsatı kaçırmayın!
+                  </p>
+                  
+                  <div className="mt-auto">
+                    <a 
+                      href="https://store.epicgames.com/tr/free-games" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-white hover:text-purple-200 font-medium"
+                    >
+                      <span>Epic Store'da Görüntüle</span>
+                      <FiArrowRight className="ml-1" />
+                    </a>
+                  </div>
+                </div>
+                
+                {/* Sağ oyun kartları bölümü */}
+                <div className="w-full md:w-2/3 lg:w-3/4 p-6 md:p-8">
+                  <GameSlider 
+                    games={filteredUpcoming} 
+                    isUpcoming={true}
+                    title="Yakında Ücretsiz Olacak"
+                  />
+                  
+                  {/* İlk oyun için geri sayım */}
+                  {filteredUpcoming[0]?.promotions?.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]?.startDate && (
+                    <div className="mt-6 flex items-center justify-center">
+                      <div className="bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow flex items-center">
+                        <FiClock className="text-purple-600 dark:text-purple-400 mr-2" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          <strong>
+                            {new Date(filteredUpcoming[0].promotions.upcomingPromotionalOffers[0].promotionalOffers[0].startDate).toLocaleDateString('tr-TR', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </strong> 
+                          tarihinde ücretsiz olacak
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </section>
         )}
       </div>
