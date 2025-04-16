@@ -13,6 +13,9 @@ import { MdOutlineTimer } from 'react-icons/md';
 import { FaHourglassHalf } from 'react-icons/fa';
 import Image from 'next/image';
 import Link from 'next/link';
+import { FaSort, FaSortAlphaDown, FaSortAlphaUp } from 'react-icons/fa';
+import { BsFillGridFill, BsList } from 'react-icons/bs';
+import { HiOutlineFilter } from 'react-icons/hi';
 
 type SortOption = 'title' | 'date';
 type SortDirection = 'asc' | 'desc';
@@ -21,12 +24,13 @@ type FilterSource = 'all' | 'epic' | 'steam';
 interface HomeProps {
   epicFreeGames: EpicGame[];
   steamFreeGames: EpicGame[];
-  upcomingFreeGames: EpicGame[];
+  upcomingGames: EpicGame[];
   trendingGames: EpicGame[];
-  temporaryFreeGames: ExtendedEpicGame[];
+  temporaryFreeGames: EpicGame[];
+  error?: string;
 }
 
-const Home: NextPage<HomeProps> = ({ epicFreeGames, steamFreeGames, upcomingFreeGames, trendingGames, temporaryFreeGames }) => {
+const Home: NextPage<HomeProps> = ({ epicFreeGames, steamFreeGames, upcomingGames, trendingGames, temporaryFreeGames }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterSource, setFilterSource] = useState<FilterSource>('all');
@@ -364,7 +368,7 @@ const Home: NextPage<HomeProps> = ({ epicFreeGames, steamFreeGames, upcomingFree
         {/* Yakında ücretsiz olacak oyunlar */}
         <section className="mb-16">
           <GameSlider 
-            games={upcomingFreeGames as ExtendedEpicGame[]} 
+            games={upcomingGames as ExtendedEpicGame[]} 
             title="Yakında Ücretsiz Olacak Oyunlar" 
             icon={<FiCalendar size={20} />}
             isUpcoming={true} 
@@ -378,69 +382,46 @@ const Home: NextPage<HomeProps> = ({ epicFreeGames, steamFreeGames, upcomingFree
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    // Epic Games'den ücretsiz oyunları al
-    const epicFreeGames = await getFreeGames();
-    const upcomingFreeGames = await getUpcomingFreeGames();
-    
-    // Steam'den ücretsiz oyunları al
-    const steamFreeGames = await getFreeSteamGames();
-    
-    // Steam'den trend oyunları al
-    const trendingSteamGames = await getTrendingSteamGames();
-    
-    // Epic Games'den trend oyunları al
-    const trendingEpicGames = await getTrendingEpicGames();
-    
-    // Geçici olarak ücretsiz olan Epic Games oyunlarını al
-    const epicTempFreeGames = await getTemporaryFreeEpicGames();
-    
-    // Geçici olarak ücretsiz olan Steam oyunlarını al
-    const steamTempFreeGames = await getTemporaryFreeSteamGames();
-    
-    // Geçici ücretsiz Steam oyunlarını Epic formatına dönüştür
-    const steamTempFreeGamesInEpicFormat = steamTempFreeGames.map(game => convertSteamToEpicFormat(game));
-    
-    // Geçici ücretsiz oyunları birleştir
-    const temporaryFreeGames = [...epicTempFreeGames, ...steamTempFreeGamesInEpicFormat] as ExtendedEpicGame[];
-    
-    // Trend oyunları birleştir
-    const trendingGames = [...trendingEpicGames, ...trendingSteamGames.map(game => convertSteamToEpicFormat(game))];
-    
-    // Epic oyunlarına kaynak bilgisi ekle
-    const epicGamesWithSource = epicFreeGames.map(game => ({
-      ...game,
-      source: 'epic'
-    }));
-    
-    // Steam oyunlarını Epic formatına dönüştür (source bilgisi convertSteamToEpicFormat içinde ekleniyor)
-    const steamGamesInEpicFormat = steamFreeGames.map(game => convertSteamToEpicFormat(game));
-    
-    // Tüm veriyi prop olarak döndür
+    // API'den free, upcoming, trending ve sınırlı süreli ücretsiz oyunları getir
+    const [epicFreeGames, steamFreeGames, upcomingGames, epicTrending, steamTrending, tempFreeEpic, tempFreeSteam] = await Promise.all([
+      getFreeGames(),
+      getFreeSteamGames(),
+      getUpcomingFreeGames(),
+      getTrendingEpicGames(),
+      getTrendingSteamGames(),
+      getTemporaryFreeEpicGames(),
+      getTemporaryFreeSteamGames(),
+    ]);
+
+    // Epic ve Steam'den sınırlı süreli ücretsiz oyunları birleştir
+    const temporaryFreeGames = [
+      ...tempFreeEpic.map(game => ({ ...game, source: 'epic' })),
+      ...tempFreeSteam.map(game => ({ ...game, source: 'steam' }))
+    ];
+
     return {
       props: {
-        epicFreeGames: epicGamesWithSource,
-        steamFreeGames: steamGamesInEpicFormat,
-        upcomingFreeGames,
-        trendingGames,
-        temporaryFreeGames
+        epicFreeGames,
+        steamFreeGames,
+        upcomingGames,
+        trendingGames: [...epicTrending, ...steamTrending],
+        temporaryFreeGames,
       },
-      // 1 saat (3600 saniye) sonra sayfayı yeniden oluştur
-      revalidate: 3600
+      // 1 saatte bir yeniden oluştur
+      revalidate: 3600,
     };
   } catch (error) {
-    console.error('getStaticProps error:', error);
-    
-    // Hata durumunda boş veri ile devam et
+    console.error('Error fetching data:', error);
     return {
       props: {
         epicFreeGames: [],
         steamFreeGames: [],
-        upcomingFreeGames: [],
+        upcomingGames: [],
         trendingGames: [],
-        temporaryFreeGames: []
+        temporaryFreeGames: [],
+        error: 'Veri çekilirken bir hata oluştu'
       },
-      // Hata durumunda 15 dakika (900 saniye) sonra tekrar dene
-      revalidate: 900
+      revalidate: 60 // Hata durumunda 1 dakika sonra tekrar dene
     };
   }
 };

@@ -49,6 +49,9 @@ export interface EpicGame {
   }[];
   productSlug: string;
   urlSlug: string;
+  source?: 'epic' | 'steam';
+  isTrending?: boolean;
+  isTempFree?: boolean;
 }
 
 export async function getFreeGames(): Promise<EpicGame[]> {
@@ -136,30 +139,12 @@ export async function getGameDetails(namespace: string): Promise<EpicGame | null
  */
 export async function getTrendingEpicGames(): Promise<EpicGame[]> {
   try {
-    // Epic Games'in katalog sayfasından veri çek
-    const response = await axios.get(EPIC_STORE_URL, {
-      params: {
-        locale: 'tr',
-        country: 'TR',
-        allowCountries: 'TR',
-        count: 30,
-        sortBy: 'relevancy',
-        sortDir: 'DESC',
-        start: 0,
-        tag: 'trending',
-      }
-    });
-
-    const games = response.data?.data?.Catalog?.searchStore?.elements || [];
+    // Epic Games'den ücretsiz oyunları al ve trending olarak işaretle
+    // Epic API'deki trending endpoint'i çalışmadığı için ücretsiz oyunları trending olarak kullanıyoruz
+    const freeGames = await getFreeGames();
     
-    // Ücretsiz olan trending oyunları filtrele
-    const trendingFreeGames = games.filter((game: EpicGame) => {
-      // Ücretsiz oyun kontrolü
-      return game.price?.totalPrice?.discountPrice === 0 || game.price?.totalPrice?.originalPrice === 0;
-    });
-
     // Trending olarak işaretle
-    const trendingGamesWithFlag = trendingFreeGames.map((game: EpicGame) => ({
+    const trendingGamesWithFlag = freeGames.map((game: EpicGame) => ({
       ...game,
       isTrending: true
     }));

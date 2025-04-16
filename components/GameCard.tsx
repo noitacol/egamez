@@ -22,7 +22,7 @@ import { PiTelevisionBold } from "react-icons/pi";
 import { LuMouse } from "react-icons/lu";
 
 // EpicGame'den türetilen ve Steam oyunları için de kullanılabilen genişletilmiş arayüz
-export interface ExtendedEpicGame extends Omit<EpicGame, 'promotions'> {
+export interface ExtendedEpicGame extends EpicGame {
   videos?: {
     type: string;
     url: string;
@@ -35,30 +35,12 @@ export interface ExtendedEpicGame extends Omit<EpicGame, 'promotions'> {
   isTrending?: boolean;
   isTempFree?: boolean;
   source?: 'epic' | 'steam';
-  catalogNs?: {
-    mappings?: any[];
-  };
-  offerMappings?: any[];
-  promotions?: {
-    promotionalOffers: {
-      promotionalOffers: {
-        startDate: string;
-        endDate: string;
-        discountSetting?: {
-          discountPercentage: number;
-        };
-      }[];
-    }[];
-    upcomingPromotionalOffers: {
-      promotionalOffers: {
-        startDate: string;
-        endDate: string;
-        discountSetting?: {
-          discountPercentage: number;
-        };
-      }[];
-    }[];
-  };
+}
+
+interface MediaItem {
+  type: string;
+  url: string;
+  thumbnail?: string;
 }
 
 // GameCard bileşeni props arayüzü
@@ -66,31 +48,67 @@ interface GameCardProps {
   game: ExtendedEpicGame;
   isFree?: boolean;
   isUpcoming?: boolean;
-  isTrending?: boolean;
 }
 
-const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = false, isTrending = false }) => {
-  const [imgError, setImgError] = useState(false);
-  const [galleryVisible, setGalleryVisible] = useState(false);
+export const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = false }) => {
+  const [imageError, setImageError] = useState<boolean>(false);
+  const [showGallery, setShowGallery] = useState<boolean>(false);
+  const [currentMediaIndex, setCurrentMediaIndex] = useState<number>(0);
   
-  // Oyunun promosyon değerinin kontrol edilmesi
+  // Promosyon bilgilerini kontrol et ve tarih bilgilerini hesapla
+  const isFreeGame = isFree || game.price?.totalPrice?.discountPrice === 0;
+  
+  // Promosyonlar varsa ve promosyonlar içinde teklifler varsa devam et
   const hasPromotions = game.promotions && 
-    (game.promotions.promotionalOffers?.length > 0 || 
-     game.promotions.upcomingPromotionalOffers?.length > 0);
-  
-  // Oyunun ücretsiz olduğunu tespit etme
-  const isFreeGame = isFree || (game.promotions?.promotionalOffers && 
-    game.promotions.promotionalOffers.some(offer => 
-      offer.promotionalOffers?.some(promo => {
-        const now = new Date().getTime();
-        const startDate = new Date(promo.startDate).getTime();
-        const endDate = new Date(promo.endDate).getTime();
-        return now >= startDate && now <= endDate;
-      })
-    ));
+                      game.promotions.promotionalOffers && 
+                      game.promotions.promotionalOffers.length > 0 &&
+                      game.promotions.promotionalOffers[0].promotionalOffers &&
+                      game.promotions.promotionalOffers[0].promotionalOffers.length > 0;
 
-  // Şu anki tarih
-  const now = new Date();
+  const hasUpcomingPromotions = game.promotions && 
+                              game.promotions.upcomingPromotionalOffers && 
+                              game.promotions.upcomingPromotionalOffers.length > 0 &&
+                              game.promotions.upcomingPromotionalOffers[0].promotionalOffers &&
+                              game.promotions.upcomingPromotionalOffers[0].promotionalOffers.length > 0;
+
+  // Kalan günleri hesapla
+  const calculateRemainingDays = (startDate: string, endDate: string): number => {
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+    const now = Date.now();
+    const diff = end - now;
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  let startDate: string | undefined = undefined;
+  let endDate: string | undefined = undefined;
+  let discountPrice: number | undefined = undefined;
+  let originalPrice: number | undefined = undefined;
+
+  // Mevcut promosyonlar
+  if (hasPromotions) {
+    const offer = game.promotions.promotionalOffers[0].promotionalOffers[0];
+    startDate = offer.startDate;
+    endDate = offer.endDate;
+  }
+  
+  // Gelecek promosyonlar
+  if (hasUpcomingPromotions && isUpcoming) {
+    const offer = game.promotions.upcomingPromotionalOffers[0].promotionalOffers[0];
+    startDate = offer.startDate;
+    endDate = offer.endDate;
+  }
+
+  // Fiyat bilgisini al
+  if (game.price) {
+    discountPrice = game.price.totalPrice?.discountPrice;
+    originalPrice = game.price.totalPrice?.originalPrice;
+  }
+
+  // Kalan gün hesabı
+  const remainingDays = (startDate && endDate) 
+    ? calculateRemainingDays(startDate, endDate) 
+    : 0;
 
   // Fiyat metni oluşturma
   let priceText = "Ücretsiz";
@@ -100,276 +118,333 @@ const GameCard: React.FC<GameCardProps> = ({ game, isFree = false, isUpcoming = 
     priceText = `${(game.price.totalPrice.discountPrice / 100).toFixed(2)} TL`;
   }
 
-  // Kalan gün hesaplama
-  let remainingDays = 0;
-  if (isUpcoming && game.promotions?.upcomingPromotionalOffers && game.promotions.upcomingPromotionalOffers.length > 0) {
-    const promo = game.promotions.upcomingPromotionalOffers[0].promotionalOffers?.[0];
-    if (promo) {
-      const startDate = new Date(promo.startDate);
-      remainingDays = Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    }
-  } else if (isFreeGame && hasPromotions) {
-    const promo = game.promotions?.promotionalOffers?.[0]?.promotionalOffers?.[0];
-    if (promo) {
-      const endDate = new Date(promo.endDate);
-      remainingDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    }
+  // Medya kaynakları oluşturma
+  const mediaItems: MediaItem[] = [];
+
+  // Ana kapak resmini ekle
+  const coverImage = game.keyImages?.find(img => img.type === 'OfferImageWide' || img.type === 'DieselStoreFrontWide');
+  if (coverImage) {
+    mediaItems.push({
+      type: 'image',
+      url: coverImage.url,
+    });
   }
 
-  // Kapak görseli bulma
-  const thumbnailImage = game.keyImages?.find(img => img.type === 'Thumbnail')?.url || 
-                        game.keyImages?.find(img => img.type === 'DieselStoreFrontThumbnail')?.url ||
-                        game.keyImages?.find(img => img.type === 'OfferImageTall')?.url;
-                        
-  const coverImage = game.keyImages?.find(img => img.type === 'DieselStoreFrontWide')?.url || 
-                    game.keyImages?.find(img => img.type === 'OfferImageWide')?.url ||
-                    game.keyImages?.find(img => ['Thumbnail', 'DieselStoreFrontThumbnail', 'OfferImageTall'].includes(img.type))?.url;
+  // Diğer resimleri ekle
+  const otherImages = game.keyImages?.filter(img => 
+    img.type === 'Screenshot' || 
+    img.type === 'DieselGameMediaCarousel' || 
+    img.type === 'ProductLogo'
+  );
   
-  // Oyun için medya galerisi oluşturma
-  const galleryImages = game.keyImages?.filter(img => 
-    !['Thumbnail', 'DieselStoreFrontThumbnail', 'OfferImageTall', 'DieselStoreFrontWide', 'OfferImageWide', 'Logo'].includes(img.type)
-  ) || [];
-  
-  // Tüm medya içeriği (resimler + videolar)
-  const allMedia = [
-    ...galleryImages,
-    ...(game.videos?.map(video => ({
-      type: 'video',
-      url: video.url,
-      thumbnail: video.thumbnail
-    })) || [])
-  ];
-  
-  // Medya galerisi açıp kapatma
-  const openGallery = () => setGalleryVisible(true);
-  const closeGallery = () => setGalleryVisible(false);
+  if (otherImages) {
+    otherImages.forEach(img => {
+      mediaItems.push({
+        type: 'image',
+        url: img.url,
+      });
+    });
+  }
+
+  // Videoları ekle
+  if (game.videos) {
+    game.videos.forEach(video => {
+      mediaItems.push({
+        type: 'video',
+        url: video.url,
+        thumbnail: video.thumbnail || coverImage?.url,
+      });
+    });
+  }
+
+  // Medya galerisini aç
+  const openGallery = () => {
+    setShowGallery(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  // Medya galerisini kapat
+  const closeGallery = () => {
+    setShowGallery(false);
+    document.body.style.overflow = 'auto';
+  };
+
+  // İleri/geri navigasyonu
+  const nextMedia = () => {
+    setCurrentMediaIndex((prev) => (prev + 1) % mediaItems.length);
+  };
+
+  const prevMedia = () => {
+    setCurrentMediaIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length);
+  };
+
+  // Klavye navigasyonu
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      closeGallery();
+    } else if (e.key === 'ArrowRight') {
+      nextMedia();
+    } else if (e.key === 'ArrowLeft') {
+      prevMedia();
+    }
+  };
+
+  // Görüntü yükleme hatası
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
   return (
-    <div className="relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col h-full group">
-      {/* Promosyon etiketleri */}
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
-        {/* Trend etiketi */}
-        {(isTrending || game.isTrending) && (
-          <span className="flex items-center gap-1 bg-epicorange text-white px-2 py-1 rounded-md text-xs font-medium">
-            <FaFire size={12} />
-            Trend
-          </span>
-        )}
-        
-        {/* Ücretsiz etiketi */}
-        {isFreeGame && (
-          <span className="flex items-center gap-1 bg-epicblue text-white px-2 py-1 rounded-md text-xs font-medium">
-            <FaRegMoneyBillAlt size={12} />
-            Ücretsiz
-          </span>
-        )}
-        
-        {/* Yakında etiketi */}
-        {isUpcoming && (
-          <span className="flex items-center gap-1 bg-epicpurple text-white px-2 py-1 rounded-md text-xs font-medium">
-            <FaStopwatch size={12} />
-            Yakında
-          </span>
-        )}
-      </div>
-      
-      {/* Platform etiketi */}
-      {game.source && (
-        <div className="absolute top-3 right-3 z-10">
-          <span className={`flex items-center gap-1 ${game.source === 'epic' ? 'bg-epicblack' : 'bg-[#1b2838]'} text-white px-2 py-1 rounded-md text-xs font-medium`}>
-            {game.source === 'epic' ? 'Epic' : 'Steam'}
-          </span>
-        </div>
-      )}
-      
-      {/* Oyun resmi */}
-      <div className="relative w-full h-48 overflow-hidden">
-        <Link href={`/game/${game.id}${game.source ? `?source=${game.source}` : ''}`}>
-          <div className="relative w-full h-full">
-            {!imgError ? (
-              coverImage ? (
+    <>
+      <div
+        className="relative flex flex-col overflow-hidden rounded-lg shadow-lg bg-gray-800 h-full transition-transform duration-300 hover:scale-[1.02]"
+        data-testid="game-card"
+      >
+        <div className="relative w-full h-48 overflow-hidden">
+          <Link href={`/game/${game.namespace}?source=${game.source || 'epic'}`}>
+            <div className="relative w-full h-full group">
+              {!imageError ? (
                 <Image
-                  src={coverImage}
+                  src={coverImage?.url || '/img/placeholder.jpg'}
                   alt={game.title}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  priority={true}
-                  onError={() => setImgError(true)}
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  unoptimized={game.source === 'steam'} // Steam görselleri için optimizasyonu devre dışı bırak
+                  className="object-cover"
+                  onError={handleImageError}
+                  priority
                 />
               ) : (
                 <Image
                   src="/img/placeholder.jpg"
                   alt={game.title}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="object-cover"
                 />
-              )
-            ) : (
-              <Image
-                src="/img/placeholder.jpg"
-                alt={game.title}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            )}
-          </div>
-        </Link>
-        
-        {/* Medya galerisi gösterme butonu */}
-        {allMedia.length > 0 && (
-          <button
-            onClick={openGallery}
-            className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
-            aria-label="Medya galerisini göster"
-          >
-            <FaRegPlayCircle size={18} />
-          </button>
-        )}
-      </div>
-      
-      {/* Oyun bilgileri */}
-      <div className="p-4 flex flex-col flex-grow">
-        <div className="flex items-start justify-between mb-2">
-          <Link href={`/game/${game.id}${game.source ? `?source=${game.source}` : ''}`}>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white hover:text-epicblue dark:hover:text-epicaccent transition-colors line-clamp-2">
-              {game.title}
-            </h3>
-          </Link>
-        </div>
-        
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-          {game.description || "Açıklama bulunmuyor."}
-        </p>
-        
-        <div className="mt-auto flex items-center justify-between">
-          {/* Fiyat veya süre bilgisi */}
-          <div>
-            {(isFreeGame || isUpcoming) && remainingDays > 0 && (
-              <div className="flex items-center text-sm">
-                <FaStopwatch className="mr-1 text-epicblue dark:text-epicaccent" size={14} />
-                <span className="text-gray-700 dark:text-gray-300">
-                  {remainingDays} gün kaldı
-                </span>
+              )}
+              
+              <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <div className="text-white font-bold bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-full">
+                  Detayları Gör
+                </div>
               </div>
-            )}
-            
-            {!isFreeGame && !isUpcoming && (
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {priceText}
-              </span>
-            )}
-          </div>
+            </div>
+          </Link>
           
-          {/* Metacritic puanı */}
-          {game.metacritic?.score && (
-            <a
-              href={game.metacritic.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`text-sm font-bold px-2 py-1 rounded ${
-                game.metacritic.score >= 75
-                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                  : game.metacritic.score >= 50
-                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                  : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-              }`}
-            >
-              {game.metacritic.score}
-            </a>
+          <button 
+            onClick={openGallery}
+            className="absolute bottom-2 right-2 z-10 bg-black bg-opacity-70 text-white p-2 rounded-full hover:bg-opacity-90"
+            aria-label="Medya galerisini görüntüle"
+          >
+            <FaRegPlayCircle size={16} />
+          </button>
+          
+          {game.isTrending && (
+            <div className="absolute top-2 left-2 z-10 bg-red-600 text-white py-1 px-3 rounded-full flex items-center text-xs">
+              <FaFire className="mr-1" size={12} />
+              Trend
+            </div>
+          )}
+          
+          {isFreeGame && !isUpcoming && (
+            <div className="absolute top-2 right-2 z-10 bg-green-600 text-white py-1 px-3 rounded-full flex items-center text-xs">
+              <FaRegMoneyBillAlt className="mr-1" size={12} />
+              Ücretsiz
+            </div>
+          )}
+          
+          {isUpcoming && (
+            <div className="absolute top-2 right-2 z-10 bg-purple-600 text-white py-1 px-3 rounded-full flex items-center text-xs">
+              <FaStopwatch className="mr-1" size={12} />
+              Yakında
+            </div>
           )}
         </div>
-      </div>
-      
-      {/* Detay bağlantıları */}
-      <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex justify-between">
-        <Link href={`/game/${game.id}${game.source ? `?source=${game.source}` : ''}`}>
-          <span className="text-sm text-epicblue dark:text-epicaccent hover:underline cursor-pointer flex items-center">
-            Detaylar <FaExternalLinkAlt size={10} className="ml-1" />
-          </span>
-        </Link>
         
-        <a
-          href={game.source === 'steam' 
-            ? `https://store.steampowered.com/app/${game.id}` 
-            : `https://store.epicgames.com/tr/p/${game.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-gray-600 dark:text-gray-400 hover:text-epicblue dark:hover:text-epicaccent flex items-center"
-        >
-          Mağazada Gör <FaWindowMaximize size={10} className="ml-1" />
-        </a>
+        <div className="flex flex-col p-4 flex-grow">
+          <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">{game.title}</h3>
+          
+          <p className="text-gray-300 text-sm line-clamp-3 mb-3">
+            {game.description || 'Bu oyun için açıklama bulunmuyor.'}
+          </p>
+          
+          <div className="mt-auto flex flex-col space-y-2">
+            {game.metacritic && (
+              <a
+                href={game.metacritic.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-gray-300 hover:text-blue-400 flex items-center"
+              >
+                <span className={`w-8 h-8 flex items-center justify-center rounded-full mr-2 ${
+                  game.metacritic.score >= 75 ? 'bg-green-600' :
+                  game.metacritic.score >= 50 ? 'bg-yellow-600' : 'bg-red-600'
+                }`}>
+                  {game.metacritic.score}
+                </span>
+                <span>Metacritic</span>
+                <RxExternalLink className="ml-1" size={14} />
+              </a>
+            )}
+            
+            <div className="flex justify-between items-center text-sm">
+              <div className="text-gray-300">
+                {game.source === 'steam' ? (
+                  <div className="flex items-center">
+                    <FaWindowMaximize size={12} className="mr-1" />
+                    <span>Steam</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <FaWindowMaximize size={12} className="mr-1" />
+                    <span>Epic</span>
+                  </div>
+                )}
+              </div>
+              
+              {isFreeGame && !isUpcoming && remainingDays > 0 && (
+                <div className="text-green-400 flex items-center">
+                  <FaStopwatch className="mr-1" size={12} />
+                  <span>{remainingDays} gün kaldı</span>
+                </div>
+              )}
+              
+              {isUpcoming && remainingDays > 0 && (
+                <div className="text-purple-400 flex items-center">
+                  <FaStopwatch className="mr-1" size={12} />
+                  <span>{remainingDays} gün sonra</span>
+                </div>
+              )}
+              
+              {!isFreeGame && !isUpcoming && (
+                <div className="text-yellow-400 font-bold">
+                  {priceText}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex space-x-2 mt-3">
+              <Link
+                href={`/game/${game.namespace}?source=${game.source || 'epic'}`}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-4 rounded"
+              >
+                Detaylar
+              </Link>
+              
+              <a
+                href={game.source === 'steam' ? 
+                  `https://store.steampowered.com/app/${game.id}` : 
+                  `https://store.epicgames.com/tr/p/${game.productSlug || game.urlSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded"
+                aria-label="Mağazada aç"
+              >
+                <FaExternalLinkAlt size={16} />
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
       
-      {/* Medya galerisi modal */}
-      {galleryVisible && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-          {/* Kapatma butonu */}
-          <button
+      {/* Medya Galerisi Modalı */}
+      {showGallery && (
+        <div 
+          className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center"
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
+        >
+          <button 
             onClick={closeGallery}
-            className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full z-10"
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
             aria-label="Galeriyi kapat"
           >
-            <FaTimes size={20} />
+            <FaTimes size={24} />
           </button>
           
-          {/* Oyun başlığı */}
-          <div className="absolute top-4 left-4 z-10">
-            <h3 className="text-white text-xl font-bold">{game.title}</h3>
-          </div>
-          
-          {/* Swiper galerisi */}
-          <div className="w-full max-w-4xl">
-            <Swiper
-              modules={[Navigation, Pagination]}
-              navigation={{
-                prevEl: '.swiper-button-prev',
-                nextEl: '.swiper-button-next',
-              }}
-              pagination={{ clickable: true }}
-              className="mySwiper"
+          <div className="relative w-full max-w-4xl max-h-[80vh] px-10">
+            <button
+              onClick={prevMedia}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 z-10"
+              aria-label="Önceki medya"
             >
-              {allMedia.map((media, index) => (
-                <SwiperSlide key={index}>
-                  {media.type === 'video' ? (
-                    <div className="relative aspect-video">
-                      <iframe
-                        src={media.url}
-                        title={`Video ${index}`}
-                        className="w-full h-full"
-                        allowFullScreen
-                      />
-                    </div>
-                  ) : (
-                    <div className="relative aspect-video flex items-center justify-center">
-                      <Image
-                        src={media.url}
-                        alt={`${game.title} görsel ${index}`}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 1024px"
-                        className="object-contain"
-                        unoptimized={game.source === 'steam'} // Steam görselleri için optimizasyonu devre dışı bırak
-                      />
-                    </div>
-                  )}
-                </SwiperSlide>
-              ))}
-            </Swiper>
-            
-            {/* Özel navigasyon butonları */}
-            <div className="swiper-button-prev absolute top-1/2 left-4 z-10 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full">
               <FaArrowLeft size={20} />
-            </div>
-            <div className="swiper-button-next absolute top-1/2 right-4 z-10 transform -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full">
+            </button>
+            
+            <button
+              onClick={nextMedia}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 z-10"
+              aria-label="Sonraki medya"
+            >
               <FaArrowRight size={20} />
+            </button>
+            
+            <div className="w-full h-full flex items-center justify-center">
+              {mediaItems.length > 0 && (
+                mediaItems[currentMediaIndex].type === 'video' ? (
+                  <iframe
+                    src={mediaItems[currentMediaIndex].url}
+                    className="w-full max-h-[70vh]"
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={`${game.title} video ${currentMediaIndex + 1}`}
+                  />
+                ) : (
+                  <Image
+                    src={mediaItems[currentMediaIndex].url}
+                    alt={`${game.title} görsel ${currentMediaIndex + 1}`}
+                    width={800}
+                    height={450}
+                    className="max-h-[70vh] w-auto mx-auto object-contain"
+                  />
+                )
+              )}
+            </div>
+            
+            <div className="mt-4">
+              <Swiper
+                modules={[Navigation, Pagination]}
+                spaceBetween={10}
+                slidesPerView="auto"
+                navigation
+                pagination={{ clickable: true }}
+                className="w-full"
+              >
+                {mediaItems.map((item, index) => (
+                  <SwiperSlide key={index} className="w-auto h-20">
+                    <button
+                      onClick={() => setCurrentMediaIndex(index)}
+                      className={`h-full ${currentMediaIndex === index ? 'ring-2 ring-blue-500' : ''}`}
+                    >
+                      {item.type === 'video' ? (
+                        <div className="relative h-full w-32">
+                          <Image
+                            src={item.thumbnail || '/img/placeholder.jpg'}
+                            alt={`Thumbnail ${index}`}
+                            fill
+                            className="object-cover"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                            <FaRegPlayCircle size={24} className="text-white" />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative h-full w-32">
+                          <Image
+                            src={item.url}
+                            alt={`Thumbnail ${index}`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                    </button>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
