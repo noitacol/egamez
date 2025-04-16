@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { GetStaticProps } from 'next';
 import Layout from '../components/Layout';
 import GameCard from '../components/GameCard';
-import { EpicGame, getUpcomingFreeGames } from '../lib/epic-api';
+import { getUpcomingFreeGames } from '../lib/epic-api';
+import { ExtendedEpicGame } from '../components/GameCard';
 
 interface UpcomingProps {
-  upcomingGames: EpicGame[];
+  upcomingGames: ExtendedEpicGame[];
 }
 
 export default function Upcoming({ upcomingGames }: UpcomingProps) {

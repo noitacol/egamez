@@ -2,11 +2,12 @@ import { GetServerSideProps } from 'next';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
-import { EpicGame, getGameDetails } from '../../lib/epic-api';
+import { getGameDetails } from '../../lib/epic-api';
+import { ExtendedEpicGame } from '../../components/GameCard';
 import { getGameDetails as getSteamGameDetails, convertSteamToEpicFormat } from '../../lib/steam-api';
 
 interface GameDetailProps {
-  game: EpicGame | null;
+  game: ExtendedEpicGame | null;
   error?: string;
 }
 

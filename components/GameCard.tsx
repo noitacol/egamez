@@ -17,7 +17,7 @@ import 'swiper/css/scrollbar';
 import clsx from 'clsx';
 
 // EpicGame tipinden oluşturulmuş genişletilmiş tip
-interface ExtendedEpicGame extends Omit<EpicGame, 'price'> {
+export interface ExtendedEpicGame extends Omit<EpicGame, 'price'> {
   videos?: { id: string | number; name?: string; url: string }[];
   metacritic?: { score: number; url: string };
   isTemporaryFree?: boolean;

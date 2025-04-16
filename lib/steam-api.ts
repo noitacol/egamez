@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ExtendedEpicGame } from '../components/GameCard';
 
 const STEAM_API_KEY = '7939B44042A20BCD809BC41CBDDE75BF';
 const STEAM_API_URL = 'https://api.steampowered.com';
@@ -430,87 +431,69 @@ export async function getSteamGameNews(appid: number, count: number = 3): Promis
  * Epic Games formatına dönüştürür
  * Bu fonksiyon, Steam Game'i EpicGame formatına çevirerek UI'da tutarlı bir gösterim sağlar
  */
-export function convertSteamToEpicFormat(steamGame: SteamGame): any {
-  // Normalde ücretli olup şu an ücretsiz olan oyunlar için bitiş tarihi
-  const endDate = steamGame.isTemporaryFree 
-    ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Varsayılan olarak 7 gün
-    : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame {
+  // Metacritic puanı varsa uygun formatta ayarla, yoksa undefined olarak bırak
+  const metacritic = steamGame.metacritic 
+    ? { score: steamGame.metacritic.score, url: steamGame.metacritic.url } 
+    : undefined;
   
-  // Tüm görselleri birleştir ve EpicGame formatına dönüştür
-  const keyImages = [];
-  
-  // Oyun kapak görselini ekle - varsayılan görsel veya placeholder
-  if (steamGame.header_image) {
-    keyImages.push({
-      type: 'DieselStoreFrontWide',
-      url: steamGame.header_image
-    });
-  } else {
-    keyImages.push({
-      type: 'DieselStoreFrontWide',
-      url: 'https://via.placeholder.com/460x215/12131a/FFFFFF?text=Steam+Game'
-    });
-  }
-  
-  // Dikey kapak görseli ekle (thumbnail)
-  if (steamGame.header_image) {
-    // Dikey kapak görseli için kapak görselini kırparak kullan
-    keyImages.push({
-      type: 'Thumbnail',
-      url: steamGame.header_image
-    });
+  // Videolar varsa uygun formatta ayarla, yoksa boş dizi olarak ver
+  const videos = steamGame.movies 
+    ? steamGame.movies.map(movie => ({
+        id: movie.id,
+        name: movie.name,
+        url: movie.webm?.max || movie.mp4?.max || ''
+      })) 
+    : [];
     
-    // OfferImageTall için de aynı görseli kullan
-    keyImages.push({
-      type: 'OfferImageTall',
-      url: steamGame.header_image
-    });
-  } else {
-    keyImages.push({
-      type: 'Thumbnail',
-      url: 'https://via.placeholder.com/300x400/12131a/FFFFFF?text=Steam+Game'
-    });
-    keyImages.push({
-      type: 'OfferImageTall',
-      url: 'https://via.placeholder.com/300x400/12131a/FFFFFF?text=Steam+Game'
-    });
-  }
+  // Gelecek 1 yıl için bitiş tarihi oluştur
+  const endDate = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString();
   
-  // Ekran görüntülerini ekle
-  if (steamGame.screenshots && steamGame.screenshots.length > 0) {
-    steamGame.screenshots.forEach((screenshot, index) => {
-      keyImages.push({
-        type: `Screenshot_${index}`,
-        url: screenshot.url
-      });
-    });
-  }
+  // Varsayılan promotions nesnesi
+  const defaultPromotions = {
+    promotionalOffers: [],
+    upcomingPromotionalOffers: []
+  };
   
-  // Arkaplan görselini ekle
-  if (steamGame.background_image) {
-    keyImages.push({
-      type: 'Background',
-      url: steamGame.background_image
-    });
-  }
+  // Ücretsiz oyunlar için promosyonları oluştur
+  const freeGamePromotions = {
+    promotionalOffers: [{
+      promotionalOffers: [{
+        discountSetting: {
+          discountPercentage: 100
+        },
+        startDate: new Date().toISOString(),
+        endDate: endDate
+      }]
+    }],
+    upcomingPromotionalOffers: [{
+      promotionalOffers: [{
+        startDate: endDate,
+        endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString(),
+        discountSetting: {
+          discountPercentage: 0
+        }
+      }]
+    }]
+  };
   
-  // Video thumbnaillerini ekle
-  if (steamGame.movies && steamGame.movies.length > 0) {
-    steamGame.movies.forEach((movie, index) => {
-      keyImages.push({
-        type: `MovieThumbnail_${index}`,
-        url: movie.thumbnail
-      });
-    });
-  }
-    
+  // Steam formatını Epic formatına dönüştür
   return {
     title: steamGame.name,
-    id: `steam_${steamGame.appid}`,
+    id: steamGame.appid.toString(),
     namespace: `steam_${steamGame.appid}`,
     description: steamGame.description || '',
     effectiveDate: steamGame.release_date?.date || new Date().toISOString(),
-    keyImages: keyImages,
+    keyImages: [
+      {
+        type: 'OfferImageWide',
+        url: steamGame.header_image || ''
+      },
+      ...(steamGame.screenshots?.map(screenshot => ({
+        type: 'Screenshot',
+        url: screenshot.url
+      })) || [])
+    ],
     seller: {
       name: steamGame.publishers?.[0] || 'Steam'
     },
@@ -521,48 +504,20 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
         discount: steamGame.price.discount || 0
       }
     },
-    promotions: {
-      promotionalOffers: steamGame.isTemporaryFree ? [
-        {
-          promotionalOffers: [
-            {
-              startDate: new Date().toISOString(),
-              endDate: endDate.toISOString(),
-              discountSetting: {
-                discountPercentage: 100
-              }
-            }
-          ]
-        }
-      ] : [],
-      upcomingPromotionalOffers: []
-    },
-    categories: [
-      {
-        path: 'games/edition/base',
-        name: 'Base Game'
-      }
-    ],
-    isTemporaryFree: steamGame.isTemporaryFree || false, // undefined yerine false değeri kullan
-    isTrending: steamGame.isTrending || false, // undefined yerine false değeri kullan
-    releaseYear: steamGame.releaseYear || null, // undefined yerine null değeri kullan
-    metacritic: steamGame.metacritic?.score || null, // undefined yerine null değeri kullan
-    productSlug: `${steamGame.url}`,
-    urlSlug: `${steamGame.url}`,
-    videos: steamGame.movies ? steamGame.movies.map(movie => ({
-      id: movie.id,
-      name: movie.name,
-      thumbnail: movie.thumbnail,
-      urls: {
-        webm: {
-          '480': movie.webm['480'],
-          max: movie.webm.max
-        },
-        mp4: {
-          '480': movie.mp4['480'],
-          max: movie.mp4.max
-        }
-      }
-    })) : null
+    categories: steamGame.categories ? steamGame.categories.map(cat => ({ 
+      path: cat.description.toLowerCase().replace(/\s+/g, '-'),
+      name: cat.description
+    })) : [],
+    productSlug: `${steamGame.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+    urlSlug: `${steamGame.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+    // Promosyonlar - ücretsizse uygun bilgileri ekle
+    promotions: steamGame.price.isFree ? freeGamePromotions : defaultPromotions,
+    // Genişletilmiş özellikler
+    videos,
+    metacritic,
+    isTemporaryFree: steamGame.isTemporaryFree,
+    isTrending: steamGame.isTrending,
+    platform: 'steam', 
+    distributionPlatform: 'steam'
   };
 } 
