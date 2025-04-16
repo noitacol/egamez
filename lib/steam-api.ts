@@ -545,6 +545,7 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
     });
   }
     
+  // undefined değerleri null'a dönüştür, Next.js getStaticProps JSON serialization hatası için
   return {
     title: steamGame.name,
     id: `steam_${steamGame.appid}`,
@@ -592,8 +593,8 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
       score: steamGame.metacritic.score,
       url: steamGame.metacritic.url || `https://www.metacritic.com/game/pc/${steamGame.name.toLowerCase().replace(/\s+/g, '-')}`
     } : null,
-    productSlug: `${steamGame.url}`,
-    urlSlug: `${steamGame.url}`,
+    productSlug: steamGame.url || '',
+    urlSlug: steamGame.url || '',
     videos: steamGame.movies ? steamGame.movies.map(movie => ({
       type: 'video',
       url: movie.webm?.max || movie.mp4?.max || '',
