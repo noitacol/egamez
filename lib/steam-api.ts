@@ -60,6 +60,7 @@ export interface SteamGame {
   };
   releaseYear?: number; // Çıkış yılı
   isTrending?: boolean; // Trend mi?
+  source?: 'epic' | 'steam'; // Oyunun kaynağı
 }
 
 // Popüler oyunların appID'leri
