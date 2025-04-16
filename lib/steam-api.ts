@@ -543,26 +543,21 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
         name: 'Base Game'
       }
     ],
-    isTemporaryFree: steamGame.isTemporaryFree || false, // undefined yerine false değeri kullan
-    isTrending: steamGame.isTrending || false, // undefined yerine false değeri kullan
-    releaseYear: steamGame.releaseYear || null, // undefined yerine null değeri kullan
-    metacritic: steamGame.metacritic?.score || null, // undefined yerine null değeri kullan
+    background_image: steamGame.background_image || null,
+    isTemporaryFree: steamGame.isTemporaryFree || false,
+    isTrending: steamGame.isTrending || false,
+    releaseYear: steamGame.releaseYear || null,
+    metacritic: steamGame.metacritic?.score ? {
+      score: steamGame.metacritic.score,
+      url: steamGame.metacritic.url || `https://www.metacritic.com/game/pc/${steamGame.name.toLowerCase().replace(/\s+/g, '-')}`
+    } : null,
     productSlug: `${steamGame.url}`,
     urlSlug: `${steamGame.url}`,
     videos: steamGame.movies ? steamGame.movies.map(movie => ({
-      id: movie.id,
-      name: movie.name,
-      thumbnail: movie.thumbnail,
-      urls: {
-        webm: {
-          '480': movie.webm['480'],
-          max: movie.webm.max
-        },
-        mp4: {
-          '480': movie.mp4['480'],
-          max: movie.mp4.max
-        }
-      }
-    })) : null
+      type: 'video',
+      url: movie.webm?.max || movie.mp4?.max || '',
+      thumbnail: movie.thumbnail || null
+    })) : null,
+    source: 'steam'
   };
 } 

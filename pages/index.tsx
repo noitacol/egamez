@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Layout from '../components/Layout';
 import GameCard, { ExtendedEpicGame } from '../components/GameCard';
 import GameSlider from '../components/GameSlider';
-import { getFreeGames, getUpcomingFreeGames, EpicGame } from '../lib/epic-api';
+import { getFreeGames, getUpcomingFreeGames, EpicGame, getTrendingEpicGames } from '../lib/epic-api';
 import { getFreeSteamGames, getTrendingSteamGames, convertSteamToEpicFormat } from '../lib/steam-api';
 import { FiFilter, FiBarChart2, FiArrowUp, FiArrowDown, FiGift, FiCalendar, FiTrendingUp } from 'react-icons/fi';
 import { SiEpicgames, SiSteam } from 'react-icons/si';
@@ -208,35 +208,36 @@ const Home: NextPage<HomeProps> = ({ epicFreeGames, steamFreeGames, upcomingFree
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    // Epic Games API'sinden ücretsiz oyunları al
+    // Epic Games'den ücretsiz oyunları al
     const epicFreeGames = await getFreeGames();
-    
-    // Epic Games API'sinden yakında ücretsiz olacak oyunları al
     const upcomingFreeGames = await getUpcomingFreeGames();
     
-    // Steam API'sinden ücretsiz oyunları al
+    // Steam'den ücretsiz oyunları al
     const steamFreeGames = await getFreeSteamGames();
     
-    // Steam API'sinden trend oyunları al
-    const trendingGames = await getTrendingSteamGames();
+    // Steam'den trend oyunları al
+    const trendingSteamGames = await getTrendingSteamGames();
     
-    // Epic Games için kaynak bilgisini ekle
+    // Epic Games'den trend oyunları al
+    const trendingEpicGames = await getTrendingEpicGames();
+    
+    // Trend oyunları birleştir
+    const trendingGames = [...trendingEpicGames, ...trendingSteamGames.map(game => convertSteamToEpicFormat(game))];
+    
+    // Epic oyunlarına kaynak bilgisi ekle
     const epicGamesWithSource = epicFreeGames.map(game => ({
       ...game,
       source: 'epic'
     }));
     
-    // Steam oyunları için kaynak bilgisini ekle
-    const steamGamesWithSource = steamFreeGames.map(game => ({
-      ...game,
-      source: 'steam'
-    }));
+    // Steam oyunlarını Epic formatına dönüştür (source bilgisi convertSteamToEpicFormat içinde ekleniyor)
+    const steamGamesInEpicFormat = steamFreeGames.map(game => convertSteamToEpicFormat(game));
     
     // Tüm veriyi prop olarak döndür
     return {
       props: {
         epicFreeGames: epicGamesWithSource,
-        steamFreeGames: steamGamesWithSource,
+        steamFreeGames: steamGamesInEpicFormat,
         upcomingFreeGames,
         trendingGames
       },
