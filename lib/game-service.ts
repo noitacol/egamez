@@ -196,7 +196,9 @@ export async function getGameDetails(id: string, source: 'epic' | 'steam'): Prom
     if (source === 'epic') {
       return await getEpicGameDetails(id);
     } else if (source === 'steam') {
-      const steamGame = await getSteamGameDetails(id);
+      // Steam ID'leri 'steam_123456' formatında olabilir, prefix'i kaldır
+      const steamId = id.startsWith('steam_') ? id.replace('steam_', '') : id;
+      const steamGame = await getSteamGameDetails(parseInt(steamId, 10));
       if (steamGame) {
         return convertSteamToEpicFormat(steamGame);
       }
