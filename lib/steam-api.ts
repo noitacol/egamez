@@ -60,7 +60,6 @@ export interface SteamGame {
   };
   releaseYear?: number; // Çıkış yılı
   isTrending?: boolean; // Trend mi?
-  source?: 'epic' | 'steam'; // Oyunun kaynağı
 }
 
 // Popüler oyunların appID'leri
@@ -256,54 +255,14 @@ export async function getFreeSteamGames(): Promise<SteamGame[]> {
  * Steam'de normalde ücretli olup şu anda tamamen ücretsiz olan oyunları getirir
  */
 export async function getTemporaryFreeSteamGames(): Promise<SteamGame[]> {
-  try {
-    // Steam'in sınırlı süreli ücretsiz oyunlarını belirlemek için sabit bir liste kullanacağız
-    // Gerçek API entegrasyonu için bu kısım güncellenebilir
-    const temporaryFreeAppIds = [
-      730,     // Counter-Strike 2 (normal şartlarda ücretsizdir ama örnek olarak ekledik)
-      440,     // Team Fortress 2 (normal şartlarda ücretsizdir ama örnek olarak ekledik)
-      1687950, // Fallout 76
-      1938090, // EA FC 24
-      1716740, // Stray
-      2138710, // Orcs Must Die! 3
-      578080,  // PUBG: BATTLEGROUNDS
-      2238630, // Starship Troopers: Extermination
-    ];
-    
-    // Örnek oyunlar için detayları al
-    const tempFreeGames = await Promise.all(
-      temporaryFreeAppIds
-        .filter(appId => appId > 0)
-        .map(async (appId) => {
-          try {
-            const details = await getGameDetails(appId);
-            if (details) {
-              return {
-                ...details,
-                isTemporaryFree: true,  // Geçici ücretsiz olarak işaretle
-                // Geçici ücretsiz oyunlar için fiyat ve indirim bilgilerini güncelle
-                price: {
-                  ...details.price,
-                  isFree: false,       // Bu oyun normalde ücretli
-                  finalPrice: 0,       // Şu an ücretsiz
-                  discount: 100,       // %100 indirim
-                  initialPrice: 299    // Varsayılan bir fiyat (örnek olarak)
-                }
-              };
-            }
-            return null;
-          } catch (error) {
-            console.error(`Error fetching details for app ID ${appId}:`, error);
-            return null;
-          }
-        })
-    );
-    
-    return tempFreeGames.filter(game => game !== null) as SteamGame[];
-  } catch (error) {
-    console.error('Steam temporary free games API error:', error);
-    return [];
-  }
+  const allGames = await getAllSteamGames();
+  return allGames.filter(game => 
+    game?.price && 
+    !game.price.isFree && // Normalde ücretsiz değil
+    game.price.finalPrice === 0 && // Şu an fiyatı 0
+    (game.price.discount ?? 0) > 0 && // İndirimde
+    game.isTemporaryFree // İşaretlenmiş
+  );
 }
 
 /**
@@ -545,7 +504,6 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
     });
   }
     
-  // undefined değerleri null'a dönüştür, Next.js getStaticProps JSON serialization hatası için
   return {
     title: steamGame.name,
     id: `steam_${steamGame.appid}`,
@@ -585,21 +543,26 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): any {
         name: 'Base Game'
       }
     ],
-    background_image: steamGame.background_image || null,
-    isTemporaryFree: steamGame.isTemporaryFree || false,
-    isTrending: steamGame.isTrending || false,
-    releaseYear: steamGame.releaseYear || null,
-    metacritic: steamGame.metacritic?.score ? {
-      score: steamGame.metacritic.score,
-      url: steamGame.metacritic.url || `https://www.metacritic.com/game/pc/${steamGame.name.toLowerCase().replace(/\s+/g, '-')}`
-    } : null,
-    productSlug: steamGame.url || '',
-    urlSlug: steamGame.url || '',
+    isTemporaryFree: steamGame.isTemporaryFree || false, // undefined yerine false değeri kullan
+    isTrending: steamGame.isTrending || false, // undefined yerine false değeri kullan
+    releaseYear: steamGame.releaseYear || null, // undefined yerine null değeri kullan
+    metacritic: steamGame.metacritic?.score || null, // undefined yerine null değeri kullan
+    productSlug: `${steamGame.url}`,
+    urlSlug: `${steamGame.url}`,
     videos: steamGame.movies ? steamGame.movies.map(movie => ({
-      type: 'video',
-      url: movie.webm?.max || movie.mp4?.max || '',
-      thumbnail: movie.thumbnail || null
-    })) : null,
-    source: 'steam'
+      id: movie.id,
+      name: movie.name,
+      thumbnail: movie.thumbnail,
+      urls: {
+        webm: {
+          '480': movie.webm['480'],
+          max: movie.webm.max
+        },
+        mp4: {
+          '480': movie.mp4['480'],
+          max: movie.mp4.max
+        }
+      }
+    })) : null
   };
 } 

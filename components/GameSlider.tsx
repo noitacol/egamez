@@ -132,6 +132,7 @@ const GameSlider: React.FC<GameSliderProps> = ({
                   game={game} 
                   isFree={isFree} 
                   isUpcoming={isUpcoming} 
+                  isTrending={isTrending} 
                 />
               </div>
             </SwiperSlide>

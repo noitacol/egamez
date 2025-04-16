@@ -9,11 +9,11 @@
   "crons": [
     {
       "path": "/api/free-games",
-      "schedule": "0 0 * * *"
+      "schedule": "0 12 * * *"
     },
     {
-      "path": "/api/free-games?check=temporary",
-      "schedule": "0 12 * * *"
+      "path": "/api/upcoming-games",
+      "schedule": "0 13 * * *"
     }
   ]
 } 
