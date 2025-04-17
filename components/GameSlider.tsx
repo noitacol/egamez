@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect, useState } from 'react';
-import { ExtendedEpicGame } from './GameCard';
+import { ExtendedEpicGame } from '@/lib/types';
 import GameCard from './GameCard';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
@@ -15,7 +15,7 @@ interface GameSliderProps {
   icon?: ReactNode;
   isFree?: boolean;
   isUpcoming?: boolean;
-  isTrending?: boolean;
+  trending?: boolean;
 }
 
 const GameSlider: React.FC<GameSliderProps> = ({
@@ -25,7 +25,7 @@ const GameSlider: React.FC<GameSliderProps> = ({
   icon,
   isFree = false,
   isUpcoming = false,
-  isTrending = false,
+  trending = false,
 }) => {
   const [slidesPerView, setSlidesPerView] = useState<{[key: string]: number}>({
     base: 1.2,
@@ -72,7 +72,7 @@ const GameSlider: React.FC<GameSliderProps> = ({
         <h2 className="text-2xl font-bold mb-6 flex items-center">
           {icon && (
             <span className={`mr-2 p-2 rounded-lg text-white ${
-              isTrending ? 'bg-gradient-to-r from-red-600 to-orange-600' : 
+              trending ? 'bg-gradient-to-r from-red-600 to-orange-600' : 
               isFree ? 'bg-gradient-to-r from-epicblue to-blue-600' :
               isUpcoming ? 'bg-gradient-to-r from-purple-600 to-purple-800' :
               'bg-gradient-to-r from-gray-700 to-gray-900'
@@ -81,7 +81,7 @@ const GameSlider: React.FC<GameSliderProps> = ({
             </span>
           )}
           <span className={`bg-clip-text text-transparent ${
-            isTrending ? 'bg-gradient-to-r from-red-500 to-orange-500' : 
+            trending ? 'bg-gradient-to-r from-red-500 to-orange-500' : 
             isFree ? 'bg-gradient-to-r from-epicblue to-blue-600' :
             isUpcoming ? 'bg-gradient-to-r from-purple-600 to-purple-800' :
             'bg-gradient-to-r from-gray-700 to-gray-900'
@@ -132,7 +132,7 @@ const GameSlider: React.FC<GameSliderProps> = ({
                   game={game} 
                   isFree={isFree} 
                   isUpcoming={isUpcoming} 
-                  isTrending={isTrending} 
+                  trending={trending} 
                 />
               </div>
             </SwiperSlide>
