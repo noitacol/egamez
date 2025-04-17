@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RxExternalLink } from 'react-icons/rx';
@@ -7,7 +7,6 @@ import { HiOutlineTag, HiOutlineTrendingUp, HiOutlineExclamation } from 'react-i
 import { IoIosArrowRoundForward } from 'react-icons/io';
 import { IoCloseCircle } from 'react-icons/io5';
 import { SiEpicgames } from 'react-icons/si';
-import { EpicGame } from '../lib/epic-api';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -15,36 +14,45 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 import clsx from 'clsx';
+import { BsCalendar, BsFillPlayFill } from 'react-icons/bs';
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { format, differenceInDays } from 'date-fns';
+import { tr } from 'date-fns/locale';
+import { calculateTimeLeft } from '@/lib/utils';
+import { ExtendedEpicGame } from '@/lib/types';
+import { IoMdClose } from 'react-icons/io';
+import { BiSolidRightArrow, BiSolidLeftArrow } from "react-icons/bi";
+import { FiExternalLink } from "react-icons/fi";
+import { IoMdPricetag } from 'react-icons/io';
+import { MdFreeBreakfast } from 'react-icons/md';
 
-// EpicGame tipinden oluşturulmuş genişletilmiş tip
-export interface ExtendedEpicGame extends Omit<EpicGame, 'price'> {
-  videos?: { id: string | number; name?: string; url: string }[];
-  metacritic?: { score: number; url: string } | null;
-  isTemporaryFree?: boolean;
-  isTrending?: boolean;
-  isUpcoming?: boolean;
-  isFree?: boolean;
-  platform?: 'epic' | 'steam';
-  distributionPlatform?: 'epic' | 'steam';
-  promotionEndDate?: string; // Promosyon bitiş tarihi
-  price?: {
-    totalPrice?: {
-      discountPrice: number;
-      originalPrice: number;
-      discount: number;
-      isFree?: boolean;
-    };
-    isFree?: boolean;
-    finalPrice?: number;
-    discount?: number;
-  };
+// Promosyonlar için tip tanımları
+interface DiscountSetting {
+  discountPercentage: number;
+}
+
+interface PromotionalOffer {
+  startDate: string;
+  endDate: string;
+  discountSetting?: DiscountSetting;
+}
+
+interface PromotionalOffers {
+  promotionalOffers?: PromotionalOffer[];
+}
+
+interface Promotions {
+  promotionalOffers?: PromotionalOffers[];
+  upcomingPromotionalOffers?: PromotionalOffers[];
 }
 
 interface GameCardProps {
   game: ExtendedEpicGame;
   isFree?: boolean;
   isUpcoming?: boolean;
-  isTrending?: boolean;
+  trending?: boolean;
+  isSteam?: boolean;
   showDetails?: boolean;
   displayType?: 'list' | 'grid';
   temporaryFreeGame?: boolean;
@@ -54,7 +62,8 @@ const GameCard: React.FC<GameCardProps> = ({
   game,
   isFree: propIsFree,
   isUpcoming = false,
-  isTrending = false,
+  trending = false,
+  isSteam = false,
   showDetails = true,
   displayType = 'grid',
   temporaryFreeGame = false
@@ -62,6 +71,97 @@ const GameCard: React.FC<GameCardProps> = ({
   const [imgError, setImgError] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+
+  const isFreeGame = propIsFree !== undefined ? propIsFree : game.promotions?.promotionalOffers?.some(
+    offer => offer.promotionalOffers?.some(
+      promo => new Date(promo.startDate) <= new Date() && new Date(promo.endDate) >= new Date()
+    )
+  );
+
+  const isUpcomingGame = isUpcoming !== undefined ? isUpcoming : game.promotions?.upcomingPromotionalOffers?.some(
+    offer => offer.promotionalOffers?.some(
+      promo => new Date(promo.startDate) > new Date()
+    )
+  );
+
+  const getRemainingDays = (): number | null => {
+    if (!game.promotions) return null;
+
+    if (isFreeGame && game.promotions.promotionalOffers?.[0]?.promotionalOffers?.[0]) {
+      const endDate = new Date(game.promotions.promotionalOffers[0].promotionalOffers[0].endDate);
+      const now = new Date();
+      return Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    if (isUpcomingGame && game.promotions.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]) {
+      const startDate = new Date(game.promotions.upcomingPromotionalOffers[0].promotionalOffers[0].startDate);
+      const now = new Date();
+      return Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    return null;
+  };
+
+  const keyImage = game.keyImages?.find(img => img.type === 'Thumbnail' || img.type === 'DieselStoreFrontWide')?.url 
+    || game.keyImages?.[0]?.url 
+    || '/placeholder.jpg';
+
+  const coverImage = game.keyImages?.find(img => img.type === 'OfferImageTall' || img.type === 'DieselStoreFrontWide')?.url 
+    || game.keyImages?.[0]?.url 
+    || '/placeholder.jpg';
+
+  const mediaGallery = [
+    ...(game.keyImages?.filter(img => 
+      img.type !== 'Thumbnail' && 
+      img.type !== 'VaultClosed' && 
+      img.type !== 'DieselStoreFrontTall' &&
+      img.url
+    ) || []).map(img => ({ type: 'image', url: img.url, id: `image-${img.url}` })),
+    ...(game.videos || []).map(video => ({ type: 'video', url: video.url, thumbnail: video.thumbnail, id: video.id || `video-${video.url}` }))
+  ];
+
+  const handlePrevMedia = () => {
+    setCurrentMediaIndex((currentMediaIndex - 1 + mediaGallery.length) % mediaGallery.length);
+  };
+
+  const handleNextMedia = () => {
+    setCurrentMediaIndex((currentMediaIndex + 1) % mediaGallery.length);
+  };
+
+  const handleCloseGallery = () => {
+    setShowGallery(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      handleCloseGallery();
+    } else if (e.key === 'ArrowLeft') {
+      handlePrevMedia();
+    } else if (e.key === 'ArrowRight') {
+      handleNextMedia();
+    }
+  };
+
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showGallery) {
+        handleCloseGallery();
+      }
+    };
+
+    if (showGallery) {
+      document.addEventListener('keydown', handleEscKey);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+      document.body.style.overflow = '';
+    };
+  }, [showGallery]);
+
+  const remainingDays = getRemainingDays();
+  const linkPath = `/game/${game.namespace || game.id || ''}/${game.catalogNs?.mappings?.[0]?.pageSlug || game.id}`;
 
   // Promosyon bilgilerini al
   const getPromotionalInfo = () => {
@@ -111,7 +211,7 @@ const GameCard: React.FC<GameCardProps> = ({
     };
   };
 
-  const { isFreeGame, isUpcomingFree, startDate, endDate } = getPromotionalInfo();
+  const { isFreeGame: promoIsFreeGame, isUpcomingFree: promoIsUpcomingFree, startDate: promoStartDate, endDate: promoEndDate } = getPromotionalInfo();
 
   // Kalan günleri hesaplama fonksiyonunu güncelle
   const calculateRemainingDays = (endDate: Date | null): number => {
@@ -139,7 +239,6 @@ const GameCard: React.FC<GameCardProps> = ({
     return { days: diffDays, hours: diffHours };
   };
 
-  const remainingDays = calculateRemainingDays(endDate || startDate);
   const tempFreeRemaining = calculateTemporaryFreeRemaining();
 
   // Oyun için en iyi resmi seç
@@ -164,10 +263,10 @@ const GameCard: React.FC<GameCardProps> = ({
 
     const galleryMedia = [
       ...images.map((img, index) => ({ type: 'image', url: img.url, id: `image-${index}` })),
-      ...videos.map(video => ({ 
+      ...videos.map((video, index) => ({ 
         type: 'video', 
-        url: `https://www.youtube.com/embed/${video.id}`, 
-        id: video.id 
+        url: `https://www.youtube.com/embed/${video.id || ''}`, 
+        id: video.id || `video-${index}` 
       }))
     ];
 
@@ -268,190 +367,225 @@ const GameCard: React.FC<GameCardProps> = ({
 
   // Oyun kartı oluştur
   return (
-    <div className={clsx(
-      "group relative overflow-hidden rounded-lg bg-gray-900 transition-all duration-300 hover:shadow-xl",
-      game.isTrending && "border-2 border-yellow-500",
-      isFreeGame && "border-2 border-green-500",
-      isUpcomingFree && "border-2 border-blue-500"
-    )}>
-      {/* Üst bilgi etiketleri */}
-      <div className="absolute top-0 left-0 z-10 flex gap-2 p-2">
-        {game.isTrending && (
-          <span className="rounded bg-yellow-500 px-2 py-1 text-xs font-bold text-black">
-            <HiOutlineTrendingUp className="mr-1 inline" />
-            Trend
-          </span>
-        )}
-        {isFreeGame && (
-          <span className="rounded bg-green-500 px-2 py-1 text-xs font-bold text-black">
-            <FaRegMoneyBillAlt className="mr-1 inline" />
-            Ücretsiz
-          </span>
-        )}
-        {isUpcomingFree && (
-          <span className="rounded bg-blue-500 px-2 py-1 text-xs font-bold text-black">
-            <FaStopwatch className="mr-1 inline" />
-            Yakında
-          </span>
-        )}
-        {game.isTemporaryFree && (
-          <span className="rounded bg-purple-500 px-2 py-1 text-xs font-bold text-black">
-            <HiOutlineTag className="mr-1 inline" />
-            Geçici
-          </span>
-        )}
-      </div>
-
-      {/* Orta ekrandaki oyun kapak resmi */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden">
-        <Image
-          src={getBestImage()}
-          alt={game.title}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="transition-transform duration-500 group-hover:scale-110"
-          style={{ objectFit: 'cover' }}
-          onError={() => setImgError(true)}
-          loading="lazy"
-        />
-
-        {renderPlatformBadge()}
-
-        {/* Medya galerisi butonu */}
-        {galleryMedia.length > 1 && (
-          <button
-            onClick={() => setShowGallery(true)}
-            className="absolute bottom-4 right-4 rounded-full bg-black bg-opacity-70 p-2 text-white hover:bg-opacity-90"
-            aria-label="Medya galerisini aç"
-          >
-            <FaRegPlayCircle size={24} />
-          </button>
-        )}
-
-        {/* Promosyon süresi göstergesi */}
-        {(isFreeGame || isUpcomingFree) && remainingDays > 0 && (
-          <div className="absolute bottom-0 left-0 w-full bg-black bg-opacity-70 p-2 text-center text-sm font-bold text-white">
-            {isFreeGame ? 'Bitiş' : 'Başlangıç'}: {remainingDays} gün kaldı
-          </div>
-        )}
-
-        {/* Sınırlı süre ücretsiz etiketi */}
-        {temporaryFreeGame && tempFreeRemaining.days >= 0 && (
-          <div className="absolute bottom-0 left-0 w-full bg-purple-800 bg-opacity-90 p-2 text-center text-sm font-bold text-white">
-            Sınırlı Süre: {tempFreeRemaining.days} gün {tempFreeRemaining.hours} saat kaldı
-          </div>
-        )}
-      </div>
-
-      {/* Oyun bilgileri */}
-      <div className="p-4">
-        <Link href={`/game/${game.id}`} className="group/title">
-          <h3 className="mb-2 text-lg font-bold text-white transition-colors duration-200 group-hover/title:text-blue-400">
-            {game.title}
-          </h3>
-        </Link>
-
-        <p className="line-clamp-2 text-sm text-gray-300">{game.description || 'Açıklama bulunmuyor.'}</p>
-
-        {/* Metacritic puanı */}
-        {game.metacritic && (
-          <div className={clsx(
-            "mt-2 inline-block rounded px-2 py-1 text-sm font-bold",
-            game.metacritic.score >= 75 ? "bg-green-600" : 
-            game.metacritic.score >= 50 ? "bg-yellow-600" : "bg-red-600"
-          )}>
-            Metaskor: {game.metacritic.score}
-          </div>
-        )}
-
-        {/* Dış bağlantılar */}
-        <div className="mt-4 flex justify-between">
-          <Link 
-            href={`/game/${game.id}`} 
-            className="inline-flex items-center rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-          >
-            Detaylar <FaChevronRight className="ml-1" />
-          </Link>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="group relative flex flex-col bg-card border rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden h-full"
+    >
+      {/* Üst Etiket - Trending, Ücretsiz veya Yakında */}
+      {(game.trending || isFreeGame || isUpcomingGame) && (
+        <div className="absolute top-0 left-0 z-10 flex gap-2 p-2">
+          {game.trending && (
+            <span className="bg-amber-500 text-white text-xs font-medium px-2 py-0.5 rounded">
+              Trend
+            </span>
+          )}
           
-          <a
-            href={getStoreUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center rounded bg-gray-700 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-gray-600"
-          >
-            Epic <FaExternalLinkAlt className="ml-1" />
-          </a>
+          {isFreeGame && !isUpcomingGame && (
+            <span className="bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded flex items-center">
+              Ücretsiz
+              {remainingDays !== null && remainingDays > 0 && (
+                <span className="ml-1">({remainingDays} gün kaldı)</span>
+              )}
+            </span>
+          )}
+          
+          {isUpcomingGame && (
+            <span className="bg-blue-500 text-white text-xs font-medium px-2 py-0.5 rounded flex items-center">
+              Yakında Ücretsiz
+              {remainingDays !== null && remainingDays > 0 && (
+                <span className="ml-1">({remainingDays} gün kaldı)</span>
+              )}
+            </span>
+          )}
+        </div>
+      )}
+      
+      {/* Platform göstergesi */}
+      <div className="absolute top-0 right-0 z-10 p-2">
+        <div className="flex bg-black/50 backdrop-blur-sm rounded-full p-1">
+          {isSteam && (
+            <FaSteam className="text-white w-4 h-4" />
+          )}
         </div>
       </div>
 
-      {/* Medya galerisi modal */}
-      {showGallery && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90">
-          <div className="relative w-full max-w-4xl">
-            <button
-              className="absolute right-4 top-4 z-10 rounded-full bg-white bg-opacity-20 p-2 text-white hover:bg-opacity-30"
-              onClick={() => setShowGallery(false)}
+      {/* Resim Bölümü */}
+      <div 
+        className="relative overflow-hidden aspect-[16/9] w-full cursor-pointer"
+        onClick={() => setShowGallery(true)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            setShowGallery(true);
+          }
+        }}
+        tabIndex={0}
+        role="button"
+        aria-label={`${game.title} resim galerisi`}
+      >
+        {!imgError && keyImage ? (
+          <Image
+            src={keyImage}
+            alt={game.title || 'Oyun görseli'}
+            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+            width={600}
+            height={338}
+            onError={() => setImgError(true)}
+            placeholder="blur"
+            blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88/HjfwAJZwPXyjQCJwAAAABJRU5ErkJggg=="
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
+            <span className="text-gray-400 text-lg">Resim Yüklenemedi</span>
+          </div>
+        )}
+        
+        {/* Resim üzerindeki galeriye git butonu */}
+        {galleryMedia.length > 1 && (
+          <div className="absolute bottom-2 right-2 bg-black/50 text-white rounded-full px-2 py-1 text-xs backdrop-blur-sm">
+            {galleryMedia.length} görsel
+          </div>
+        )}
+      </div>
+
+      {/* Oyun Bilgileri */}
+      <div className="flex flex-col p-4 flex-grow">
+        <Link href={`/game/${game.id}`} className="hover:underline">
+          <h3 className="text-lg font-semibold line-clamp-1">{game.title}</h3>
+        </Link>
+          
+        {/* Metacritic Puanı */}
+        {game.metacritic && (
+          <div className="mt-1 flex items-center">
+            <div 
+              className={`w-8 h-8 flex items-center justify-center font-bold text-white text-sm rounded ${
+                game.metacritic.score >= 75 ? 'bg-green-600' : 
+                game.metacritic.score >= 50 ? 'bg-yellow-500' : 'bg-red-600'
+              }`}
+            >
+              {game.metacritic.score}
+            </div>
+            <span className="ml-2 text-xs text-gray-500">Metacritic</span>
+          </div>
+        )}
+        
+        {/* Açıklama */}
+        <p className="mt-2 text-sm text-gray-600 line-clamp-2 flex-grow">
+          {game.description || 'Bu oyun için açıklama bulunmamaktadır.'}
+        </p>
+        
+        {/* Detay Linkine Git Butonu */}
+        <div className="flex items-center justify-between mt-4">
+          <Link 
+            href={`/game/${game.id}`}
+            className="text-primary hover:underline text-sm font-medium flex items-center"
+          >
+            Detayları Gör
+            <FaChevronRight className="ml-1 h-3 w-3" />
+          </Link>
+          
+          {/* Fiyat Bilgisi */}
+          <div className="text-right">
+            {isFreeGame ? (
+              <span className="text-green-600 font-semibold">Ücretsiz</span>
+            ) : isUpcomingGame ? (
+              <span className="text-blue-600 font-semibold">Yakında Ücretsiz</span>
+            ) : game.price?.totalPrice?.discountPrice === 0 ? (
+              <span className="text-green-600 font-semibold">Ücretsiz</span>
+            ) : game.price?.totalPrice?.discountPrice !== game.price?.totalPrice?.originalPrice ? (
+              <div className="flex flex-col">
+                <span className="line-through text-gray-500 text-xs">
+                  {game.price?.totalPrice?.originalPrice 
+                    ? `₺${(game.price.totalPrice.originalPrice / 100).toFixed(2)}`
+                    : ''}
+                </span>
+                <span className="text-green-600 font-semibold">
+                  {game.price?.totalPrice?.discountPrice 
+                    ? `₺${(game.price.totalPrice.discountPrice / 100).toFixed(2)}`
+                    : 'Bilinmiyor'}
+                </span>
+              </div>
+            ) : (
+              <span className="font-semibold">
+                {game.price?.totalPrice?.originalPrice 
+                  ? `₺${(game.price.totalPrice.originalPrice / 100).toFixed(2)}`
+                  : 'Bilinmiyor'}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Medya Galerisi Modal */}
+      {showGallery && galleryMedia.length > 0 && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+          onClick={handleCloseGallery}
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
+        >
+          <div 
+            className="relative w-full max-w-5xl h-full max-h-[80vh] p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Kapat Butonu */}
+            <button 
+              onClick={handleCloseGallery}
+              className="absolute top-2 right-2 z-50 bg-black/50 text-white p-2 rounded-full"
               aria-label="Galeriyi kapat"
             >
-              <FaTimes size={24} />
+              <IoMdClose className="w-6 h-6" />
             </button>
-
-            <div className="px-8 pb-4 pt-12">
-              <Swiper
-                modules={[Navigation, Pagination]}
-                navigation={{
-                  prevEl: '.swiper-button-prev',
-                  nextEl: '.swiper-button-next',
-                }}
-                pagination={{ clickable: true }}
-                slidesPerView={1}
-                initialSlide={0}
-                onSlideChange={(swiper) => setCurrentMediaIndex(swiper.activeIndex)}
-                className="h-full w-full"
-              >
-                {galleryMedia.map((media, index) => (
-                  <SwiperSlide key={media.id}>
-                    <div className="flex aspect-video w-full items-center justify-center">
-                      {media.type === 'image' ? (
-                        <div className="relative h-full w-full">
-                          <Image
-                            src={media.url}
-                            alt={`${game.title} görsel ${index + 1}`}
-                            fill
-                            style={{ objectFit: 'contain' }}
-                            loading="lazy"
-                          />
-                        </div>
-                      ) : (
-                        <iframe
-                          src={media.url}
-                          title={`${game.title} video ${index + 1}`}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          className="h-full w-full"
-                        ></iframe>
-                      )}
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-
-              <div className="mt-4 flex items-center justify-between">
-                <button className="swiper-button-prev z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white bg-opacity-20 text-white hover:bg-opacity-30">
-                  <FaChevronLeft size={20} />
+            
+            {/* Ana Medya */}
+            <div className="w-full h-full flex items-center justify-center">
+              {galleryMedia[currentMediaIndex].type === 'video' ? (
+                <iframe
+                  src={galleryMedia[currentMediaIndex].url}
+                  className="w-full h-full"
+                  allowFullScreen
+                  title={`${game.title} video ${currentMediaIndex + 1}`}
+                ></iframe>
+              ) : (
+                <Image
+                  src={galleryMedia[currentMediaIndex].url}
+                  alt={`${game.title} görsel ${currentMediaIndex + 1}`}
+                  className="object-contain max-h-full"
+                  width={1200}
+                  height={675}
+                />
+              )}
+            </div>
+            
+            {/* Navigasyon Butonları */}
+            {galleryMedia.length > 1 && (
+              <>
+                <button 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-3 rounded-full"
+                  onClick={handlePrevMedia}
+                  aria-label="Önceki görsel"
+                >
+                  <FaArrowLeft className="w-5 h-5" />
                 </button>
-                <div className="text-center text-sm text-white">
+                <button 
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-3 rounded-full"
+                  onClick={handleNextMedia}
+                  aria-label="Sonraki görsel"
+                >
+                  <FaArrowRight className="w-5 h-5" />
+                </button>
+                
+                {/* Sayfa göstergesi */}
+                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/50 text-white rounded-full px-3 py-1 text-sm">
                   {currentMediaIndex + 1} / {galleryMedia.length}
                 </div>
-                <button className="swiper-button-next z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white bg-opacity-20 text-white hover:bg-opacity-30">
-                  <FaChevronRight size={20} />
-                </button>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

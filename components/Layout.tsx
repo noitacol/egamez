@@ -2,12 +2,37 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import { ReactNode } from 'react';
+import { useRouter } from 'next/router';
+import { IconType } from 'react-icons';
+import { FiHome, FiClock, FiTag, FiList, FiTrendingUp } from 'react-icons/fi';
+import { SiEpicgames, SiSteam } from 'react-icons/si';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
   title?: string;
   description?: string;
 }
+
+interface NavItemProps {
+  href: string;
+  label: string;
+  icon: IconType;
+  active: boolean;
+}
+
+const NavItem = ({ href, label, icon: Icon, active }: NavItemProps) => {
+  const activeClass = active
+    ? 'bg-blue-50 text-blue-600 dark:bg-gray-700 dark:text-blue-400 font-medium'
+    : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700';
+
+  return (
+    <Link href={href} className={`flex items-center px-3 py-2 rounded-md ${activeClass}`}>
+      <Icon className="mr-2 h-5 w-5" />
+      <span>{label}</span>
+    </Link>
+  );
+};
 
 const Layout = ({ 
   children, 
@@ -17,6 +42,8 @@ const Layout = ({
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter();
+  const currentPath = router.pathname;
 
   // Tema değişikliğini sadece client tarafında gerçekleştirme
   useEffect(() => {
@@ -91,6 +118,14 @@ const Layout = ({
                 Ana Sayfa
               </Link>
               <Link 
+                href="/all-free-games"
+                className="text-gray-700 dark:text-gray-300 hover:text-epicblue dark:hover:text-epicaccent transition-colors font-medium"
+                tabIndex={0}
+                aria-label="Tüm ücretsiz oyunları gör"
+              >
+                Tüm Ücretsiz Oyunlar
+              </Link>
+              <Link 
                 href="/upcoming"
                 className="text-gray-700 dark:text-gray-300 hover:text-epicblue dark:hover:text-epicaccent transition-colors font-medium"
                 tabIndex={0}
@@ -132,6 +167,15 @@ const Layout = ({
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Ana Sayfa
+                </Link>
+                <Link 
+                  href="/all-free-games"
+                  className="text-gray-700 dark:text-gray-300 hover:text-epicblue dark:hover:text-epicaccent transition-colors font-medium"
+                  tabIndex={0}
+                  aria-label="Tüm ücretsiz oyunları gör"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Tüm Ücretsiz Oyunlar
                 </Link>
                 <Link 
                   href="/upcoming"
