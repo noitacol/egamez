@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { EpicGame } from "@/lib/epic-api";
 import GameCard from "./GameCard";
-import { FaSteam, FaEpic } from "react-icons/fa";
+import { FaSteam } from "react-icons/fa";
+import { SiEpicgames } from "react-icons/si";
 
 interface FreeGamesListProps {
   epicGames: EpicGame[];
@@ -67,7 +68,7 @@ const FreeGamesList = ({ epicGames, steamGames }: FreeGamesListProps) => {
               } border-t border-b border-r border-gray-300`}
               onClick={() => setFilter("epic")}
             >
-              <FaEpic /> Epic
+              <SiEpicgames /> Epic
             </button>
             <button
               className={`px-4 py-2 text-sm font-medium flex items-center gap-1 rounded-r-md ${
