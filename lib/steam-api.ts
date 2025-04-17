@@ -432,10 +432,10 @@ export async function getSteamGameNews(appid: number, count: number = 3): Promis
  * Bu fonksiyon, Steam Game'i EpicGame formatına çevirerek UI'da tutarlı bir gösterim sağlar
  */
 export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame {
-  // Metacritic puanı varsa uygun formatta ayarla, yoksa undefined olarak bırak
+  // Metacritic puanı varsa uygun formatta ayarla, yoksa null olarak bırak
   const metacritic = steamGame.metacritic 
     ? { score: steamGame.metacritic.score, url: steamGame.metacritic.url } 
-    : undefined;
+    : null;
   
   // Videolar varsa uygun formatta ayarla, yoksa boş dizi olarak ver
   const videos = steamGame.movies 
@@ -515,8 +515,8 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame
     // Genişletilmiş özellikler
     videos,
     metacritic,
-    isTemporaryFree: steamGame.isTemporaryFree,
-    isTrending: steamGame.isTrending,
+    isTemporaryFree: steamGame.isTemporaryFree || false,
+    isTrending: steamGame.isTrending || false,
     platform: 'steam', 
     distributionPlatform: 'steam'
   };

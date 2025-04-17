@@ -19,7 +19,7 @@ import clsx from 'clsx';
 // EpicGame tipinden oluşturulmuş genişletilmiş tip
 export interface ExtendedEpicGame extends Omit<EpicGame, 'price'> {
   videos?: { id: string | number; name?: string; url: string }[];
-  metacritic?: { score: number; url: string };
+  metacritic?: { score: number; url: string } | null;
   isTemporaryFree?: boolean;
   isTrending?: boolean;
   isUpcoming?: boolean;
