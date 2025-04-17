@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ExtendedEpicGame } from '../components/GameCard';
+import { getAllTemporaryFreeAppIds } from './api-extractor';
 
 const STEAM_API_KEY = '7939B44042A20BCD809BC41CBDDE75BF';
 const STEAM_API_URL = 'https://api.steampowered.com';
@@ -255,17 +256,45 @@ export async function getFreeSteamGames(): Promise<SteamGame[]> {
 }
 
 /**
- * Steam'den geçici olarak (yüzde 100 indirimli) ücretsiz olan oyunları getir
+ * Steam'den geçici olarak ücretsiz olan oyunları getir
  * Örneğin: https://store.steampowered.com/app/753660/AtmaSphere/ gibi
  */
 export async function getTemporaryFreeSteamGames(): Promise<SteamGame[]> {
   try {
-    // URL üzerinden Steam'in free promocontent sayfasından veri çekmeye çalışalım
-    // API'den alamadığımız için şu anda manuel bir liste kullanıyoruz
-    // Bu liste düzenli olarak güncellenmelidir
+    // Tüm kaynaklardan geçici olarak ücretsiz oyunların app ID'lerini ve bitiş tarihlerini al
+    const temporaryFreeApps = await getAllTemporaryFreeAppIds();
     
-    // Şu anda geçici olarak ücretsiz olan Steam oyunlarının appID'leri
-    const temporaryFreeAppIds = [
+    // Oyun detaylarını paralel olarak al
+    const tempFreeGames = await Promise.all(
+      temporaryFreeApps.map(async ({ appId, endDate }) => {
+        try {
+          const details = await getGameDetails(appId);
+          
+          // Oyun detayları başarıyla alındıysa
+          if (details) {
+            // İndirimdeyse veya ücretsizse işaretle
+            if (details.price.finalPrice === 0 || details.price.discount === 100) {
+              return {
+                ...details,
+                isTemporaryFree: true, 
+                promotionEndDate: endDate // SteamDB veya diğer kaynaklardan alınan bitiş tarihi
+              };
+            }
+          }
+          return null;
+        } catch (error) {
+          console.error(`Error fetching details for temporary free app ID ${appId}:`, error);
+          return null;
+        }
+      })
+    );
+    
+    return tempFreeGames.filter(game => game !== null) as SteamGame[];
+  } catch (error) {
+    console.error('Steam temporary free games API error:', error);
+    
+    // Fallback: Manuel olarak bilinen geçici ücretsiz oyunların listesini kullan
+    const knownFreePromotionAppIds = [
       753660, // AtmaSphere (Örnek olarak eklendi)
       1201240, // POSTAL 4: No Regerts
       1245620, // Elden Ring (Örnek)
@@ -274,38 +303,31 @@ export async function getTemporaryFreeSteamGames(): Promise<SteamGame[]> {
       1716740, // Far Cry 6 (Örnek)
     ];
     
-    // Geçici ücretsiz oyunların detaylarını al
-    const tempFreeGames = await Promise.all(
-      temporaryFreeAppIds
-        .filter(appId => appId > 0)
-        .map(async (appId) => {
-          try {
-            const details = await getGameDetails(appId);
-            // Ücretsiz oyunları filtrele
-            if (details) {
-              // Normalde oyun ücretsiz değil ama şu an fiyatı 0 ve indirimdeyse
-              if (!details.price.isFree && 
-                  (details.price.finalPrice === 0 || details.price.discount === 100)) {
-                return {
-                  ...details,
-                  isTemporaryFree: true,
-                  // Promosyon bitiş tarihi - varsayılan olarak 7 gün sonrası
-                  promotionEndDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString()
-                };
-              }
-            }
-            return null;
-          } catch (error) {
-            console.error(`Error fetching details for temporary free app ID ${appId}:`, error);
-            return null;
+    // Manuel liste için oyun detaylarını al
+    const fallbackGames = await Promise.all(
+      knownFreePromotionAppIds.map(async (appId) => {
+        try {
+          const details = await getGameDetails(appId);
+          if (details) {
+            // Gelecek bir hafta için varsayılan bitiş tarihi ayarla
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + 7);
+            
+            return {
+              ...details,
+              isTemporaryFree: true,
+              promotionEndDate: endDate.toISOString()
+            };
           }
-        })
+          return null;
+        } catch (error) {
+          console.error(`Error fetching details for fallback app ID ${appId}:`, error);
+          return null;
+        }
+      })
     );
     
-    return tempFreeGames.filter(game => game !== null) as SteamGame[];
-  } catch (error) {
-    console.error('Steam temporary free games API error:', error);
-    return [];
+    return fallbackGames.filter(game => game !== null) as SteamGame[];
   }
 }
 
