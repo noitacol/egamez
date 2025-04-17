@@ -13,6 +13,7 @@
     "axios": "^1.6.7",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "framer-motion": "^12.7.4",
     "jsdom": "^26.1.0",
     "keen-slider": "^6.8.6",
     "next": "14.0.4",
