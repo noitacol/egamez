@@ -3,6 +3,7 @@ import Image from "next/image";
 import { SteamGame } from "@/lib/steam-api";
 import { EpicGame } from "@/lib/epic-api";
 import GameCard from "./GameCard";
+import { ExtendedEpicGame } from "@/lib/types";
 
 interface TrendingGamesProps {
   epicGames: EpicGame[];
@@ -18,9 +19,18 @@ const TrendingGames = ({ epicGames, steamGames }: TrendingGamesProps) => {
       case "epic":
         return epicGames;
       case "steam":
-        return steamGames;
+        return steamGames.map(game => ({
+          ...game,
+          id: `steam_${game.appid}` // SteamGame'in id'si yok, appid kullanarak id oluştur
+        })) as unknown as ExtendedEpicGame[];
       default:
-        return [...epicGames, ...steamGames];
+        return [
+          ...epicGames,
+          ...steamGames.map(game => ({
+            ...game,
+            id: `steam_${game.appid}`
+          })) as unknown as ExtendedEpicGame[]
+        ];
     }
   };
 
@@ -56,7 +66,7 @@ const TrendingGames = ({ epicGames, steamGames }: TrendingGamesProps) => {
           <GameCard 
             key={game.id} 
             game={game} 
-            isTrending 
+            trending 
           />
         ))}
       </div>
