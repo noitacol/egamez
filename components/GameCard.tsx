@@ -26,6 +26,7 @@ export interface ExtendedEpicGame extends Omit<EpicGame, 'price'> {
   isFree?: boolean;
   platform?: 'epic' | 'steam';
   distributionPlatform?: 'epic' | 'steam';
+  promotionEndDate?: string; // Promosyon bitiş tarihi
   price?: {
     totalPrice?: {
       discountPrice: number;
@@ -112,7 +113,7 @@ const GameCard: React.FC<GameCardProps> = ({
 
   const { isFreeGame, isUpcomingFree, startDate, endDate } = getPromotionalInfo();
 
-  // Promosyon bitişine kalan günleri hesapla
+  // Kalan günleri hesaplama fonksiyonunu güncelle
   const calculateRemainingDays = (endDate: Date | null): number => {
     if (!endDate) return 0;
     
@@ -122,7 +123,24 @@ const GameCard: React.FC<GameCardProps> = ({
     return diffDays > 0 ? diffDays : 0;
   };
 
+  // Geçici ücretsiz oyunlar için kalan süreyi hesapla
+  const calculateTemporaryFreeRemaining = (): { days: number, hours: number } => {
+    if (!game.promotionEndDate) return { days: 0, hours: 0 };
+    
+    const now = new Date();
+    const endDate = new Date(game.promotionEndDate);
+    const diffTime = endDate.getTime() - now.getTime();
+    
+    if (diffTime <= 0) return { days: 0, hours: 0 };
+    
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    return { days: diffDays, hours: diffHours };
+  };
+
   const remainingDays = calculateRemainingDays(endDate || startDate);
+  const tempFreeRemaining = calculateTemporaryFreeRemaining();
 
   // Oyun için en iyi resmi seç
   const getBestImage = (): string => {
@@ -314,6 +332,13 @@ const GameCard: React.FC<GameCardProps> = ({
         {(isFreeGame || isUpcomingFree) && remainingDays > 0 && (
           <div className="absolute bottom-0 left-0 w-full bg-black bg-opacity-70 p-2 text-center text-sm font-bold text-white">
             {isFreeGame ? 'Bitiş' : 'Başlangıç'}: {remainingDays} gün kaldı
+          </div>
+        )}
+
+        {/* Sınırlı süre ücretsiz etiketi */}
+        {temporaryFreeGame && tempFreeRemaining.days >= 0 && (
+          <div className="absolute bottom-0 left-0 w-full bg-purple-800 bg-opacity-90 p-2 text-center text-sm font-bold text-white">
+            Sınırlı Süre: {tempFreeRemaining.days} gün {tempFreeRemaining.hours} saat kaldı
           </div>
         )}
       </div>

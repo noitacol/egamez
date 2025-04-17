@@ -4,7 +4,7 @@ import Head from 'next/head';
 import Layout from '../components/Layout';
 import GameCard from '../components/GameCard';
 import { getFreeGames, getUpcomingFreeGames } from '../lib/epic-api';
-import { getFreeSteamGames, getTrendingSteamGames, convertSteamToEpicFormat } from '../lib/steam-api';
+import { getFreeSteamGames, getTrendingSteamGames, convertSteamToEpicFormat, getTemporaryFreeSteamGames } from '../lib/steam-api';
 import { ExtendedEpicGame } from '../components/GameCard';
 import { FiFilter, FiArrowDown, FiArrowUp, FiSearch, FiClock, FiArrowRight, FiGrid, FiMenu } from 'react-icons/fi';
 import { SiEpicgames, SiSteam } from 'react-icons/si';
@@ -20,13 +20,20 @@ interface HomeProps {
   epicUpcomingGames: ExtendedEpicGame[];
   steamFreeGames: ExtendedEpicGame[];
   steamTrendingGames: ExtendedEpicGame[];
+  temporaryFreeGames: ExtendedEpicGame[];
 }
 
 type SortOption = 'title' | 'date';
 type SortDirection = 'asc' | 'desc';
 type ViewMode = 'grid' | 'list';
 
-export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames, steamTrendingGames }: HomeProps) {
+export default function Home({ 
+  epicFreeGames, 
+  epicUpcomingGames, 
+  steamFreeGames, 
+  steamTrendingGames,
+  temporaryFreeGames
+}: HomeProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -66,9 +73,15 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
       platform: 'steam' as const,
       isTrending: true
     }));
+
+    const tempFree = temporaryFreeGames.map(game => ({
+      ...game,
+      platform: 'steam' as const,
+      isTemporaryFree: true
+    }));
     
-    setAllGames([...epic, ...upcoming, ...steam, ...trending]);
-  }, [epicFreeGames, epicUpcomingGames, steamFreeGames, steamTrendingGames]);
+    setAllGames([...epic, ...upcoming, ...steam, ...trending, ...tempFree]);
+  }, [epicFreeGames, epicUpcomingGames, steamFreeGames, steamTrendingGames, temporaryFreeGames]);
   
   // Filtreleme ve sıralama işlemleri
   useEffect(() => {
@@ -474,6 +487,35 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
           </div>
         </div>
       </section>
+
+      {/* Sınırlı Süre Ücretsiz Oyunlar */}
+      {temporaryFreeGames.length > 0 && (
+        <section className="mb-10">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+              <span className="bg-purple-200 dark:bg-purple-900 text-purple-700 dark:text-purple-300 p-2 rounded-lg mr-3">
+                <FiClock />
+              </span>
+              Sınırlı Süre Ücretsiz Oyunlar
+            </h2>
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              Kaçırmayın - Sınırlı süre için ücretsiz!
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {temporaryFreeGames.map(game => (
+              <div key={game.id} className="h-full">
+                <GameCard 
+                  game={game} 
+                  temporaryFreeGame={true}
+                  isFree={true}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </Layout>
   );
 }
@@ -481,11 +523,12 @@ export default function Home({ epicFreeGames, epicUpcomingGames, steamFreeGames,
 export const getStaticProps: GetStaticProps<HomeProps> = async () => {
   try {
     // Paralel olarak tüm API isteklerini yapıyoruz
-    const [epicFreeGamesData, epicUpcomingGamesData, steamFreeGamesData, steamTrendingGamesData] = await Promise.all([
+    const [epicFreeGamesData, epicUpcomingGamesData, steamFreeGamesData, steamTrendingGamesData, temporaryFreeGamesData] = await Promise.all([
       getFreeGames(),
       getUpcomingFreeGames(),
       getFreeSteamGames().then(games => games.map(convertSteamToEpicFormat)),
       getTrendingSteamGames().then(games => games.map(convertSteamToEpicFormat)),
+      getTemporaryFreeSteamGames().then(games => games.map(convertSteamToEpicFormat))
     ]);
 
     // Tüm verileri bir araya getiriyoruz
@@ -495,6 +538,7 @@ export const getStaticProps: GetStaticProps<HomeProps> = async () => {
         epicUpcomingGames: epicUpcomingGamesData as ExtendedEpicGame[],
         steamFreeGames: steamFreeGamesData as ExtendedEpicGame[],
         steamTrendingGames: steamTrendingGamesData as ExtendedEpicGame[],
+        temporaryFreeGames: temporaryFreeGamesData as ExtendedEpicGame[]
       },
       revalidate: 1800, // 30 dakikada bir yeniden oluştur
     };
@@ -508,6 +552,7 @@ export const getStaticProps: GetStaticProps<HomeProps> = async () => {
         epicUpcomingGames: [] as ExtendedEpicGame[],
         steamFreeGames: [] as ExtendedEpicGame[],
         steamTrendingGames: [] as ExtendedEpicGame[],
+        temporaryFreeGames: [] as ExtendedEpicGame[]
       },
       revalidate: 300, // Hata durumunda 5 dakika sonra tekrar dene
     };
