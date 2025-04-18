@@ -3,7 +3,7 @@ import { GetStaticProps } from 'next';
 import Layout from '../components/Layout';
 import GameCard from '../components/GameCard';
 import { getUpcomingFreeGames } from '../lib/epic-api';
-import { ExtendedEpicGame } from '../components/GameCard';
+import { ExtendedEpicGame } from '../lib/types';
 
 interface UpcomingProps {
   upcomingGames: ExtendedEpicGame[];

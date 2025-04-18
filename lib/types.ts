@@ -1,70 +1,58 @@
 import { EpicGame } from './epic-api';
 
 /**
- * EpicGame arayüzünü genişleten arayüz; Epic ve Steam'den gelen verileri birleştirmek için kullanılır
+ * Epic Games ve Steam oyunları için genişletilmiş tip tanımı
+ * Temel EpicGame tipine ek özellikler ekler
  */
 export interface ExtendedEpicGame extends EpicGame {
-  /**
-   * Oyunun video içerikleri
-   */
-  videos?: {
-    url: string;
-    thumbnail?: string;
-    id?: string | number;
-  }[];
+  /** Oyunun Steam veya Epic mağazasından geldiğini belirtir */
+  source?: 'epic' | 'steam';
   
-  /**
-   * Metacritic puanı ve inceleme URL'si
-   */
-  metacritic?: {
-    score: number;
-    url?: string;
-  };
-  
-  /**
-   * Oyunun trend olma durumu
-   */
-  trending?: boolean;
-  
-  /**
-   * Oyunun trend olma durumu (alternatif isim)
-   */
-  isTrending?: boolean;
-  
-  /**
-   * Oyunun yakında ücretsiz olma durumu
-   */
-  isUpcoming?: boolean;
-  
-  /**
-   * Oyunun sadece geçici olarak ücretsiz olma durumu
-   */
-  temporaryFree?: boolean;
-  
-  /**
-   * Geçici olarak ücretsiz oyun
-   */
-  temporaryFreeGame?: boolean;
-  
-  /**
-   * Geçici promosyonun bitiş tarihi
-   */
-  promotionEndDate?: string;
-  
-  /**
-   * Oyunun hangi platformdan geldiği (epic veya steam)
-   */
+  /** Platformu belirtir (epic veya steam) */
   platform?: 'epic' | 'steam';
   
-  /**
-   * Dağıtım platformu (epic veya steam)
-   */
+  /** Dağıtım platformu */
   distributionPlatform?: 'epic' | 'steam';
   
-  /**
-   * Katalog namespace
-   */
+  /** Oyunun geçici olarak ücretsiz olup olmadığını belirtir */
+  isTempFree?: boolean;
+  
+  /** Geçici olarak ücretsiz oyun */
+  temporaryFreeGame?: boolean;
+  
+  /** Promosyon bitiş tarihi */
+  promotionEndDate?: string;
+  
+  /** Oyunun yakında ücretsiz olma durumu */
+  isUpcoming?: boolean;
+  
+  /** Oyunun popüler olup olmadığını belirtir */
+  isTrending?: boolean;
+  
+  /** Trend olma durumu (alternatif isim) */
+  trending?: boolean;
+  
+  /** Katalog namespace bilgisi */
   catalogNs?: {
     mappings?: { pageSlug: string }[];
   };
+  
+  /** Metacritic puanı */
+  metacritic?: {
+    score: number;
+    url: string;
+  };
+  
+  /** Oyun videoları */
+  videos?: Array<{
+    id: string;
+    thumbnail: string;
+    url: string;
+  }>;
+  
+  /** Çıkış tarihi (ISO string) */
+  releaseDate?: string;
+  
+  /** Özel not veya açıklama */
+  note?: string;
 } 

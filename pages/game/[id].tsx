@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
 import { getGameDetails } from '../../lib/epic-api';
-import { ExtendedEpicGame } from '../../components/GameCard';
+import { ExtendedEpicGame } from '../../lib/types';
 import { getGameDetails as getSteamGameDetails, convertSteamToEpicFormat } from '../../lib/steam-api';
 
 interface GameDetailProps {

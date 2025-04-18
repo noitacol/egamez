@@ -1,16 +1,17 @@
 import { GetStaticProps } from "next";
 import { useState } from "react";
 import Head from "next/head";
-import { EpicGame, getFreeGames, getUpcomingFreeGames } from "@/lib/epic-api";
+import { getFreeGames, getUpcomingFreeGames } from "@/lib/epic-api";
 import { getFreeSteamGames } from "@/lib/steam-api";
 import FreeGamesList from "@/components/FreeGamesList";
 import GameCard from "@/components/GameCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ExtendedEpicGame } from "@/lib/types";
 
 interface HomeProps {
-  epicFreeGames: EpicGame[];
-  upcomingEpicGames: EpicGame[];
-  steamFreeGames: EpicGame[];
+  epicFreeGames: ExtendedEpicGame[];
+  upcomingEpicGames: ExtendedEpicGame[];
+  steamFreeGames: ExtendedEpicGame[];
   totalGames: number;
 }
 
