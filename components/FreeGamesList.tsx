@@ -13,6 +13,18 @@ const FreeGamesList = ({ epicGames, steamGames }: FreeGamesListProps) => {
   const [filter, setFilter] = useState<"all" | "epic" | "steam">("all");
   const [sortBy, setSortBy] = useState<"name" | "release">("name");
 
+  // Güvenli bir string karşılaştırma fonksiyonu
+  const safeCompare = (a: string | undefined | null, b: string | undefined | null) => {
+    // Eğer her iki değer de tanımlı değilse 0 döndür (eşit kabul et)
+    if (!a && !b) return 0;
+    // Eğer sadece a tanımlı değilse b önce gelsin
+    if (!a) return 1;
+    // Eğer sadece b tanımlı değilse a önce gelsin
+    if (!b) return -1;
+    // Her iki değer de tanımlıysa normal karşılaştırma yap
+    return a.localeCompare(b);
+  };
+
   // Tüm oyunları filtre ve sıralama ayarlarına göre düzenle
   const getFilteredAndSortedGames = () => {
     let games: ExtendedEpicGame[] = [];
@@ -28,12 +40,12 @@ const FreeGamesList = ({ epicGames, steamGames }: FreeGamesListProps) => {
     
     // Sıralama
     if (sortBy === "name") {
-      games.sort((a, b) => a.title.localeCompare(b.title));
+      games.sort((a, b) => safeCompare(a.title, b.title));
     } else {
       // Yayınlanma tarihine göre sırala (en yeni üstte)
       games.sort((a, b) => {
-        const dateA = new Date(a.effectiveDate || 0).getTime();
-        const dateB = new Date(b.effectiveDate || 0).getTime();
+        const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : 0;
+        const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : 0;
         return dateB - dateA;
       });
     }
