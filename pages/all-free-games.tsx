@@ -365,7 +365,9 @@ export default function AllFreeGames({
                             <div className="text-green-600 dark:text-green-400 font-semibold">Ücretsiz</div>
                           ) : (
                             <div className="text-gray-600 dark:text-gray-400">
-                              {game.price?.totalPrice?.fmtPrice?.originalPrice || 'Ücretsiz'}
+                              {game.price?.totalPrice?.originalPrice 
+                                ? `₺${(game.price.totalPrice.originalPrice / 100).toFixed(2)}`
+                                : 'Ücretsiz'}
                             </div>
                           )}
                         </div>
