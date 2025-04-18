@@ -1,8 +1,8 @@
 import { GetStaticProps } from "next";
 import { useState } from "react";
 import Head from "next/head";
-import { getFreeGames, getUpcomingFreeGames } from "@/lib/epic-api";
-import { getFreeSteamGames } from "@/lib/steam-api";
+import { getFreeGames, getUpcomingFreeGames, getTrendingEpicGames } from "@/lib/epic-api";
+import { getFreeSteamGames, getTrendingSteamGames } from "@/lib/steam-api";
 import FreeGamesList from "@/components/FreeGamesList";
 import GameCard from "@/components/GameCard";
 import { ExtendedEpicGame } from "@/lib/types";
@@ -11,8 +11,6 @@ interface HomeProps {
   epicFreeGames: ExtendedEpicGame[];
   upcomingEpicGames: ExtendedEpicGame[];
   steamFreeGames: ExtendedEpicGame[];
-  temporaryFreeGames: ExtendedEpicGame[];
-  trendingGames: ExtendedEpicGame[];
   totalGames: number;
 }
 
@@ -20,8 +18,6 @@ export default function Home({
   epicFreeGames, 
   upcomingEpicGames, 
   steamFreeGames,
-  temporaryFreeGames,
-  trendingGames,
   totalGames 
 }: HomeProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -139,12 +135,6 @@ export const getStaticProps: GetStaticProps = async () => {
     let epicFreeGames = await getFreeGames() || [];
     let upcomingEpicGames = await getUpcomingFreeGames() || [];
     let steamFreeGames = await getFreeSteamGames() || [];
-    let temporaryFreeGames = await getTemporaryFreeSteamGames() || [];
-    
-    // Trend oyunları getir
-    let epicTrendingGames = await getTrendingEpicGames() || [];
-    let steamTrendingGames = await getTrendingSteamGames() || [];
-    let trendingGames = [...epicTrendingGames, ...steamTrendingGames];
     
     // Serileştirme hatalarını önlemek için veriyi temizleyelim
     const safelySerialize = (data: any) => {
@@ -155,8 +145,6 @@ export const getStaticProps: GetStaticProps = async () => {
     epicFreeGames = safelySerialize(epicFreeGames);
     upcomingEpicGames = safelySerialize(upcomingEpicGames);
     steamFreeGames = safelySerialize(steamFreeGames);
-    temporaryFreeGames = safelySerialize(temporaryFreeGames);
-    trendingGames = safelySerialize(trendingGames);
     
     // Oyun verilerini kontrol et ve eksik alanları tamamla
     const sanitizeEpicGames = (games: ExtendedEpicGame[]): ExtendedEpicGame[] => {
@@ -168,35 +156,17 @@ export const getStaticProps: GetStaticProps = async () => {
       }));
     };
     
-    // Steam oyunlarını olduğu gibi bırak, zaten dönüştürülmüş durumdalar
     // Tüm oyun listelerini temizle
     epicFreeGames = sanitizeEpicGames(epicFreeGames);
     upcomingEpicGames = sanitizeEpicGames(upcomingEpicGames);
-    // steamFreeGames ve diğer Steam oyunları için sanitize işlemi yapmıyoruz
-    // temporaryFreeGames için de sanitize işlemi yapmıyoruz
-    trendingGames = trendingGames.map(game => {
-      // Eğer Epic oyunu ise sanitize et
-      if (game.platform === 'epic') {
-        return {
-          ...game,
-          title: game.title || 'İsimsiz Oyun',
-          id: game.id || `game-${Math.random().toString(36).substr(2, 9)}`,
-          effectiveDate: game.effectiveDate || new Date().toISOString()
-        };
-      }
-      // Steam oyunlarını olduğu gibi döndür
-      return game;
-    });
     
-    const totalGames = epicFreeGames.length + upcomingEpicGames.length + steamFreeGames.length + temporaryFreeGames.length;
+    const totalGames = epicFreeGames.length + upcomingEpicGames.length + steamFreeGames.length;
 
     return {
       props: {
         epicFreeGames,
         upcomingEpicGames,
         steamFreeGames,
-        temporaryFreeGames,
-        trendingGames,
         totalGames
       },
       // Her 6 saatte bir yeniden oluştur
@@ -210,8 +180,6 @@ export const getStaticProps: GetStaticProps = async () => {
         epicFreeGames: [],
         upcomingEpicGames: [],
         steamFreeGames: [],
-        temporaryFreeGames: [],
-        trendingGames: [],
         totalGames: 0
       },
       revalidate: 60 * 60, // Bir saat sonra yeniden dene
