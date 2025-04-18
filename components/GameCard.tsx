@@ -30,7 +30,6 @@ import { AiFillStar, AiOutlineInfoCircle } from "react-icons/ai";
 import { BiChevronLeft, BiChevronRight } from "react-icons/bi";
 import { FaPlay } from "react-icons/fa";
 import { SiSteam } from "react-icons/si";
-import { BsCalendar } from "react-icons/bs";
 
 // Promosyonlar için tip tanımları
 interface DiscountSetting {
