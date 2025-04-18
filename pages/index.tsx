@@ -5,7 +5,6 @@ import { getFreeGames, getUpcomingFreeGames } from "@/lib/epic-api";
 import { getFreeSteamGames } from "@/lib/steam-api";
 import FreeGamesList from "@/components/FreeGamesList";
 import GameCard from "@/components/GameCard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExtendedEpicGame } from "@/lib/types";
 
 interface HomeProps {
@@ -23,6 +22,7 @@ export default function Home({
 }: HomeProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'free' | 'upcoming'>('free');
 
   return (
     <>
@@ -59,27 +59,49 @@ export default function Home({
             </div>
           </div>
 
-          <Tabs defaultValue="free" className="mb-8">
-            <TabsList className="mb-6">
-              <TabsTrigger value="free">Ücretsiz Oyunlar</TabsTrigger>
-              <TabsTrigger value="upcoming">Yakında Ücretsiz</TabsTrigger>
-            </TabsList>
+          {/* Tab butonları */}
+          <div className="flex space-x-2 border-b border-gray-200 mb-6">
+            <button
+              onClick={() => setActiveTab('free')}
+              className={`py-2 px-4 font-medium ${
+                activeTab === 'free'
+                  ? 'border-b-2 border-blue-500 text-blue-500'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Ücretsiz Oyunlar
+            </button>
+            <button
+              onClick={() => setActiveTab('upcoming')}
+              className={`py-2 px-4 font-medium ${
+                activeTab === 'upcoming'
+                  ? 'border-b-2 border-blue-500 text-blue-500'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Yakında Ücretsiz
+            </button>
+          </div>
+          
+          {/* Tab içeriği */}
+          <div className="mt-4">
+            {activeTab === 'free' && (
+              <>
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : error ? (
+                  <div className="bg-red-100 p-4 rounded-lg">
+                    <p className="text-red-700">{error}</p>
+                  </div>
+                ) : (
+                  <FreeGamesList epicGames={epicFreeGames} steamGames={steamFreeGames} />
+                )}
+              </>
+            )}
             
-            <TabsContent value="free">
-              {isLoading ? (
-                <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                </div>
-              ) : error ? (
-                <div className="bg-red-100 p-4 rounded-lg">
-                  <p className="text-red-700">{error}</p>
-                </div>
-              ) : (
-                <FreeGamesList epicGames={epicFreeGames} steamGames={steamFreeGames} />
-              )}
-            </TabsContent>
-            
-            <TabsContent value="upcoming">
+            {activeTab === 'upcoming' && (
               <div>
                 <h2 className="text-2xl font-bold mb-6">Yakında Ücretsiz Olacak Oyunlar</h2>
                 
@@ -99,8 +121,8 @@ export default function Home({
                   </div>
                 )}
               </div>
-            </TabsContent>
-          </Tabs>
+            )}
+          </div>
         </section>
       </main>
     </>
