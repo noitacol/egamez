@@ -26,6 +26,11 @@ import { BiSolidRightArrow, BiSolidLeftArrow } from "react-icons/bi";
 import { FiExternalLink } from "react-icons/fi";
 import { IoMdPricetag } from 'react-icons/io';
 import { MdFreeBreakfast } from 'react-icons/md';
+import { AiFillStar, AiOutlineInfoCircle } from "react-icons/ai";
+import { BiChevronLeft, BiChevronRight } from "react-icons/bi";
+import { FaPlay } from "react-icons/fa";
+import { SiSteam } from "react-icons/si";
+import { BsCalendar } from "react-icons/bs";
 
 // Promosyonlar için tip tanımları
 interface DiscountSetting {
@@ -35,11 +40,11 @@ interface DiscountSetting {
 interface PromotionalOffer {
   startDate: string;
   endDate: string;
-  discountSetting?: DiscountSetting;
+  discountSetting: DiscountSetting;
 }
 
 interface PromotionalOffers {
-  promotionalOffers?: PromotionalOffer[];
+  promotionalOffers: PromotionalOffer[];
 }
 
 interface Promotions {
@@ -161,7 +166,7 @@ const GameCard: React.FC<GameCardProps> = ({
   }, [showGallery]);
 
   const remainingDays = getRemainingDays();
-  const linkPath = `/game/${game.namespace || game.id || ''}/${game.catalogNs?.mappings?.[0]?.pageSlug || game.id}`;
+  const linkPath = `/game/${game.namespace || game.id || ''}/${game.productSlug || game.urlSlug || game.id}`;
 
   // Promosyon bilgilerini al
   const getPromotionalInfo = () => {
@@ -249,7 +254,7 @@ const GameCard: React.FC<GameCardProps> = ({
 
     // Öncelik sırasına göre resimleri al
     const tallImage = game.keyImages.find(img => img.type === 'Tall');
-    const wideImage = game.keyImages.find(img => img.type === 'OfferImageWide');
+    const wideImage = game.keyImages.find(img => img.type === 'DieselStoreFrontWide');
     const thumbnailImage = game.keyImages.find(img => img.type === 'Thumbnail');
     const defaultImage = game.keyImages[0];
 

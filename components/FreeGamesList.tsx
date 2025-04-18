@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { EpicGame } from "@/lib/epic-api";
 import GameCard from "./GameCard";
 import { FaSteam } from "react-icons/fa";
 import { SiEpicgames } from "react-icons/si";
+import { ExtendedEpicGame } from "@/lib/types";
 
 interface FreeGamesListProps {
-  epicGames: EpicGame[];
-  steamGames: EpicGame[];
+  epicGames: ExtendedEpicGame[];
+  steamGames: ExtendedEpicGame[];
 }
 
 const FreeGamesList = ({ epicGames, steamGames }: FreeGamesListProps) => {
@@ -15,7 +15,7 @@ const FreeGamesList = ({ epicGames, steamGames }: FreeGamesListProps) => {
 
   // Tüm oyunları filtre ve sıralama ayarlarına göre düzenle
   const getFilteredAndSortedGames = () => {
-    let games: EpicGame[] = [];
+    let games: ExtendedEpicGame[] = [];
     
     // Filtreleme
     if (filter === "all") {
