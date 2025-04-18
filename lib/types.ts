@@ -21,7 +21,7 @@ export interface ExtendedEpicGame extends EpicGame {
   temporaryFreeGame?: boolean;
   
   /** Promosyon bitiş tarihi */
-  promotionEndDate?: string;
+  promotionEndDate?: string | null;
   
   /** Oyunun yakında ücretsiz olma durumu */
   isUpcoming?: boolean;
@@ -41,7 +41,7 @@ export interface ExtendedEpicGame extends EpicGame {
   metacritic?: {
     score: number;
     url: string;
-  };
+  } | null;
   
   /** Oyun videoları */
   videos?: Array<{
@@ -51,8 +51,11 @@ export interface ExtendedEpicGame extends EpicGame {
   }>;
   
   /** Çıkış tarihi (ISO string) */
-  releaseDate?: string;
+  releaseDate?: string | null;
+  
+  /** Oyunun arkaplan resmi */
+  background_image?: string | null;
   
   /** Özel not veya açıklama */
-  note?: string;
+  note?: string | null;
 } 

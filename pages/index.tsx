@@ -132,9 +132,20 @@ export default function Home({
 export const getStaticProps: GetStaticProps = async () => {
   try {
     // Epic Games ve Steam'den ücretsiz oyunları getir
-    const epicFreeGames = await getFreeGames();
-    const upcomingEpicGames = await getUpcomingFreeGames();
-    const steamFreeGames = await getFreeSteamGames();
+    let epicFreeGames = await getFreeGames();
+    let upcomingEpicGames = await getUpcomingFreeGames();
+    let steamFreeGames = await getFreeSteamGames();
+    
+    // Serileştirme hatalarını önlemek için veriyi temizleyelim
+    // undefined değerleri null'a dönüştürür
+    const safelySerialize = (data: any) => {
+      return JSON.parse(JSON.stringify(data));
+    };
+    
+    // Verileri temizle ve serileştirilmeye hazırla
+    epicFreeGames = safelySerialize(epicFreeGames);
+    upcomingEpicGames = safelySerialize(upcomingEpicGames);
+    steamFreeGames = safelySerialize(steamFreeGames);
     
     const totalGames = epicFreeGames.length + upcomingEpicGames.length + steamFreeGames.length;
 

@@ -201,21 +201,21 @@ export async function getGameDetails(appid: number): Promise<SteamGame | null> {
       const game: SteamGame = {
         appid: gameData.steam_appid,
         name: gameData.name,
-        description: gameData.short_description,
-        header_image: gameData.header_image,
-        background_image: gameData.background || undefined,
+        description: gameData.short_description || '',
+        header_image: gameData.header_image || '',
+        background_image: gameData.background || null,
         screenshots: screenshots,
         movies: movies,
         price,
-        categories: gameData.categories,
-        release_date: gameData.release_date,
-        platforms: gameData.platforms,
-        developers: gameData.developers,
-        publishers: gameData.publishers,
+        categories: gameData.categories || [],
+        release_date: gameData.release_date || null,
+        platforms: gameData.platforms || null,
+        developers: gameData.developers || [],
+        publishers: gameData.publishers || [],
         url: `https://store.steampowered.com/app/${gameData.steam_appid}`,
         isTemporaryFree: !gameData.is_free && price.finalPrice === 0 && price.discount > 0,
-        promotionEndDate: gameData.promotion_end_date,
-        metacritic: gameData.metacritic
+        promotionEndDate: gameData.promotion_end_date || null,
+        metacritic: gameData.metacritic || null
       };
       
       return game;
@@ -500,7 +500,7 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame
   // Metacritic puanı varsa uygun formatta ayarla, yoksa null olarak bırak
   const metacritic = steamGame.metacritic 
     ? { score: steamGame.metacritic.score, url: steamGame.metacritic.url } 
-    : undefined;
+    : null;
   
   // Videolar varsa uygun formatta ayarla, yoksa boş dizi olarak ver
   const videos = steamGame.movies 
@@ -583,6 +583,12 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame
     temporaryFreeGame: steamGame.isTemporaryFree || false,
     trending: steamGame.isTrending || false,
     platform: 'steam', 
-    distributionPlatform: 'steam'
+    distributionPlatform: 'steam',
+    // undefined değerleri null ile değiştir
+    background_image: steamGame.background_image || null,
+    releaseDate: steamGame.release_date?.date || null,
+    promotionEndDate: steamGame.promotionEndDate || null,
+    // Diğer özellikler
+    note: steamGame.isTemporaryFree ? 'Bu oyun geçici olarak ücretsizdir' : null
   };
 } 
