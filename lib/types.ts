@@ -32,9 +32,19 @@ export interface ExtendedEpicGame extends EpicGame {
   isTrending?: boolean;
   
   /**
+   * Oyunun yakında ücretsiz olma durumu
+   */
+  isUpcoming?: boolean;
+  
+  /**
    * Oyunun sadece geçici olarak ücretsiz olma durumu
    */
   temporaryFree?: boolean;
+  
+  /**
+   * Geçici olarak ücretsiz oyun
+   */
+  temporaryFreeGame?: boolean;
   
   /**
    * Geçici promosyonun bitiş tarihi
