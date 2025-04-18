@@ -505,8 +505,8 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame
   // Videolar varsa uygun formatta ayarla, yoksa boş dizi olarak ver
   const videos = steamGame.movies 
     ? steamGame.movies.map(movie => ({
-        id: movie.id,
-        name: movie.name,
+        id: String(movie.id),
+        thumbnail: movie.thumbnail || '',
         url: movie.webm?.max || movie.mp4?.max || ''
       })) 
     : [];
@@ -580,7 +580,7 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame
     // Genişletilmiş özellikler
     videos,
     metacritic,
-    temporaryFree: steamGame.isTemporaryFree || false,
+    temporaryFreeGame: steamGame.isTemporaryFree || false,
     trending: steamGame.isTrending || false,
     platform: 'steam', 
     distributionPlatform: 'steam'
