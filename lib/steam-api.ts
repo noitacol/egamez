@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ExtendedEpicGame } from '../components/GameCard';
+import { ExtendedEpicGame } from '../lib/types';
 import { getAllTemporaryFreeAppIds } from './api-extractor';
 
 const STEAM_API_KEY = '7939B44042A20BCD809BC41CBDDE75BF';
@@ -500,7 +500,7 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame
   // Metacritic puanı varsa uygun formatta ayarla, yoksa null olarak bırak
   const metacritic = steamGame.metacritic 
     ? { score: steamGame.metacritic.score, url: steamGame.metacritic.url } 
-    : null;
+    : undefined;
   
   // Videolar varsa uygun formatta ayarla, yoksa boş dizi olarak ver
   const videos = steamGame.movies 
@@ -580,8 +580,8 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame
     // Genişletilmiş özellikler
     videos,
     metacritic,
-    isTemporaryFree: steamGame.isTemporaryFree || false,
-    isTrending: steamGame.isTrending || false,
+    temporaryFree: steamGame.isTemporaryFree || false,
+    trending: steamGame.isTrending || false,
     platform: 'steam', 
     distributionPlatform: 'steam'
   };
