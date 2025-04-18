@@ -75,6 +75,7 @@ const GameCard: React.FC<GameCardProps> = ({
   const [imgError, setImgError] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState('main');
 
   const isFreeGame = propIsFree !== undefined ? propIsFree : game.promotions?.promotionalOffers?.some(
     offer => offer.promotionalOffers?.some(
@@ -588,6 +589,54 @@ const GameCard: React.FC<GameCardProps> = ({
             )}
           </div>
         </div>
+      )}
+
+      {/* Sekme butonlarına yeni bir sekme ekle */}
+      <button
+        onClick={() => setActiveTab('tempFree')}
+        className={`py-2 px-4 font-medium ${
+          activeTab === 'tempFree'
+            ? 'border-b-2 border-blue-500 text-blue-500'
+            : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        Geçici Ücretsiz Oyunlar
+      </button>
+
+      {/* Tab içeriği için yeni bir koşullu bölüm */}
+      {activeTab === 'tempFree' && (
+        <div>
+          <h2 className="text-2xl font-bold mb-6">Sınırlı Süre Ücretsiz Oyunlar</h2>
+          
+          {steamTemporaryFreeGames.length === 0 ? (
+            <div className="bg-gray-100 p-6 rounded-lg text-center">
+              <p>Şu anda geçici olarak ücretsiz oyun bulunamadı.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {steamTemporaryFreeGames.map((game) => (
+                <GameCard 
+                  key={game.id} 
+                  game={game} 
+                  isFree 
+                  temporaryFreeGame={true}
+                  isSteam={true}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {temporaryFreeGame && (
+        <span className="bg-purple-500 text-white text-xs font-medium px-2 py-0.5 rounded flex items-center">
+          Sınırlı Süre Ücretsiz
+          {game.promotionEndDate && (
+            <span className="ml-1">
+              ({new Date(game.promotionEndDate).toLocaleDateString()} tarihine kadar)
+            </span>
+          )}
+        </span>
       )}
     </motion.div>
   );
