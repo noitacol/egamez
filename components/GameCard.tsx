@@ -172,13 +172,15 @@ const GameCard: React.FC<GameCardProps> = ({
     return null;
   };
 
-  const keyImage = game.keyImages?.find(img => img.type === 'Thumbnail' || img.type === 'DieselStoreFrontWide')?.url 
+  const keyImage = game.keyImages?.find(img => img.type === 'Thumbnail' || img.type === 'DieselStoreFrontWide' || img.type === 'OfferImageWide')?.url 
     || game.keyImages?.[0]?.url 
-    || '/placeholder.jpg';
+    || game.headerImage 
+    || '/placeholder-game.jpg';
 
   const coverImage = game.keyImages?.find(img => img.type === 'OfferImageTall' || img.type === 'DieselStoreFrontWide')?.url 
     || game.keyImages?.[0]?.url 
-    || '/placeholder.jpg';
+    || game.headerImage
+    || '/placeholder-game.jpg';
 
   const mediaGallery = [
     ...(game.keyImages?.filter(img => 
@@ -624,6 +626,21 @@ const GameCard: React.FC<GameCardProps> = ({
     );
   };
 
+  // Oyun başlığını güvenli şekilde kontrol et
+  const getGameTitle = (): string => {
+    if (game?.title && typeof game.title === 'string' && game.title.trim() !== '') {
+      return game.title;
+    }
+    
+    if ((game as any)?.name && typeof (game as any).name === 'string' && (game as any).name.trim() !== '') {
+      return (game as any).name;
+    }
+    
+    return 'İsimsiz Oyun';
+  };
+  
+  const gameTitle = getGameTitle();
+
   // Kapak resmini bul
   const getCoverImage = (): string => {
     // Önceden tanımlanmış bir thumbnail varsa kullan
@@ -631,13 +648,18 @@ const GameCard: React.FC<GameCardProps> = ({
       return (game as any).thumbnail;
     }
 
+    // Header image kontrolü
+    if (game.headerImage) {
+      return game.headerImage;
+    }
+
     // KeyImages dizisi kontrolü
-    if (!game?.keyImages || !Array.isArray(game?.keyImages)) {
+    if (!game?.keyImages || !Array.isArray(game?.keyImages) || game.keyImages.length === 0) {
       return '/placeholder-game.jpg';
     }
 
     // Epic Games format - keyImages dizisinden uygun resmi seç
-    const imageTypes = ['DieselGameBoxTall', 'DieselGameBox', 'OfferImageTall', 'Thumbnail', 'VaultClosed', 'DieselStoreFrontWide'];
+    const imageTypes = ['DieselGameBoxTall', 'DieselGameBox', 'OfferImageTall', 'Thumbnail', 'VaultClosed', 'DieselStoreFrontWide', 'OfferImageWide'];
     for (const type of imageTypes) {
       const image = game.keyImages.find(img => img?.type === type);
       if (image?.url) {
@@ -749,18 +771,19 @@ const GameCard: React.FC<GameCardProps> = ({
           }}
           tabIndex={0}
           role="button"
-          aria-label={`${game.title} resim galerisi`}
+          aria-label={`${gameTitle} resim galerisi`}
         >
           {!imgError && keyImage ? (
             <Image
               src={keyImage}
-              alt={game.title || 'Oyun görseli'}
+              alt={gameTitle || 'Oyun görseli'}
               className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
               width={600}
               height={338}
               onError={() => setImgError(true)}
               placeholder="blur"
               blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88/HjfwAJZwPXyjQCJwAAAABJRU5ErkJggg=="
+              unoptimized={true}
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
@@ -772,7 +795,7 @@ const GameCard: React.FC<GameCardProps> = ({
         {/* Oyun Bilgileri */}
         <CardHeader className="flex-1 p-4">
           <CardTitle className="line-clamp-1 text-lg font-bold text-white">
-            {game.title}
+            {gameTitle}
           </CardTitle>
           <div className="line-clamp-2 mt-1 text-sm text-gray-300">
             {game.description || 'Açıklama yok'}
@@ -870,7 +893,7 @@ const GameCard: React.FC<GameCardProps> = ({
                   galleryMedia[currentMediaIndex].type === 'image' ? (
                     <Image
                       src={galleryMedia[currentMediaIndex].url}
-                      alt={galleryMedia[currentMediaIndex].alt || game.title}
+                      alt={galleryMedia[currentMediaIndex].alt || gameTitle}
                       className="w-full h-full object-contain"
                       width={1920}
                       height={1080}
@@ -883,7 +906,7 @@ const GameCard: React.FC<GameCardProps> = ({
                           src={`${galleryMedia[currentMediaIndex].url}?autoplay=1&mute=0`}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           className="w-full h-full"
-                          title={`${game.title} trailer`}
+                          title={`${gameTitle} trailer`}
                         ></iframe>
                       ) : (
                         <div 
@@ -892,7 +915,7 @@ const GameCard: React.FC<GameCardProps> = ({
                         >
                           <Image
                             src={galleryMedia[currentMediaIndex].thumbnail || getBestImage()}
-                            alt={`${game.title} video thumbnail`}
+                            alt={`${gameTitle} video thumbnail`}
                             className="w-full h-full object-cover"
                             width={1920}
                             height={1080}
@@ -911,7 +934,7 @@ const GameCard: React.FC<GameCardProps> = ({
               {/* Medya kontrolleri */}
               <div className="mt-4 w-full flex items-center justify-between">
                 <span className="text-white font-medium text-lg">
-                  {game.title}{galleryMedia[currentMediaIndex]?.alt ? ` - ${galleryMedia[currentMediaIndex].alt}` : ''}
+                  {gameTitle}{galleryMedia[currentMediaIndex]?.alt ? ` - ${galleryMedia[currentMediaIndex].alt}` : ''}
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="text-gray-300 text-sm">
@@ -951,7 +974,7 @@ const GameCard: React.FC<GameCardProps> = ({
                     >
                       <Image
                         src={media.type === 'video' ? media.thumbnail : media.url}
-                        alt={media.alt || game.title}
+                        alt={media.alt || gameTitle}
                         className="w-full h-full object-cover"
                         width={96}
                         height={54}

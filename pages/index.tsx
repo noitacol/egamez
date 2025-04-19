@@ -520,20 +520,43 @@ export const getStaticProps: GetStaticProps = async () => {
     
     // Oyun verilerini kontrol et ve eksik alanları tamamla
     const sanitizeEpicGames = (games: any[]): ExtendedEpicGame[] => {
-      return games.map(game => ({
-        ...game,
-        title: game.title || 'İsimsiz Oyun',
-        id: game.id || `game-${Math.random().toString(36).substr(2, 9)}`,
-        effectiveDate: game.effectiveDate || new Date().toISOString(),
-        categories: game.categories || [],
-        price: game.price || {
-          totalPrice: {
-            originalPrice: 0,
-            discountPrice: 0,
-            discount: 0
+      return games.map(game => {
+        // Başlık kontrolü
+        let title = game.title || game.name || 'İsimsiz Oyun';
+        if (typeof title !== 'string' || title.trim() === '') {
+          title = 'İsimsiz Oyun';
+        }
+        
+        // Resim kontrolü
+        let keyImages = game.keyImages || [];
+        if (!Array.isArray(keyImages) || keyImages.length === 0) {
+          // Eğer headerImage varsa, bunu keyImages'a ekle
+          if (game.headerImage || game.header_image) {
+            keyImages = [{
+              type: 'OfferImageWide',
+              url: game.headerImage || game.header_image
+            }];
           }
         }
-      })) as ExtendedEpicGame[];
+        
+        return {
+          ...game,
+          title,
+          id: game.id || `game-${Math.random().toString(36).substr(2, 9)}`,
+          effectiveDate: game.effectiveDate || new Date().toISOString(),
+          categories: game.categories || [],
+          keyImages,
+          headerImage: game.headerImage || game.header_image || (keyImages.length > 0 ? keyImages[0].url : ''),
+          description: game.description || 'Bu oyun hakkında açıklama bulunmamaktadır.',
+          price: game.price || {
+            totalPrice: {
+              originalPrice: 0,
+              discountPrice: 0,
+              discount: 0
+            }
+          }
+        }
+      }) as ExtendedEpicGame[];
     };
     
     // Tüm oyun listelerini temizle ve type dönüşümlerini gerçekleştir
