@@ -429,14 +429,59 @@ const GameCard: React.FC<GameCardProps> = ({
 
   // Platform badge component
   const renderPlatformBadge = () => {
-    if (game.distributionPlatform === 'gamerpower' || propIsGamerPower) {
-      return (
-        <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-indigo-600 rounded-md font-medium text-xs text-white">
-          <IoLogoGameControllerB className="text-white" size={14} />
-          <span>GamerPower</span>
-        </div>
-      );
-    } else if (game.distributionPlatform === 'steam' || propIsSteam) {
+    // Dağıtım platformunu belirleme
+    const platform = game.distributionPlatform || '';
+    
+    // GamerPower'dan gelen oyunlarda platformu belirle
+    if (platform === 'gamerpower' || propIsGamerPower) {
+      // Platformları kontrol et
+      const gamePlatform = game.platform?.toLowerCase() || '';
+      
+      if (gamePlatform.includes('steam')) {
+        return (
+          <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#171a21] rounded-md font-medium text-xs text-white">
+            <FaSteam className="text-white" size={14} />
+            <span>Steam</span>
+          </div>
+        );
+      } else if (gamePlatform.includes('epic') || gamePlatform.includes('egs')) {
+        return (
+          <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#2a2a2a] rounded-md font-medium text-xs text-white">
+            <SiEpicgames className="text-white" size={14} />
+            <span>Epic</span>
+          </div>
+        );
+      } else if (gamePlatform.includes('playstation') || gamePlatform.includes('ps4') || gamePlatform.includes('ps5')) {
+        return (
+          <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#006FCD] rounded-md font-medium text-xs text-white">
+            <FaPlaystation className="text-white" size={14} />
+            <span>PlayStation</span>
+          </div>
+        );
+      } else if (gamePlatform.includes('xbox')) {
+        return (
+          <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#107C10] rounded-md font-medium text-xs text-white">
+            <FaXbox className="text-white" size={14} />
+            <span>Xbox</span>
+          </div>
+        );
+      } else if (gamePlatform.includes('pc')) {
+        return (
+          <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#0078D7] rounded-md font-medium text-xs text-white">
+            <FaDesktop className="text-white" size={14} />
+            <span>PC</span>
+          </div>
+        );
+      } else {
+        // Varsayılan olarak, platformun adını göster
+        return (
+          <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#555] rounded-md font-medium text-xs text-white">
+            <FaGamepad className="text-white" size={14} />
+            <span>{game.platform || 'Oyun'}</span>
+          </div>
+        );
+      }
+    } else if (platform === 'steam' || propIsSteam) {
       return (
         <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#171a21] rounded-md font-medium text-xs text-white">
           <FaSteam className="text-white" size={14} />
@@ -680,8 +725,19 @@ const GameCard: React.FC<GameCardProps> = ({
         <div className="flex items-center mt-2 space-x-1 text-xs text-gray-400">
           {game.distributionPlatform === 'gamerpower' && (
             <div className="flex items-center">
-              <FaGamepad className="mr-1" />
-              <span>GamerPower</span>
+              {/* Platform'a göre ikon seç */}
+              {game.platform?.toLowerCase().includes('steam') ? (
+                <FaSteam className="mr-1" />
+              ) : game.platform?.toLowerCase().includes('epic') ? (
+                <SiEpicgames className="mr-1" />
+              ) : game.platform?.toLowerCase().includes('playstation') || game.platform?.toLowerCase().includes('ps') ? (
+                <FaPlaystation className="mr-1" />
+              ) : game.platform?.toLowerCase().includes('xbox') ? (
+                <FaXbox className="mr-1" />
+              ) : (
+                <FaGamepad className="mr-1" />
+              )}
+              <span>{game.platform || 'Oyun'}</span>
             </div>
           )}
           {game.distributionPlatform === 'steam' && (
@@ -692,7 +748,7 @@ const GameCard: React.FC<GameCardProps> = ({
           )}
           {(game.distributionPlatform === 'epic' || !game.distributionPlatform) && (
             <div className="flex items-center">
-              <FaWindowMaximize className="mr-1" />
+              <SiEpicgames className="mr-1" />
               <span>Epic Games</span>
             </div>
           )}
@@ -701,9 +757,23 @@ const GameCard: React.FC<GameCardProps> = ({
         {/* Platform bilgisi */}
         <div className="mt-auto pt-2">
           {game.distributionPlatform === 'gamerpower' ? (
-            <Link href={game.url || '#'} target="_blank" className="inline-flex items-center text-sm text-indigo-500 hover:text-indigo-600">
-              <span>Detaylar</span>
-              <FaExternalLinkAlt size={12} className="ml-1" />
+            <Link 
+              href={game.url || '#'} 
+              target="_blank" 
+              className="inline-flex items-center text-sm text-indigo-500 hover:text-indigo-600"
+            >
+              {/* Platform'a göre metin seç */}
+              {game.platform?.toLowerCase().includes('steam') ? (
+                <><span>Steam'de Görüntüle</span><FaExternalLinkAlt size={12} className="ml-1" /></>
+              ) : game.platform?.toLowerCase().includes('epic') ? (
+                <><span>Epic Store'da Görüntüle</span><FaExternalLinkAlt size={12} className="ml-1" /></>
+              ) : game.platform?.toLowerCase().includes('playstation') || game.platform?.toLowerCase().includes('ps') ? (
+                <><span>PlayStation Store'da Görüntüle</span><FaExternalLinkAlt size={12} className="ml-1" /></>
+              ) : game.platform?.toLowerCase().includes('xbox') ? (
+                <><span>Xbox Store'da Görüntüle</span><FaExternalLinkAlt size={12} className="ml-1" /></>
+              ) : (
+                <><span>Detayları Gör</span><FaExternalLinkAlt size={12} className="ml-1" /></>
+              )}
             </Link>
           ) : game.distributionPlatform === 'steam' ? (
             <Link href={`https://store.steampowered.com/app/${game.steamAppId}`} target="_blank" className="inline-flex items-center text-sm text-indigo-500 hover:text-indigo-600">
@@ -712,7 +782,7 @@ const GameCard: React.FC<GameCardProps> = ({
             </Link>
           ) : (
             <Link href={game.url || '#'} target="_blank" className="inline-flex items-center text-sm text-indigo-500 hover:text-indigo-600">
-              <span>Detaylar</span>
+              <span>Epic Store'da Görüntüle</span>
               <FaExternalLinkAlt size={12} className="ml-1" />
             </Link>
           )}

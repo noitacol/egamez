@@ -205,6 +205,57 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
     }
   ];
   
+  // Platforma göre dağıtım platformunu belirle
+  const getPlatformInfo = (platformStr: string) => {
+    const platforms = platformStr.toLowerCase();
+    
+    if (platforms.includes('steam')) {
+      return {
+        distributionPlatform: 'steam',
+        platform: 'Steam'
+      };
+    } else if (platforms.includes('epic')) {
+      return {
+        distributionPlatform: 'epic',
+        platform: 'Epic Games'
+      };
+    } else if (platforms.includes('playstation') || platforms.includes('ps4') || platforms.includes('ps5')) {
+      return {
+        distributionPlatform: 'playstation',
+        platform: 'PlayStation'
+      };
+    } else if (platforms.includes('xbox')) {
+      return {
+        distributionPlatform: 'xbox',
+        platform: 'Xbox'
+      };
+    } else if (platforms.includes('pc')) {
+      return {
+        distributionPlatform: 'pc',
+        platform: 'PC'
+      };
+    } else if (platforms.includes('android')) {
+      return {
+        distributionPlatform: 'android',
+        platform: 'Android'
+      };
+    } else if (platforms.includes('ios')) {
+      return {
+        distributionPlatform: 'ios',
+        platform: 'iOS'
+      };
+    } else {
+      // Varsayılan dağıtım platformu
+      return {
+        distributionPlatform: 'other',
+        platform: platforms
+      };
+    }
+  };
+  
+  // Platform bilgilerini al
+  const platformInfo = getPlatformInfo(game.platforms);
+  
   return {
     id: `gp-${game.id}`,
     title: game.title,
@@ -220,8 +271,8 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
       }
     },
     source: 'gamerpower',
-    distributionPlatform: 'gamerpower',
-    platform: platforms.includes('PC') ? 'PC' : platforms[0],
+    distributionPlatform: platformInfo.distributionPlatform,
+    platform: platformInfo.platform,
     offerType: game.type.toLowerCase(),
     endDate: game.end_date,
     url: game.open_giveaway_url,

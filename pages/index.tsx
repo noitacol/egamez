@@ -65,9 +65,13 @@ export default function Home({
                 </span>
               </div>
               <div className="bg-green-100 dark:bg-green-900 px-3 py-1 rounded-full flex items-center text-sm">
-                <span className="font-medium mr-2">GamerPower'da Ücretsiz:</span>
+                <span className="font-medium mr-2">PC Oyunları:</span>
                 <span className="bg-green-500 text-white w-6 h-6 rounded-full flex items-center justify-center">
-                  {gamerPowerGames.length}
+                  {gamerPowerGames.filter(game => 
+                    game.platform?.toLowerCase().includes('pc') || 
+                    game.platform?.toLowerCase().includes('steam') || 
+                    game.platform?.toLowerCase().includes('epic')
+                  ).length}
                 </span>
               </div>
               <div className="bg-yellow-100 dark:bg-yellow-900 px-3 py-1 rounded-full flex items-center text-sm">
