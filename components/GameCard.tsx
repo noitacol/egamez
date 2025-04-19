@@ -602,23 +602,6 @@ const GameCard: React.FC<GameCardProps> = ({
       );
     }
 
-    // Steam mağaza butonu
-    if ((game as any)?.appid) {
-      storeButtons.push(
-        <a 
-          key="steam-store" 
-          href={`https://store.steampowered.com/app/${(game as any).appid}`}
-          className="flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-gray-700 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          target="_blank" 
-          rel="noopener noreferrer"
-          tabIndex={0}
-          aria-label="Steam'de Görüntüle"
-        >
-          <FaSteam className="mr-2" /> Steam
-        </a>
-      );
-    }
-
     return (
       <div className="flex flex-wrap gap-2 mt-3">
         {storeButtons}

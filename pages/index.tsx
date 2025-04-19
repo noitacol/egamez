@@ -4,7 +4,6 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { getFreeGames, getUpcomingFreeGames, getTrendingEpicGames } from "@/lib/epic-api";
-import { getFreeSteamGames, getTrendingSteamGames } from "@/lib/steam-api";
 import { getFreeGamerPowerGames, getTrendingGamerPowerGames } from "@/lib/gamerpower-api";
 import FreeGamesList from "@/components/FreeGamesList";
 import GameCard from "@/components/GameCard";
@@ -20,7 +19,6 @@ import { MdNavigateNext, MdNavigateBefore } from "react-icons/md";
 interface HomeProps {
   epicFreeGames: ExtendedEpicGame[];
   upcomingEpicGames: ExtendedEpicGame[];
-  steamFreeGames: ExtendedEpicGame[];
   gamerPowerGames: ExtendedEpicGame[];
   trendingGames: ExtendedEpicGame[];
   totalGames: number;
@@ -29,7 +27,6 @@ interface HomeProps {
 export default function Home({ 
   epicFreeGames, 
   upcomingEpicGames, 
-  steamFreeGames,
   gamerPowerGames,
   trendingGames,
   totalGames 
@@ -38,7 +35,7 @@ export default function Home({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'free' | 'upcoming' | 'trending'>('free');
   const [featuredGame, setFeaturedGame] = useState<ExtendedEpicGame | null>(null);
-  const [activePlatform, setActivePlatform] = useState<'all' | 'epic' | 'steam' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'mobile'>('all');
+  const [activePlatform, setActivePlatform] = useState<'all' | 'epic' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'mobile'>('all');
 
   // Ana ekranda gösterilecek öne çıkan oyunu belirle
   useEffect(() => {
@@ -55,7 +52,7 @@ export default function Home({
 
     // İlk olarak sekme bazında oyunları seç
     if (activeTab === 'free') {
-      games = [...epicFreeGames, ...steamFreeGames, ...gamerPowerGames];
+      games = [...epicFreeGames, ...gamerPowerGames];
     } else if (activeTab === 'upcoming') {
       games = [...upcomingEpicGames];
     } else if (activeTab === 'trending') {
@@ -79,8 +76,6 @@ export default function Home({
         switch (activePlatform) {
           case 'epic':
             return platform.includes('epic') || platformName.includes('epic');
-          case 'steam':
-            return platform.includes('steam') || platformName.includes('steam');
           case 'playstation':
             return platformName.includes('playstation') || platformName.includes('ps4') || platformName.includes('ps5');
           case 'xbox':
@@ -120,7 +115,7 @@ export default function Home({
     <>
       <Head>
         <title>FRPG Gaming - Ücretsiz Oyunları Keşfedin</title>
-        <meta name="description" content="Epic Games, Steam ve tüm platformlardaki ücretsiz oyunları keşfedin" />
+        <meta name="description" content="Epic Games ve tüm platformlardaki ücretsiz oyunları keşfedin" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -138,6 +133,7 @@ export default function Home({
                   fill 
                   className="object-cover opacity-50"
                   priority
+                  unoptimized={true}
                 />
               )}
             </div>
@@ -175,20 +171,13 @@ export default function Home({
         {/* Platform Selection */}
         <section className="pt-10 pb-6 container mx-auto px-4">
           <h2 className="text-2xl font-bold mb-6">Platformlar</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
             <button 
               onClick={() => setActivePlatform('all')}
               className={`flex flex-col items-center justify-center rounded-lg p-4 transition duration-300 ${getPlatformCardClass('all')}`}
             >
               <RiGamepadLine className="h-8 w-8 mb-2" />
               <span className="text-xs font-medium">Tümü</span>
-            </button>
-            <button 
-              onClick={() => setActivePlatform('steam')}
-              className={`flex flex-col items-center justify-center rounded-lg p-4 transition duration-300 ${getPlatformCardClass('steam')}`}
-            >
-              <SiSteam className="h-8 w-8 mb-2" />
-              <span className="text-xs font-medium">Steam</span>
             </button>
             <button 
               onClick={() => setActivePlatform('epic')}
@@ -495,16 +484,15 @@ export const getStaticProps: GetStaticProps = async () => {
     let epicFreeGames = await getFreeGames();
     let upcomingEpicGames = await getUpcomingFreeGames();
     
-    // Steam API'sinden ücretsiz ve trend olan oyunları al
-    let steamFreeGames = await getFreeSteamGames();
-    const trendingSteamGames = await getTrendingSteamGames();
-    
     // GamerPower API'sinden ücretsiz ve trend olan oyunları al
     let gamerPowerFreeGames = await getFreeGamerPowerGames();
     const trendingGamerPowerGames = await getTrendingGamerPowerGames();
     
+    // Epic Games trend oyunlarını al
+    const trendingEpicGames = await getTrendingEpicGames();
+    
     // Tüm trend oyunları birleştir
-    let allTrendingGames = [...trendingSteamGames, ...trendingGamerPowerGames].slice(0, 12);
+    let allTrendingGames = [...trendingEpicGames, ...trendingGamerPowerGames].slice(0, 12);
     
     // Serileştirme hatalarını önlemek için veriyi temizleyelim
     const safelySerialize = (data: any) => {
@@ -514,7 +502,6 @@ export const getStaticProps: GetStaticProps = async () => {
     // Verileri temizle
     epicFreeGames = safelySerialize(epicFreeGames);
     upcomingEpicGames = safelySerialize(upcomingEpicGames);
-    steamFreeGames = safelySerialize(steamFreeGames);
     gamerPowerFreeGames = safelySerialize(gamerPowerFreeGames);
     allTrendingGames = safelySerialize(allTrendingGames);
     
@@ -562,17 +549,15 @@ export const getStaticProps: GetStaticProps = async () => {
     // Tüm oyun listelerini temizle ve type dönüşümlerini gerçekleştir
     const epicGames = sanitizeEpicGames(epicFreeGames);
     const upcomingGames = sanitizeEpicGames(upcomingEpicGames);
-    const steamGames = sanitizeEpicGames(steamFreeGames);
     const gamerPowerGames = sanitizeEpicGames(gamerPowerFreeGames);
     const trendingGames = sanitizeEpicGames(allTrendingGames);
     
-    const totalGames = epicGames.length + upcomingGames.length + steamGames.length + gamerPowerGames.length + trendingGames.length;
+    const totalGames = epicGames.length + upcomingGames.length + gamerPowerGames.length + trendingGames.length;
 
     return {
       props: {
         epicFreeGames: epicGames,
         upcomingEpicGames: upcomingGames,
-        steamFreeGames: steamGames,
         gamerPowerGames: gamerPowerGames,
         trendingGames: trendingGames,
         totalGames
@@ -586,7 +571,6 @@ export const getStaticProps: GetStaticProps = async () => {
       props: {
         epicFreeGames: [] as ExtendedEpicGame[],
         upcomingEpicGames: [] as ExtendedEpicGame[],
-        steamFreeGames: [] as ExtendedEpicGame[],
         gamerPowerGames: [] as ExtendedEpicGame[],
         trendingGames: [] as ExtendedEpicGame[],
         totalGames: 0
