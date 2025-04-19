@@ -145,11 +145,11 @@ const GameCard: React.FC<GameCardProps> = ({
     }
 
     // Eğer promotions property'si yoksa null döndür
-    if (!game.promotions) return null;
+    if (!game?.promotions) return null;
 
     // Epic Games API formatı kontrolü
     if (isFreeGame && 
-        game.promotions?.promotionalOffers && 
+        game?.promotions?.promotionalOffers && 
         Array.isArray(game.promotions.promotionalOffers) &&
         game.promotions.promotionalOffers.length > 0 && 
         game.promotions.promotionalOffers[0]?.promotionalOffers?.length > 0) {
@@ -160,7 +160,7 @@ const GameCard: React.FC<GameCardProps> = ({
 
     // Epic Games API formatı kontrolü - yakında ücretsiz olacaklar
     if (isUpcomingGame && 
-        game.promotions?.upcomingPromotionalOffers && 
+        game?.promotions?.upcomingPromotionalOffers && 
         Array.isArray(game.promotions.upcomingPromotionalOffers) &&
         game.promotions.upcomingPromotionalOffers.length > 0 && 
         game.promotions.upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0) {
@@ -291,11 +291,14 @@ const GameCard: React.FC<GameCardProps> = ({
 
   const { endDate: promoEndDate, startDate: promoStartDate, discountPercentage: promoDiscountPercentage } = getPromotionalInfo();
 
-  const calculateRemainingDays = (dateStr: string | null): number => {
-    if (!dateStr) return 0;
-    const endDate = new Date(dateStr);
+  const calculateRemainingDays = (endDateStr: string): number => {
+    if (!endDateStr) return 0;
+    
+    const endDate = new Date(endDateStr);
     const now = new Date();
-    return Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    const diffTime = endDate.getTime() - now.getTime();
+    
+    return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
   };
 
   const calculateTemporaryFreeRemaining = (): { days: number, hours: number } => {
@@ -572,6 +575,128 @@ const GameCard: React.FC<GameCardProps> = ({
         </a>
       </div>
     );
+  };
+
+  const generateStoreButtons = (): JSX.Element => {
+    let storeButtons = [];
+
+    // Epic Games mağaza butonu
+    if (game?.namespace || (game as any)?.catalogNs?.mappings) {
+      const epicStoreUrl = game.storeUrl || 
+        `https://store.epicgames.com/tr/p/${(game as any)?.catalogNs?.mappings?.[0]?.pageSlug || game?.namespace}`;
+
+      storeButtons.push(
+        <a 
+          key="epic-store" 
+          href={epicStoreUrl}
+          className="flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          target="_blank" 
+          rel="noopener noreferrer"
+          tabIndex={0}
+          aria-label="Epic Store'da Görüntüle"
+        >
+          <FaGamepad className="mr-2" /> Epic
+        </a>
+      );
+    }
+
+    // Steam mağaza butonu
+    if ((game as any)?.appid) {
+      storeButtons.push(
+        <a 
+          key="steam-store" 
+          href={`https://store.steampowered.com/app/${(game as any).appid}`}
+          className="flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-gray-700 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          target="_blank" 
+          rel="noopener noreferrer"
+          tabIndex={0}
+          aria-label="Steam'de Görüntüle"
+        >
+          <FaSteam className="mr-2" /> Steam
+        </a>
+      );
+    }
+
+    return (
+      <div className="flex flex-wrap gap-2 mt-3">
+        {storeButtons}
+      </div>
+    );
+  };
+
+  // Kapak resmini bul
+  const getCoverImage = (): string => {
+    // Önceden tanımlanmış bir thumbnail varsa kullan
+    if ((game as any).thumbnail) {
+      return (game as any).thumbnail;
+    }
+
+    // KeyImages dizisi kontrolü
+    if (!game?.keyImages || !Array.isArray(game?.keyImages)) {
+      return '/placeholder-game.jpg';
+    }
+
+    // Epic Games format - keyImages dizisinden uygun resmi seç
+    const imageTypes = ['DieselGameBoxTall', 'DieselGameBox', 'OfferImageTall', 'Thumbnail', 'VaultClosed', 'DieselStoreFrontWide'];
+    for (const type of imageTypes) {
+      const image = game.keyImages.find(img => img?.type === type);
+      if (image?.url) {
+        return image.url;
+      }
+    }
+
+    // Herhangi bir resim var mı kontrolü
+    if (game.keyImages.length > 0 && game.keyImages[0]?.url) {
+      return game.keyImages[0].url;
+    }
+
+    // Yedek olarak varsayılan placeholder döndür
+    return '/placeholder-game.jpg';
+  };
+
+  // Ücretsiz oyunları kontrol et
+  const checkPromotion = (): { isFreeNow: boolean, isUpcomingFree: boolean, remainingDays: number, endDate: string } => {
+    // İsPromotion fonksiyonu aktarılmış değilse bağımsız şekilde hesaplama yap
+    let isFreeNow = !!propIsFree;
+    let isUpcomingFree = !!propIsUpcoming;
+    let remainingDays = 0;
+    let endDate = '';
+
+    // Eğer trendingGame prop'u geldiyse standart kontrolleri atla
+    if (propTrending) {
+      return { isFreeNow, isUpcomingFree, remainingDays, endDate };
+    }
+
+    // Epic Games promosyon kontrolü
+    const promotions = (game as any)?.promotions;
+    
+    if (promotions) {
+      const promotionalOffers = promotions?.promotionalOffers || [];
+      const upcomingPromotionalOffers = promotions?.upcomingPromotionalOffers || [];
+
+      // Aktif promosyon kontrolü
+      if (promotionalOffers && promotionalOffers.length > 0) {
+        const currentOffer = promotionalOffers[0]?.promotionalOffers?.[0];
+        if (currentOffer) {
+          isFreeNow = currentOffer.discountSetting?.discountPercentage === 100;
+          isUpcomingFree = false;
+          endDate = currentOffer.endDate;
+          remainingDays = calculateRemainingDays(endDate);
+        }
+      }
+
+      // Yakında ücretsiz oyunları kontrol et
+      if (upcomingPromotionalOffers && upcomingPromotionalOffers.length > 0) {
+        const upcomingOffer = upcomingPromotionalOffers[0]?.promotionalOffers?.[0];
+        if (upcomingOffer) {
+          isUpcomingFree = upcomingOffer.discountSetting?.discountPercentage === 100;
+          endDate = upcomingOffer.endDate;
+          remainingDays = calculateRemainingDays(endDate);
+        }
+      }
+    }
+
+    return { isFreeNow, isUpcomingFree, remainingDays, endDate };
   };
 
   // Oyun kartı oluştur
