@@ -6,87 +6,127 @@ import { SteamGame } from './steam-api';
  * Temel EpicGame tipine ek özellikler ekler
  */
 export interface ExtendedEpicGame extends EpicGame {
-  /** Oyunun Steam veya Epic mağazasından geldiğini belirtir */
-  source?: 'epic' | 'steam' | 'gamerpower';
+  /** Oyunun Steam veya Epic kaynaklı olduğunu belirtir */
+  source?: string;
   
-  /** Platformu belirtir (epic veya steam) */
-  platform?: 'epic' | 'steam' | 'gamerpower';
+  /** Oyunun yayınlandığı platform */
+  platform?: string;
   
-  /** Dağıtım platformu */
-  distributionPlatform?: 'epic' | 'steam' | 'gamerpower';
+  /** Dağıtım platformu (epic, steam, gamerpower vs.) */
+  distributionPlatform?: 'epic' | 'steam' | 'gamerpower' | string;
   
-  /** Oyunun geçici olarak ücretsiz olup olmadığını belirtir */
-  isTempFree?: boolean;
-  
-  /** Oyunun ücretsiz olup olmadığını belirtir */
+  /** Ücretsiz olup olmadığı */
   isFree?: boolean;
   
-  /** Geçici olarak ücretsiz oyun */
-  temporaryFreeGame?: boolean;
-  
-  /** Promosyon bitiş tarihi */
-  promotionEndDate?: string | null;
-  
-  /** Oyunun yakında ücretsiz olma durumu */
+  /** Yakında ücretsiz olacak mı */
   isUpcoming?: boolean;
   
-  /** Oyunun popüler olup olmadığını belirtir */
+  /** Popüler/trend mi */
   isTrending?: boolean;
   
-  /** Trend olma durumu (alternatif isim) */
-  trending?: boolean;
+  /** İndirimde mi */
+  isOnSale?: boolean;
   
-  /** Katalog namespace bilgisi */
-  catalogNs?: {
-    mappings?: { pageSlug: string }[];
-  };
+  /** Sadece kupon kodu ile mi kullanılabilir */
+  isCodeRedemptionOnly?: boolean;
   
-  /** Metacritic puanı */
+  /** Promosyon tipi */
+  offerType?: string;
+  
+  /** Promosyon bitiş tarihi */
+  endDate?: string | null;
+  
+  /** Oyunun URL'si */
+  url?: string;
+  
+  /** Mağaza URL'si */
+  storeUrl?: string;
+  
+  /** Oyunun yayıncısı */
+  publisher?: string;
+  
+  /** MetaCritic puanı */
   metacritic?: {
     score: number;
     url: string;
-  } | null;
+  };
   
-  /** Oyun videoları */
-  videos?: {
-    id: string | number;
-    name?: string;
+  /** Oyunun videoları */
+  videos?: Array<{
     url: string;
     thumbnail?: string;
-  }[];
+    type?: string;
+  }>;
   
-  /** Çıkış tarihi (ISO string) */
-  releaseDate?: string | null;
+  /** Steam App ID */
+  steamAppId?: string;
   
-  /** Oyunun arkaplan resmi */
-  background_image?: string | null;
+  /** Steam başlık resmi */
+  headerImage?: string;
   
-  /** Özel not veya açıklama */
-  note?: string | null;
-  
-  /** Steam ile ilgili ekstra alanlar */
-  screenshots?: {
-    id: number | string;
-    type: string;
+  /** Ekran görüntüleri */
+  screenshots?: Array<{
     url: string;
+    type?: string;
+  }>;
+  
+  /** Hangi platformlarda çalıştığı */
+  platformName?: string;
+  
+  /** Kategoriler - EpicGame'in categories tipini override eder */
+  categories: {
+    path: string;
+    name: string;
   }[];
-  
-  /** Trend, geçici ücretsiz gibi özel işaretler */
-  isTemporaryFree?: boolean;
-  isDiscounted?: boolean;
-  
-  /** Tarih bilgileri */
-  releaseYear?: number;
-  endDate?: string;
-  
-  /** URL bilgileri */
-  url?: string;
-  
-  /** GamerPower özellikleri */
-  openGiveawayUrl?: string;
-  instructions?: string;
-  gamerPowerUrl?: string;
-  status?: string;
-  worthString?: string;
+}
+
+/**
+ * API filtreleme seçenekleri
+ */
+export interface GameFilterOptions {
+  source?: string;
+  platform?: string;
   type?: string;
+  sortBy?: string;
+}
+
+/**
+ * API yanıt formatı
+ */
+export interface ApiResponse<T> {
+  status: 'success' | 'error';
+  count: number;
+  data: T[];
+  error?: string;
+}
+
+// Dağıtım platformları
+export type DistributionPlatform = 'epic' | 'steam' | 'gamerpower' | string;
+
+// Fiyat formatı
+export interface FormattedPrice {
+  originalPrice: string;
+  discountPrice: string;
+  intermediatePrice: string;
+}
+
+// Para birimi bilgisi
+export interface CurrencyInfo {
+  decimals: number;
+}
+
+// Toplam fiyat
+export interface TotalPrice {
+  discountPrice: number;
+  originalPrice: number;
+  voucherDiscount?: number;
+  discount: number;
+  currencyCode?: string;
+  currencyInfo?: CurrencyInfo;
+  fmtPrice?: FormattedPrice;
+}
+
+// Fiyat bilgisi
+export interface Price {
+  totalPrice: TotalPrice;
 } 

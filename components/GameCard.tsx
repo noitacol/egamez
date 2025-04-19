@@ -2,11 +2,16 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RxExternalLink } from 'react-icons/rx';
-import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam } from 'react-icons/fa';
-import { HiOutlineTag, HiOutlineTrendingUp, HiOutlineExclamation } from 'react-icons/hi';
-import { IoIosArrowRoundForward } from 'react-icons/io';
-import { IoCloseCircle, IoPlanetOutline } from 'react-icons/io5';
-import { SiEpicgames } from 'react-icons/si';
+import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { HiOutlineTag, HiOutlineTrendingUp, HiOutlineExternalLink, HiOutlineShoppingCart, HiOutlineInformationCircle } from 'react-icons/hi';
+import { IoLogoWindows, IoWarningOutline, IoCalendarClearOutline, IoStopwatchOutline, IoPlanetOutline } from 'react-icons/io5';
+import { BsPlayCircle, BsPlayCircleFill, BsInfoCircle, BsLightningChargeFill, BsFillClockFill } from 'react-icons/bs';
+import { SiEpicgames, SiSteam } from 'react-icons/si';
+import { GiStopwatch } from 'react-icons/gi';
+import { MdCalendarToday, MdVideogameAsset } from 'react-icons/md';
+import { TbDiscount } from 'react-icons/tb';
+import { BiTimeFive } from 'react-icons/bi';
+import { ExtendedEpicGame } from '../lib/types';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -15,12 +20,11 @@ import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 import clsx from 'clsx';
 import { BsCalendar, BsFillPlayFill } from 'react-icons/bs';
-import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { format, differenceInDays } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { calculateTimeLeft } from '@/lib/utils';
-import { ExtendedEpicGame } from '@/lib/types';
+import { EpicGame } from '../lib/epic-api';
 import { IoMdClose } from 'react-icons/io';
 import { BiSolidRightArrow, BiSolidLeftArrow } from "react-icons/bi";
 import { FiExternalLink } from "react-icons/fi";
@@ -29,8 +33,7 @@ import { MdFreeBreakfast } from 'react-icons/md';
 import { AiFillStar, AiOutlineInfoCircle } from "react-icons/ai";
 import { BiChevronLeft, BiChevronRight } from "react-icons/bi";
 import { FaPlay } from "react-icons/fa";
-import { SiSteam } from "react-icons/si";
-import axios from 'axios';
+import PlatformIcon from './PlatformIcon';
 
 // Promosyonlar için tip tanımları
 interface DiscountSetting {
@@ -52,56 +55,81 @@ interface Promotions {
   upcomingPromotionalOffers?: PromotionalOffers[];
 }
 
+// Medya öğeleri için tip tanımı
+interface MediaItem {
+  type: 'image' | 'video';
+  url: string;
+  id?: string;
+  thumbnail?: string;
+  alt?: string;
+}
+
 interface GameCardProps {
   game: ExtendedEpicGame;
+  view?: 'grid' | 'list';
+  isTrending?: boolean;
+  useSmallCard?: boolean;
+  temporaryFreeGame?: boolean;
+  favorited?: boolean;
+  showAddToFavorite?: boolean;
+  onToggleFavorite?: (gameId: string) => void;
+  endDate?: string;
   isFree?: boolean;
   isUpcoming?: boolean;
   trending?: boolean;
   isSteam?: boolean;
   isGamerPower?: boolean;
   showDetails?: boolean;
-  displayType?: 'list' | 'grid';
-  temporaryFreeGame?: boolean;
 }
 
 const GameCard: React.FC<GameCardProps> = ({
   game,
+  view = 'grid',
+  isTrending = false,
+  useSmallCard = false,
+  temporaryFreeGame = false,
+  favorited = false,
+  showAddToFavorite = false,
+  onToggleFavorite,
+  endDate: propEndDate,
   isFree: propIsFree,
-  isUpcoming = false,
-  trending = false,
-  isSteam = false,
-  isGamerPower = false,
-  showDetails = true,
-  displayType = 'grid',
-  temporaryFreeGame = false
+  isUpcoming: propIsUpcoming,
+  trending: propTrending,
+  isSteam: propIsSteam,
+  isGamerPower: propIsGamerPower,
+  showDetails
 }) => {
   const [imgError, setImgError] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('main');
 
-  const isFreeGame = propIsFree !== undefined ? propIsFree : game.promotions?.promotionalOffers?.some(
-    offer => offer.promotionalOffers?.some(
-      promo => new Date(promo.startDate) <= new Date() && new Date(promo.endDate) >= new Date()
-    )
-  );
-
-  const isUpcomingGame = isUpcoming !== undefined ? isUpcoming : game.promotions?.upcomingPromotionalOffers?.some(
-    offer => offer.promotionalOffers?.some(
-      promo => new Date(promo.startDate) > new Date()
-    )
-  );
+  // Promosyon ve ücretsiz oyun bilgilerini hesapla
+  const hasPromotion = game.price?.totalPrice.discountPrice === 0 || game.isFree;
+  const isFreeGame = propIsFree !== undefined ? propIsFree : hasPromotion || game.isFree;
+  const isUpcoming = propIsUpcoming !== undefined ? propIsUpcoming : game.isUpcoming;
+  
+  // Promosyon bitiş tarihini hesapla
+  const promotionEndDate = game.endDate || propEndDate;
 
   const getRemainingDays = (): number | null => {
     if (!game.promotions) return null;
 
-    if (isFreeGame && game.promotions.promotionalOffers?.[0]?.promotionalOffers?.[0]) {
+    // Güncel promosyonlar için kalan gün sayısı
+    if (isFreeGame && 
+        game.promotions.promotionalOffers && 
+        game.promotions.promotionalOffers.length > 0 && 
+        game.promotions.promotionalOffers[0]?.promotionalOffers?.length > 0) {
       const endDate = new Date(game.promotions.promotionalOffers[0].promotionalOffers[0].endDate);
       const now = new Date();
       return Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     }
 
-    if (isUpcomingGame && game.promotions.upcomingPromotionalOffers?.[0]?.promotionalOffers?.[0]) {
+    // Gelecek promosyonlar için kalan gün sayısı
+    if (isUpcoming && 
+        game.promotions.upcomingPromotionalOffers && 
+        game.promotions.upcomingPromotionalOffers.length > 0 && 
+        game.promotions.upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0) {
       const startDate = new Date(game.promotions.upcomingPromotionalOffers[0].promotionalOffers[0].startDate);
       const now = new Date();
       return Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -118,14 +146,25 @@ const GameCard: React.FC<GameCardProps> = ({
     || game.keyImages?.[0]?.url 
     || '/placeholder.jpg';
 
-  const mediaGallery = [
+  const mediaGallery: MediaItem[] = [
     ...(game.keyImages?.filter(img => 
       img.type !== 'Thumbnail' && 
       img.type !== 'VaultClosed' && 
       img.type !== 'DieselStoreFrontTall' &&
       img.url
-    ) || []).map(img => ({ type: 'image', url: img.url, id: `image-${img.url}` })),
-    ...(game.videos || []).map(video => ({ type: 'video', url: video.url, thumbnail: video.thumbnail, id: video.id || `video-${video.url}` }))
+    ) || []).map(img => ({ 
+      type: 'image' as const, 
+      url: img.url, 
+      id: `image-${img.url.substring(img.url.lastIndexOf('/') + 1)}`,
+      alt: `${game.title} - ${img.type}`
+    })),
+    ...(game.videos || []).map(video => ({ 
+      type: 'video' as const, 
+      url: video.url, 
+      thumbnail: video.thumbnail, 
+      id: `video-${video.url.substring(video.url.lastIndexOf('/') + 1)}`,
+      alt: `${game.title} video`
+    }))
   ];
 
   const handlePrevMedia = () => {
@@ -222,29 +261,35 @@ const GameCard: React.FC<GameCardProps> = ({
   const { isFreeGame: promoIsFreeGame, isUpcomingFree: promoIsUpcomingFree, startDate: promoStartDate, endDate: promoEndDate } = getPromotionalInfo();
 
   // Kalan günleri hesaplama fonksiyonunu güncelle
-  const calculateRemainingDays = (endDate: Date | null): number => {
-    if (!endDate) return 0;
-    
+  const calculateRemainingDays = (dateStr: string | null): number => {
+    if (!dateStr) return 0;
+    const endDate = new Date(dateStr);
     const now = new Date();
-    const diffTime = endDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays > 0 ? diffDays : 0;
+    return Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
   };
 
   // Geçici ücretsiz oyunlar için kalan süreyi hesapla
   const calculateTemporaryFreeRemaining = (): { days: number, hours: number } => {
-    if (!game.promotionEndDate) return { days: 0, hours: 0 };
+    const defaultResponse = { days: 0, hours: 0 };
+    
+    // Özelliğin var olup olmadığını kontrol et
+    const endDateStr = game.endDate || propEndDate;
+    if (!endDateStr) return defaultResponse;
+    
+    const endDate = new Date(endDateStr);
+    if (isNaN(endDate.getTime())) return defaultResponse;
     
     const now = new Date();
-    const endDate = new Date(game.promotionEndDate);
-    const diffTime = endDate.getTime() - now.getTime();
+    if (endDate <= now) return defaultResponse;
     
-    if (diffTime <= 0) return { days: 0, hours: 0 };
+    const diffMs = endDate.getTime() - now.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    return { days: diffDays, hours: diffHours };
+    return {
+      days: diffDays,
+      hours: diffHours
+    };
   };
 
   const tempFreeRemaining = calculateTemporaryFreeRemaining();
@@ -270,12 +315,21 @@ const GameCard: React.FC<GameCardProps> = ({
     const videos = game.videos || [];
 
     const galleryMedia = [
-      ...images.map((img, index) => ({ type: 'image', url: img.url, id: `image-${index}` })),
-      ...videos.map((video, index) => ({ 
-        type: 'video', 
-        url: `https://www.youtube.com/embed/${video.id || ''}`, 
-        id: video.id || `video-${index}` 
-      }))
+      ...images.map((img, index) => ({ 
+        type: 'image' as const, 
+        url: img.url, 
+        id: `image-${index}`,
+        alt: img.url || `${game.title} image ${index+1}`
+      })),
+      ...videos.map((video, index) => {
+        // Video işleme kodu
+        return {
+          type: 'video' as const,
+          url: video.url,
+          id: `video-${index}`,
+          thumbnail: video.thumbnail || ''
+        };
+      })
     ];
 
     return galleryMedia;
@@ -286,7 +340,7 @@ const GameCard: React.FC<GameCardProps> = ({
   // Oyunun ücretsiz olup olmadığını kontrol et
   const checkIsFree = () => {
     // Override with prop if provided
-    if (propIsFree !== undefined) return propIsFree;
+    if (isFreeGame !== undefined) return isFreeGame;
     
     // Check if game has promotions property
     if (!game.promotions) return false;
@@ -302,7 +356,7 @@ const GameCard: React.FC<GameCardProps> = ({
   // Oyunun yakında ücretsiz olup olmadığını kontrol et
   const checkIsUpcoming = () => {
     // Override with prop if provided
-    if (isUpcoming) return true;
+    if (isUpcoming !== undefined) return isUpcoming;
     
     // Check if game has promotions property
     if (!game.promotions) return false;
@@ -317,9 +371,10 @@ const GameCard: React.FC<GameCardProps> = ({
 
   // Oyunun istors linkini oluştur
   const getStoreUrl = () => {
-    if (isGamerPower && game.openGiveawayUrl) {
-      return game.openGiveawayUrl; // GamerPower'daki giveaway URL'ini kullan
-    } else if (isSteam && game.url) {
+    // Özellik kontrolü ve tip güvenliği için açıkça kontrol et
+    if (game.distributionPlatform === 'gamerpower' && game.url) {
+      return game.url;
+    } else if (game.distributionPlatform === 'steam' && game.url) {
       return game.url; // Steam URL'ini kullan
     } else {
       // Epic Store URL'ini oluştur
@@ -336,14 +391,17 @@ const GameCard: React.FC<GameCardProps> = ({
     let hasDiscount = false;
     
     if (totalPrice) {
-      // Fiyat alanları doğru formatta çıktı oluştur
-      finalPrice = totalPrice.originalPrice !== 0 
-        ? `₺${totalPrice.originalPrice}` 
-        : 'Ücretsiz';
-      
+      // İndirim varsa doğru şekilde fiyatları hesapla
       if (totalPrice.discount > 0) {
-        originalPrice = `₺${totalPrice.discountPrice}`;
+        // İndirimli fiyat ve orijinal fiyat doğru şekilde göster
+        finalPrice = `₺${(totalPrice.discountPrice).toFixed(2)}`;
+        originalPrice = `₺${(totalPrice.originalPrice).toFixed(2)}`;
         hasDiscount = true;
+      } else {
+        // İndirim yoksa normal fiyatı göster
+        finalPrice = totalPrice.originalPrice === 0 
+          ? 'Ücretsiz' 
+          : `₺${(totalPrice.originalPrice).toFixed(2)}`;
       }
     }
     
@@ -352,14 +410,14 @@ const GameCard: React.FC<GameCardProps> = ({
 
   // Platform badge component
   const renderPlatformBadge = () => {
-    if (isGamerPower) {
+    if (game.distributionPlatform === 'gamerpower' || propIsGamerPower) {
       return (
         <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-indigo-600 rounded-md font-medium text-xs text-white">
           <IoPlanetOutline className="text-white" size={14} />
           <span>GamerPower</span>
         </div>
       );
-    } else if (isSteam) {
+    } else if (game.distributionPlatform === 'steam' || propIsSteam) {
       return (
         <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#171a21] rounded-md font-medium text-xs text-white">
           <SiSteam className="text-white" size={14} />
@@ -376,6 +434,50 @@ const GameCard: React.FC<GameCardProps> = ({
     }
   };
 
+  // Promosyon kalan zamanı göster
+  const renderPromotionTimeRemaining = () => {
+    if (temporaryFreeGame) {
+      const { days, hours } = calculateTemporaryFreeRemaining();
+      
+      if (days > 0 || hours > 0) {
+        return (
+          <div className="absolute top-3 right-3 z-10 bg-blue-600 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center">
+            <FaStopwatch className="mr-1" />
+            {days > 0 ? `${days} gün ` : ''}{hours > 0 ? `${hours} saat` : ''}
+          </div>
+        );
+      }
+    }
+    
+    if (isFreeGame && !isUpcoming && !temporaryFreeGame && remainingDays !== null && remainingDays > 0) {
+      return (
+        <span className="bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded flex items-center">
+          Ücretsiz
+          {remainingDays !== null && remainingDays > 0 && (
+            <span className="ml-1">({remainingDays} gün kaldı)</span>
+          )}
+        </span>
+      );
+    }
+    
+    if (isUpcoming && remainingDays !== null && remainingDays > 0) {
+      return (
+        <span className="bg-blue-500 text-white text-xs font-medium px-2 py-0.5 rounded flex items-center">
+          Yakında Ücretsiz
+          {remainingDays !== null && remainingDays > 0 && (
+            <span className="ml-1">({remainingDays} gün kaldı)</span>
+          )}
+        </span>
+      );
+    }
+  };
+
+  const isPromotionActive = () => {
+    if (isFreeGame || isUpcoming) return true;
+    if (game.endDate) return new Date(game.endDate) > new Date();
+    return false;
+  };
+
   // Oyun kartı oluştur
   return (
     <motion.div 
@@ -385,42 +487,15 @@ const GameCard: React.FC<GameCardProps> = ({
       className="group relative flex flex-col bg-card border rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden h-full"
     >
       {/* Üst Etiket - Trending, Ücretsiz veya Yakında */}
-      {(trending || isFreeGame || isUpcomingGame || temporaryFreeGame) && (
+      {(isTrending || isFreeGame || isUpcoming || temporaryFreeGame) && (
         <div className="absolute top-0 left-0 z-10 flex gap-2 p-2">
-          {trending && (
+          {isTrending && (
             <span className="bg-amber-500 text-white text-xs font-medium px-2 py-0.5 rounded">
               Trend
             </span>
           )}
           
-          {isFreeGame && !isUpcomingGame && !temporaryFreeGame && (
-            <span className="bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded flex items-center">
-              Ücretsiz
-              {remainingDays !== null && remainingDays > 0 && (
-                <span className="ml-1">({remainingDays} gün kaldı)</span>
-              )}
-            </span>
-          )}
-          
-          {temporaryFreeGame && (
-            <span className="bg-purple-500 text-white text-xs font-medium px-2 py-0.5 rounded flex items-center">
-              Sınırlı Süre Ücretsiz
-              {game.promotionEndDate && (
-                <span className="ml-1">
-                  ({new Date(game.promotionEndDate).toLocaleDateString()} tarihine kadar)
-                </span>
-              )}
-            </span>
-          )}
-          
-          {isUpcomingGame && (
-            <span className="bg-blue-500 text-white text-xs font-medium px-2 py-0.5 rounded flex items-center">
-              Yakında Ücretsiz
-              {remainingDays !== null && remainingDays > 0 && (
-                <span className="ml-1">({remainingDays} gün kaldı)</span>
-              )}
-            </span>
-          )}
+          {renderPromotionTimeRemaining()}
         </div>
       )}
       
@@ -428,7 +503,7 @@ const GameCard: React.FC<GameCardProps> = ({
       {/* 
       <div className="absolute top-0 right-0 z-10 p-2">
         <div className="flex bg-black/50 backdrop-blur-sm rounded-full p-1">
-          {isSteam && (
+          {game.isSteam && (
             <FaSteam className="text-white w-4 h-4" />
           )}
         </div>
@@ -437,6 +512,20 @@ const GameCard: React.FC<GameCardProps> = ({
 
       {/* Platform etiketi */}
       {renderPlatformBadge()}
+
+      {/* Platform Rozeti */}
+      {(propIsSteam || game.distributionPlatform === 'steam') && (
+        <div className="absolute top-2 right-2 z-10 bg-black/70 rounded-full p-1.5">
+          <FaSteam className="text-white text-lg" />
+        </div>
+      )}
+
+      {/* GamerPower Rozeti */}
+      {(propIsGamerPower || game.distributionPlatform === 'gamerpower') && (
+        <div className="absolute top-2 right-2 z-10 bg-purple-600 rounded-full p-1.5">
+          <FaGamepad className="text-white text-lg" />
+        </div>
+      )}
 
       {/* Resim Bölümü */}
       <div 
@@ -516,7 +605,7 @@ const GameCard: React.FC<GameCardProps> = ({
           <div className="text-right">
             {isFreeGame ? (
               <span className="text-green-600 font-semibold">Ücretsiz</span>
-            ) : isUpcomingGame ? (
+            ) : isUpcoming ? (
               <span className="text-blue-600 font-semibold">Yakında Ücretsiz</span>
             ) : game.price?.totalPrice?.discountPrice === 0 ? (
               <span className="text-green-600 font-semibold">Ücretsiz</span>
@@ -542,7 +631,57 @@ const GameCard: React.FC<GameCardProps> = ({
             )}
           </div>
         </div>
+
+        {/* Oyun kaynağı bilgisi */}
+        <div className="flex items-center mt-2 space-x-1 text-xs text-gray-400">
+          {game.distributionPlatform === 'gamerpower' && (
+            <div className="flex items-center">
+              <FaGamepad className="mr-1" />
+              <span>GamerPower</span>
+            </div>
+          )}
+          {game.distributionPlatform === 'steam' && (
+            <div className="flex items-center">
+              <FaSteam className="mr-1" />
+              <span>Steam</span>
+            </div>
+          )}
+          {(game.distributionPlatform === 'epic' || !game.distributionPlatform) && (
+            <div className="flex items-center">
+              <FaWindowMaximize className="mr-1" />
+              <span>Epic Games</span>
+            </div>
+          )}
+        </div>
+
+        {/* Platform bilgisi */}
+        <div className="mt-auto pt-2">
+          {game.distributionPlatform === 'gamerpower' ? (
+            <Link href={game.url || '#'} target="_blank" className="inline-flex items-center text-sm text-indigo-500 hover:text-indigo-600">
+              <span>Detaylar</span>
+              <FaExternalLinkAlt size={12} className="ml-1" />
+            </Link>
+          ) : game.distributionPlatform === 'steam' ? (
+            <Link href={`https://store.steampowered.com/app/${game.steamAppId}`} target="_blank" className="inline-flex items-center text-sm text-indigo-500 hover:text-indigo-600">
+              <span>Steam'de Görüntüle</span>
+              <FaExternalLinkAlt size={12} className="ml-1" />
+            </Link>
+          ) : (
+            <Link href={game.url || '#'} target="_blank" className="inline-flex items-center text-sm text-indigo-500 hover:text-indigo-600">
+              <span>Detaylar</span>
+              <FaExternalLinkAlt size={12} className="ml-1" />
+            </Link>
+          )}
+        </div>
       </div>
+
+      {/* Kalan gün etiketini göster */}
+      {(isFreeGame) && game.endDate && (
+        <div className="absolute top-0 right-0 m-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-2 py-1 rounded-full text-xs flex items-center">
+          <BiTimeFive className="mr-1" />
+          <span>{calculateRemainingDays(game.endDate)} gün kaldı</span>
+        </div>
+      )}
 
       {/* Medya Galerisi Modal */}
       {showGallery && galleryMedia.length > 0 && (

@@ -16,11 +16,17 @@ export interface GamerPowerGame {
   published_date: string;
   type: string;
   platforms: string;
-  end_date: string;
+  end_date: string | null;
   users: number;
   status: string;
   gamerpower_url: string;
   open_giveaway: string;
+}
+
+// GamerPower API'den dönen toplam değer bilgisi
+export interface GamerPowerWorth {
+  worth: string;
+  giveaways_count: number;
 }
 
 /**
@@ -40,139 +46,225 @@ export async function getAllGamerPowerGames(): Promise<GamerPowerGame[]> {
 }
 
 /**
- * GamerPower API'den sadece ücretsiz oyunları getirir (DLC vb. hariç)
+ * GamerPower API'den tüm ücretsiz oyunları getirir
  */
 export async function getFreeGamerPowerGames(): Promise<GamerPowerGame[]> {
   try {
-    const response = await axios.get(`${GAMERPOWER_API_URL}/giveaways`, {
-      params: {
-        type: 'game'
-      }
-    });
+    const response = await axios.get(`${GAMERPOWER_API_URL}/giveaways`);
     
-    if (response.data && Array.isArray(response.data)) {
-      return response.data;
+    if (response.status !== 200) {
+      throw new Error(`GamerPower API responded with status: ${response.status}`);
     }
-    return [];
+    
+    // Eğer API yanıtı bir hata içeriyorsa
+    if (response.data.status === 'error') {
+      throw new Error(response.data.message || 'GamerPower API returned an error');
+    }
+    
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
-    console.error('GamerPower API error:', error);
+    console.error('Error fetching GamerPower games:', error);
     return [];
   }
 }
 
 /**
- * GamerPower API'den platforma göre oyunları getirir
+ * GamerPower API'den belirli bir platforma göre ücretsiz oyunları getirir
+ * @param platform Platform adı (pc, steam, epic-games, switch, ps4, xbox-one, android, ios, vr...)
  */
 export async function getGamerPowerGamesByPlatform(platform: string): Promise<GamerPowerGame[]> {
   try {
-    const response = await axios.get(`${GAMERPOWER_API_URL}/giveaways`, {
+    const response = await axios.get(`${GAMERPOWER_API_URL}/giveaways?platform=${platform}`);
+    
+    if (response.status !== 200) {
+      throw new Error(`GamerPower API responded with status: ${response.status}`);
+    }
+    
+    // Eğer API yanıtı bir hata içeriyorsa
+    if (response.data.status === 'error') {
+      throw new Error(response.data.message || 'GamerPower API returned an error');
+    }
+    
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error(`Error fetching GamerPower games for platform ${platform}:`, error);
+    return [];
+  }
+}
+
+/**
+ * GamerPower API'den belirli bir oyun tipine göre ücretsiz oyunları getirir
+ * @param type Oyun tipi (game, loot, beta...)
+ */
+export async function getGamerPowerGamesByType(type: string): Promise<GamerPowerGame[]> {
+  try {
+    const response = await axios.get(`${GAMERPOWER_API_URL}/giveaways?type=${type}`);
+    
+    if (response.status !== 200) {
+      throw new Error(`GamerPower API responded with status: ${response.status}`);
+    }
+    
+    // Eğer API yanıtı bir hata içeriyorsa
+    if (response.data.status === 'error') {
+      throw new Error(response.data.message || 'GamerPower API returned an error');
+    }
+    
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error(`Error fetching GamerPower games for type ${type}:`, error);
+    return [];
+  }
+}
+
+/**
+ * GamerPower API'den oyunları sıralı şekilde getirir
+ * @param sort Sıralama kriteri (date, value, popularity)
+ */
+export async function getGamerPowerGamesSorted(sort: 'date' | 'value' | 'popularity'): Promise<GamerPowerGame[]> {
+  try {
+    const response = await axios.get(`${GAMERPOWER_API_URL}/giveaways?sort-by=${sort}`);
+    
+    if (response.status !== 200) {
+      throw new Error(`GamerPower API responded with status: ${response.status}`);
+    }
+    
+    // Eğer API yanıtı bir hata içeriyorsa
+    if (response.data.status === 'error') {
+      throw new Error(response.data.message || 'GamerPower API returned an error');
+    }
+    
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error(`Error fetching GamerPower games sorted by ${sort}:`, error);
+    return [];
+  }
+}
+
+/**
+ * GamerPower API'den belirli bir giveaway'in ayrıntılarını getirir
+ */
+export async function getGamerPowerGiveawayById(id: number): Promise<GamerPowerGame | null> {
+  try {
+    const response = await axios.get(`${GAMERPOWER_API_URL}/giveaway`, {
       params: {
-        platform
+        id
       }
     });
     
-    if (response.data && Array.isArray(response.data)) {
+    // API başarısız olduğunda "status" alanında bilgi döndürüyor
+    if (response.data && !response.data.status) {
       return response.data;
     }
-    return [];
+    return null;
   } catch (error) {
-    console.error(`GamerPower API error for platform ${platform}:`, error);
-    return [];
+    console.error(`GamerPower API error for giveaway ID ${id}:`, error);
+    return null;
+  }
+}
+
+/**
+ * GamerPower API'den tüm giveaway'lerin toplam değerini getirir
+ */
+export async function getGamerPowerWorth(): Promise<GamerPowerWorth> {
+  try {
+    const response = await axios.get(`${GAMERPOWER_API_URL}/worth`);
+    
+    if (response.data) {
+      return {
+        worth: response.data.worth || "$0",
+        giveaways_count: response.data.giveaways_count || 0
+      };
+    }
+    return { worth: "$0", giveaways_count: 0 };
+  } catch (error) {
+    console.error('GamerPower API worth error:', error);
+    return { worth: "$0", giveaways_count: 0 };
   }
 }
 
 /**
  * GamerPower oyunlarını ExtendedEpicGame formatına dönüştürür
  */
-export function convertGamerPowerToEpicFormat(gpGame: GamerPowerGame): ExtendedEpicGame {
-  // Platformları parse et
-  const platforms = gpGame.platforms.split(', ');
+export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpicGame {
+  // Platformları dizi haline getir
+  const platforms = game.platforms.split(', ').map(p => p.trim());
   
-  // Fiyat değerini parse et (örn: "$19.99" -> 19.99)
-  const worthValue = parseFloat(gpGame.worth.replace(/[^0-9.]/g, '')) || 0;
+  // Oyun değerini sayısal değere dönüştür
+  const worth = game.worth.replace('$', '').trim();
+  const price = parseFloat(worth) || 0;
   
-  // Bitiş tarihini parse et
-  const endDate = gpGame.end_date ? new Date(gpGame.end_date).toISOString() : '';
-  
-  // Yayınlanma tarihini parse et
-  const publishedDate = gpGame.published_date ? new Date(gpGame.published_date) : new Date();
-  
-  // Desteklenen platform kontrolü
-  const platformToUse = platforms[0]?.toLowerCase() || '';
-  let distributionPlatform: 'epic' | 'steam' | 'gamerpower' = 'gamerpower';
-  
-  // Platformlardan bilinen bir platform var mı kontrol et
-  if (platformToUse.includes('steam')) {
-    distributionPlatform = 'steam';
-  } else if (platformToUse.includes('epic')) {
-    distributionPlatform = 'epic';
-  }
-  
-  // Promosyon alanını oluştur - her GamerPower oyunu ücretsiz kabul edilir
-  const promotions = {
-    promotionalOffers: [
-      {
-        promotionalOffers: [
-          {
-            startDate: publishedDate.toISOString(),
-            endDate: endDate || new Date(publishedDate.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Eğer bitiş tarihi yoksa 30 gün ekle
-            discountSetting: {
-              discountPercentage: 100 // Ücretsiz
-            }
-          }
-        ]
-      }
-    ],
-    upcomingPromotionalOffers: []
-  };
-  
-  // ExtendedEpicGame formatında oyun objesi oluştur
-  return {
-    id: gpGame.id.toString(),
-    title: gpGame.title,
-    namespace: `gamerpower-${gpGame.id}`,
-    description: gpGame.description,
-    effectiveDate: gpGame.published_date,
-    keyImages: [
-      {
-        type: 'thumbnail',
-        url: gpGame.thumbnail
-      },
-      {
-        type: 'featuredMedia',
-        url: gpGame.image
-      }
-    ],
-    seller: {
-      name: 'GamerPower'
+  // Kapak resmini ve görüntüleri hazırla
+  const keyImages = [
+    {
+      type: 'thumbnail',
+      url: game.thumbnail
     },
+    {
+      type: 'cover',
+      url: game.image
+    }
+  ];
+  
+  return {
+    id: `gp-${game.id}`,
+    title: game.title,
+    namespace: `gamerpower-${game.id}`,
+    description: game.description,
+    effectiveDate: game.published_date,
+    keyImages,
     price: {
       totalPrice: {
         discountPrice: 0,
-        originalPrice: worthValue,
-        discount: 100
+        originalPrice: price,
+        voucherDiscount: 0,
+        discount: price,
+        currencyCode: 'USD',
+        currencyInfo: {
+          decimals: 2
+        },
+        fmtPrice: {
+          originalPrice: `$${price}`,
+          discountPrice: 'Free',
+          intermediatePrice: 'Free'
+        }
       }
     },
-    categories: platforms.map(platform => ({
-      path: platform.toLowerCase().replace(/\s+/g, '-'),
-      name: platform
-    })),
-    productSlug: gpGame.title.toLowerCase().replace(/\s+/g, '-'),
-    urlSlug: gpGame.title.toLowerCase().replace(/\s+/g, '-'),
-    promotions: promotions, // Promosyon bilgisini ekledik
-    
-    // ExtendedEpicGame'e özel alanlar
     source: 'gamerpower',
-    platform: 'gamerpower',
-    distributionPlatform,
-    openGiveawayUrl: gpGame.open_giveaway_url,
-    instructions: gpGame.instructions,
-    endDate: endDate,
+    distributionPlatform: platforms.join(', '),
+    platform: platforms.includes('PC') ? 'PC' : platforms[0],
+    offerType: game.type.toLowerCase(),
+    endDate: game.end_date,
+    url: game.open_giveaway_url,
+    categories: [game.type],
     isFree: true,
-    gamerPowerUrl: gpGame.gamerpower_url,
-    status: gpGame.status,
-    worthString: gpGame.worth,
-    type: gpGame.type
+    isOnSale: true,
+    publisher: '',
+    seller: {
+      name: 'GamerPower'
+    },
+    productSlug: `gamerpower-${game.id}`,
+    urlSlug: `gamerpower-${game.id}`,
+    promotions: {
+      promotionalOffers: [
+        {
+          promotionalOffers: [
+            {
+              startDate: game.published_date,
+              endDate: game.end_date || undefined,
+              discountSetting: {
+                discountPercentage: 100
+              }
+            }
+          ]
+        }
+      ]
+    },
+    status: 'ACTIVE',
+    isCodeRedemptionOnly: false,
+    catalogNs: {
+      mappings: []
+    },
+    offerMappings: []
   };
 }
 
@@ -185,6 +277,49 @@ export async function getGamerPowerGamesAsEpicFormat(): Promise<ExtendedEpicGame
     return gpGames.map(game => convertGamerPowerToEpicFormat(game));
   } catch (error) {
     console.error('GamerPower conversion error:', error);
+    return [];
+  }
+}
+
+/**
+ * GamerPower API'den filtrelenmiş oyunları getirir
+ * @param type Oyun tipi (game, loot, beta...)
+ * @param platform Platform adı (pc, steam, epic-games, switch, ps4, xbox-one, android, ios, vr...)
+ * @param sort Sıralama kriteri (date, value, popularity)
+ */
+export async function getFilteredGamerPowerGames(
+  type?: string,
+  platform?: string,
+  sort?: 'date' | 'value' | 'popularity'
+): Promise<ExtendedEpicGame[]> {
+  try {
+    let url = `${GAMERPOWER_API_URL}/giveaways`;
+    const params = [];
+    
+    if (type) params.push(`type=${type}`);
+    if (platform) params.push(`platform=${platform}`);
+    if (sort) params.push(`sort-by=${sort}`);
+    
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+    
+    const response = await axios.get(url);
+    
+    if (response.status !== 200) {
+      throw new Error(`GamerPower API responded with status: ${response.status}`);
+    }
+    
+    // Eğer API yanıtı bir hata içeriyorsa
+    if (response.data.status === 'error') {
+      throw new Error(response.data.message || 'GamerPower API returned an error');
+    }
+    
+    // GamerPower oyunlarını Epic formata dönüştür
+    const games = Array.isArray(response.data) ? response.data : [];
+    return games.map(game => convertGamerPowerToEpicFormat(game));
+  } catch (error) {
+    console.error('Error fetching filtered GamerPower games:', error);
     return [];
   }
 } 
