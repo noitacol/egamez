@@ -2,16 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RxExternalLink } from 'react-icons/rx';
-import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaApple, FaLinux, FaPlaystation, FaXbox, FaDesktop, FaMobileAlt } from 'react-icons/fa';
-import { HiOutlineTag, HiOutlineTrendingUp, HiOutlineExternalLink, HiOutlineShoppingCart, HiOutlineInformationCircle } from 'react-icons/hi';
-import { IoLogoWindows, IoWarningOutline, IoCalendarClearOutline, IoStopwatchOutline, IoPlanetOutline } from 'react-icons/io5';
-import { BsPlayCircle, BsPlayCircleFill, BsInfoCircle, BsLightningChargeFill, BsFillClockFill } from 'react-icons/bs';
-import { SiEpicgames, SiSteam } from 'react-icons/si';
-import { GiStopwatch } from 'react-icons/gi';
-import { MdCalendarToday, MdVideogameAsset } from 'react-icons/md';
-import { TbDiscount } from 'react-icons/tb';
-import { BiTimeFive } from 'react-icons/bi';
-import { ExtendedEpicGame } from '@/lib/types';
+import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaApple, FaLinux, FaPlaystation, FaXbox, FaDesktop, FaChrome, FaArchive } from 'react-icons/fa';
+import { SiEpicgames } from 'react-icons/si';
+import { IoLogoGameControllerB } from 'react-icons/io';
+import { MdClose } from 'react-icons/md';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ExtendedEpicGame } from '../lib/types';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -20,8 +16,7 @@ import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 import clsx from 'clsx';
 import { BsCalendar, BsFillPlayFill } from 'react-icons/bs';
-import { motion } from 'framer-motion';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, parseISO } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { calculateTimeLeft } from '@/lib/utils';
 import { IoMdClose } from 'react-icons/io';
@@ -31,6 +26,9 @@ import { IoMdPricetag } from 'react-icons/io';
 import { MdFreeBreakfast } from 'react-icons/md';
 import { AiFillStar, AiOutlineInfoCircle } from "react-icons/ai";
 import PlatformIcon from './PlatformIcon';
+import { BiTimeFive } from 'react-icons/bi';
+import { HiOutlineTag, HiOutlineTrendingUp, HiOutlineExternalLink, HiOutlineShoppingCart, HiOutlineInformationCircle } from 'react-icons/hi';
+import { IoWarningOutline, IoCalendarClearOutline, IoStopwatchOutline, IoPlanetOutline } from 'react-icons/io5';
 
 // Media öğesi tipi
 interface MediaItem {
@@ -74,6 +72,10 @@ interface GameCardProps {
   isSteam?: boolean;
   isGamerPower?: boolean;
   showDetails?: boolean;
+  showMedia?: boolean;
+  isDetailPage?: boolean;
+  onCardClick?: () => void;
+  showStoreButton?: boolean;
 }
 
 const GameCard: React.FC<GameCardProps> = ({
@@ -91,12 +93,18 @@ const GameCard: React.FC<GameCardProps> = ({
   trending: propTrending,
   isSteam: propIsSteam,
   isGamerPower: propIsGamerPower,
-  showDetails
+  showDetails = true,
+  showMedia = false,
+  isDetailPage = false,
+  onCardClick,
+  showStoreButton = true,
 }) => {
   const [imgError, setImgError] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('main');
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Promosyon ve ücretsiz oyun bilgilerini hesapla
   const hasPromotion = game.price?.totalPrice.discountPrice === 0 || game.isFree;
@@ -107,25 +115,27 @@ const GameCard: React.FC<GameCardProps> = ({
   const promotionEndDate = game.endDate || propEndDate;
 
   const getRemainingDays = (): number | null => {
-    // Eğer game.promotions yoksa null döndür
+    // Promotions kontrolü
     if (!game.promotions) return null;
 
     // Güncel promosyonlar için kalan gün sayısı
-    const promotionalOffers = game.promotions.promotionalOffers || [];
     if (isFreeGame && 
-        promotionalOffers.length > 0 && 
-        promotionalOffers[0]?.promotionalOffers?.length > 0) {
-      const endDate = new Date(promotionalOffers[0].promotionalOffers[0].endDate);
+        game.promotions.promotionalOffers && 
+        Array.isArray(game.promotions.promotionalOffers) &&
+        game.promotions.promotionalOffers.length > 0 && 
+        game.promotions.promotionalOffers[0]?.promotionalOffers?.length > 0) {
+      const endDate = new Date(game.promotions.promotionalOffers[0].promotionalOffers[0].endDate);
       const now = new Date();
       return Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     }
 
     // Gelecek promosyonlar için kalan gün sayısı
-    const upcomingPromotionalOffers = game.promotions.upcomingPromotionalOffers || [];
     if (isUpcoming && 
-        upcomingPromotionalOffers.length > 0 && 
-        upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0) {
-      const startDate = new Date(upcomingPromotionalOffers[0].promotionalOffers[0].startDate);
+        game.promotions.upcomingPromotionalOffers && 
+        Array.isArray(game.promotions.upcomingPromotionalOffers) &&
+        game.promotions.upcomingPromotionalOffers.length > 0 && 
+        game.promotions.upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0) {
+      const startDate = new Date(game.promotions.upcomingPromotionalOffers[0].promotionalOffers[0].startDate);
       const now = new Date();
       return Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     }
@@ -191,16 +201,24 @@ const GameCard: React.FC<GameCardProps> = ({
       }
     };
 
-    if (showGallery) {
-      document.addEventListener('keydown', handleEscKey);
-      document.body.style.overflow = 'hidden';
-    }
-
+    window.addEventListener('keydown', handleEscKey);
     return () => {
-      document.removeEventListener('keydown', handleEscKey);
-      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleEscKey);
     };
   }, [showGallery]);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
 
   const remainingDays = getRemainingDays();
   const linkPath = `/game/${game.namespace || game.id || ''}/${game.productSlug || game.urlSlug || game.id}`;
@@ -218,7 +236,7 @@ const GameCard: React.FC<GameCardProps> = ({
     let endDate: Date | null = null;
 
     // Şu an olan promosyonları kontrol et
-    if (promoOffers.length > 0) {
+    if (Array.isArray(promoOffers) && promoOffers.length > 0) {
       const currentPromotions = promoOffers[0]?.promotionalOffers || [];
       const freePromotion = currentPromotions.find(
         offer => offer.discountSetting?.discountPercentage === 100
@@ -408,14 +426,14 @@ const GameCard: React.FC<GameCardProps> = ({
     if (game.distributionPlatform === 'gamerpower' || propIsGamerPower) {
       return (
         <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-indigo-600 rounded-md font-medium text-xs text-white">
-          <IoPlanetOutline className="text-white" size={14} />
+          <IoLogoGameControllerB className="text-white" size={14} />
           <span>GamerPower</span>
         </div>
       );
     } else if (game.distributionPlatform === 'steam' || propIsSteam) {
       return (
         <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#171a21] rounded-md font-medium text-xs text-white">
-          <SiSteam className="text-white" size={14} />
+          <FaSteam className="text-white" size={14} />
           <span>Steam</span>
         </div>
       );
@@ -471,6 +489,31 @@ const GameCard: React.FC<GameCardProps> = ({
     if (isFreeGame || isUpcoming) return true;
     if (game.endDate) return new Date(game.endDate) > new Date();
     return false;
+  };
+
+  // Medya galerisini kapat
+  const closeGallery = () => {
+    setShowGallery(false);
+    setIsVideoPlaying(false);
+  };
+
+  // Medya galerisindeki öğeler arasında gezinme
+  const navigateGallery = (direction: 'next' | 'prev') => {
+    setIsVideoPlaying(false);
+    if (direction === 'next') {
+      setCurrentMediaIndex((prev) => (prev === mediaGallery.length - 1 ? 0 : prev + 1));
+    } else {
+      setCurrentMediaIndex((prev) => (prev === 0 ? mediaGallery.length - 1 : prev - 1));
+    }
+  };
+
+  // Ana kart tıklama işleyicisi
+  const handleCardClick = () => {
+    if (onCardClick) {
+      onCardClick();
+    } else if (showMedia && mediaGallery.length > 0) {
+      setShowGallery(true);
+    }
   };
 
   // Oyun kartı oluştur

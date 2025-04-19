@@ -188,19 +188,19 @@ export default function Home({
 export const getStaticProps: GetStaticProps = async () => {
   try {
     // Epic Games API'sinden ücretsiz ve yakında ücretsiz olacak oyunları al
-    const epicFreeGames = await getFreeGames();
-    const upcomingEpicGames = await getUpcomingFreeGames();
+    let epicFreeGames = await getFreeGames();
+    let upcomingEpicGames = await getUpcomingFreeGames();
     
     // Steam API'sinden ücretsiz ve trend olan oyunları al
-    const steamFreeGames = await getFreeSteamGames();
+    let steamFreeGames = await getFreeSteamGames();
     const trendingSteamGames = await getTrendingSteamGames();
     
     // GamerPower API'sinden ücretsiz ve trend olan oyunları al
-    const gamerPowerFreeGames = await getFreeGamerPowerGames();
+    let gamerPowerFreeGames = await getFreeGamerPowerGames();
     const trendingGamerPowerGames = await getTrendingGamerPowerGames();
     
     // Tüm trend oyunları birleştir
-    const allTrendingGames = [...trendingSteamGames, ...trendingGamerPowerGames].slice(0, 12);
+    let allTrendingGames = [...trendingSteamGames, ...trendingGamerPowerGames].slice(0, 12);
     
     // Serileştirme hatalarını önlemek için veriyi temizleyelim
     const safelySerialize = (data: any) => {
@@ -215,31 +215,32 @@ export const getStaticProps: GetStaticProps = async () => {
     allTrendingGames = safelySerialize(allTrendingGames);
     
     // Oyun verilerini kontrol et ve eksik alanları tamamla
-    const sanitizeEpicGames = (games: ExtendedEpicGame[]): ExtendedEpicGame[] => {
+    const sanitizeEpicGames = (games: any[]): ExtendedEpicGame[] => {
       return games.map(game => ({
         ...game,
         title: game.title || 'İsimsiz Oyun',
         id: game.id || `game-${Math.random().toString(36).substr(2, 9)}`,
-        effectiveDate: game.effectiveDate || new Date().toISOString()
-      }));
+        effectiveDate: game.effectiveDate || new Date().toISOString(),
+        categories: game.categories || []
+      })) as ExtendedEpicGame[];
     };
     
-    // Tüm oyun listelerini temizle
-    epicFreeGames = sanitizeEpicGames(epicFreeGames);
-    upcomingEpicGames = sanitizeEpicGames(upcomingEpicGames);
-    steamFreeGames = sanitizeEpicGames(steamFreeGames);
-    gamerPowerFreeGames = sanitizeEpicGames(gamerPowerFreeGames);
-    allTrendingGames = sanitizeEpicGames(allTrendingGames);
+    // Tüm oyun listelerini temizle ve type dönüşümlerini gerçekleştir
+    const epicGames = sanitizeEpicGames(epicFreeGames);
+    const upcomingGames = sanitizeEpicGames(upcomingEpicGames);
+    const steamGames = sanitizeEpicGames(steamFreeGames);
+    const gamerPowerGames = sanitizeEpicGames(gamerPowerFreeGames);
+    const trendingGames = sanitizeEpicGames(allTrendingGames);
     
-    const totalGames = epicFreeGames.length + upcomingEpicGames.length + steamFreeGames.length + gamerPowerFreeGames.length + allTrendingGames.length;
+    const totalGames = epicGames.length + upcomingGames.length + steamGames.length + gamerPowerGames.length + trendingGames.length;
 
     return {
       props: {
-        epicFreeGames,
-        upcomingEpicGames,
-        steamFreeGames,
-        gamerPowerGames: gamerPowerFreeGames,
-        trendingGames: allTrendingGames,
+        epicFreeGames: epicGames,
+        upcomingEpicGames: upcomingGames,
+        steamFreeGames: steamGames,
+        gamerPowerGames: gamerPowerGames,
+        trendingGames: trendingGames,
         totalGames
       },
       // Her 6 saatte bir yeniden oluştur
@@ -249,11 +250,11 @@ export const getStaticProps: GetStaticProps = async () => {
     console.error("Error fetching data:", error);
     return {
       props: {
-        epicFreeGames: [],
-        upcomingEpicGames: [],
-        steamFreeGames: [],
-        gamerPowerGames: [],
-        trendingGames: [],
+        epicFreeGames: [] as ExtendedEpicGame[],
+        upcomingEpicGames: [] as ExtendedEpicGame[],
+        steamFreeGames: [] as ExtendedEpicGame[],
+        gamerPowerGames: [] as ExtendedEpicGame[],
+        trendingGames: [] as ExtendedEpicGame[],
         totalGames: 0
       },
       // Hata durumunda 1 saat sonra yeniden dene
