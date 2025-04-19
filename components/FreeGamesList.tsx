@@ -2,6 +2,7 @@ import { useState } from "react";
 import GameCard from "./GameCard";
 import { SiEpicgames, SiSteam } from "react-icons/si";
 import { IoPlanetOutline } from "react-icons/io5";
+import { FaGamepad } from "react-icons/fa";
 import { ExtendedEpicGame } from "@/lib/types";
 
 interface FreeGamesListProps {
@@ -11,22 +12,44 @@ interface FreeGamesListProps {
 }
 
 const FreeGamesList = ({ epicGames, steamGames, gamerPowerGames }: FreeGamesListProps) => {
-  const [filter, setFilter] = useState<"all" | "epic" | "steam" | "gamerpower">("all");
+  const [filter, setFilter] = useState<"all" | "epic" | "steam" | "other">("all");
   const [sortBy, setSortBy] = useState<"name" | "release">("name");
+
+  // GamerPower oyunlarını platformlarına göre grupla
+  const groupGamerPowerGamesByPlatform = () => {
+    const epicFromGamerPower = gamerPowerGames.filter(
+      game => game.distributionPlatform === 'epic'
+    );
+    
+    const steamFromGamerPower = gamerPowerGames.filter(
+      game => game.distributionPlatform === 'steam'
+    );
+    
+    const otherPlatformGames = gamerPowerGames.filter(
+      game => game.distributionPlatform !== 'epic' && game.distributionPlatform !== 'steam'
+    );
+    
+    return {
+      epicFromGamerPower,
+      steamFromGamerPower,
+      otherPlatformGames
+    };
+  };
 
   // Tüm oyunları filtre ve sıralama ayarlarına göre düzenle
   const getFilteredAndSortedGames = () => {
     let games: ExtendedEpicGame[] = [];
+    const { epicFromGamerPower, steamFromGamerPower, otherPlatformGames } = groupGamerPowerGamesByPlatform();
     
     // Filtreleme
     if (filter === "all") {
       games = [...epicGames, ...steamGames, ...gamerPowerGames];
     } else if (filter === "epic") {
-      games = [...epicGames];
+      games = [...epicGames, ...epicFromGamerPower];
     } else if (filter === "steam") {
-      games = [...steamGames];
-    } else {
-      games = [...gamerPowerGames];
+      games = [...steamGames, ...steamFromGamerPower];
+    } else if (filter === "other") {
+      games = [...otherPlatformGames];
     }
     
     // Sıralama
@@ -42,7 +65,20 @@ const FreeGamesList = ({ epicGames, steamGames, gamerPowerGames }: FreeGamesList
     });
   };
 
+  // Platform istatistiklerini hesapla
+  const getPlatformStats = () => {
+    const { epicFromGamerPower, steamFromGamerPower, otherPlatformGames } = groupGamerPowerGamesByPlatform();
+    
+    return {
+      epicCount: epicGames.length + epicFromGamerPower.length,
+      steamCount: steamGames.length + steamFromGamerPower.length,
+      otherCount: otherPlatformGames.length,
+      totalCount: epicGames.length + steamGames.length + gamerPowerGames.length
+    };
+  };
+
   const filteredGames = getFilteredAndSortedGames();
+  const stats = getPlatformStats();
 
   return (
     <div>
@@ -58,7 +94,7 @@ const FreeGamesList = ({ epicGames, steamGames, gamerPowerGames }: FreeGamesList
           >
             <span className="mr-2">Tüm Platformlar</span>
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-              {epicGames.length + steamGames.length + gamerPowerGames.length}
+              {stats.totalCount}
             </span>
           </button>
           
@@ -73,7 +109,7 @@ const FreeGamesList = ({ epicGames, steamGames, gamerPowerGames }: FreeGamesList
             <SiEpicgames className="mr-2" />
             <span className="mr-2">Epic Games</span>
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-              {epicGames.length}
+              {stats.epicCount}
             </span>
           </button>
           
@@ -88,22 +124,22 @@ const FreeGamesList = ({ epicGames, steamGames, gamerPowerGames }: FreeGamesList
             <SiSteam className="mr-2" />
             <span className="mr-2">Steam</span>
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-              {steamGames.length}
+              {stats.steamCount}
             </span>
           </button>
           
           <button
             className={`px-4 py-2 rounded-md flex items-center justify-center ${
-              filter === "gamerpower"
+              filter === "other"
                 ? "bg-blue-500 text-white"
                 : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
             }`}
-            onClick={() => setFilter("gamerpower")}
+            onClick={() => setFilter("other")}
           >
-            <IoPlanetOutline className="mr-2" />
-            <span className="mr-2">GamerPower</span>
+            <FaGamepad className="mr-2" />
+            <span className="mr-2">Diğer Platformlar</span>
             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-              {gamerPowerGames.length}
+              {stats.otherCount}
             </span>
           </button>
         </div>
