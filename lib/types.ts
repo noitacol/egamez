@@ -1,4 +1,5 @@
 import { EpicGame } from './epic-api';
+import { SteamGame } from './steam-api';
 
 /**
  * Epic Games ve Steam oyunları için genişletilmiş tip tanımı
@@ -6,13 +7,13 @@ import { EpicGame } from './epic-api';
  */
 export interface ExtendedEpicGame extends EpicGame {
   /** Oyunun Steam veya Epic mağazasından geldiğini belirtir */
-  source?: 'epic' | 'steam';
+  source?: 'epic' | 'steam' | 'gamerpower';
   
   /** Platformu belirtir (epic veya steam) */
-  platform?: 'epic' | 'steam';
+  platform?: 'epic' | 'steam' | 'gamerpower';
   
   /** Dağıtım platformu */
-  distributionPlatform?: 'epic' | 'steam';
+  distributionPlatform?: 'epic' | 'steam' | 'gamerpower';
   
   /** Oyunun geçici olarak ücretsiz olup olmadığını belirtir */
   isTempFree?: boolean;
@@ -44,11 +45,12 @@ export interface ExtendedEpicGame extends EpicGame {
   } | null;
   
   /** Oyun videoları */
-  videos?: Array<{
-    id: string;
-    thumbnail: string;
+  videos?: {
+    id: string | number;
+    name?: string;
     url: string;
-  }>;
+    thumbnail?: string;
+  }[];
   
   /** Çıkış tarihi (ISO string) */
   releaseDate?: string | null;
@@ -58,4 +60,30 @@ export interface ExtendedEpicGame extends EpicGame {
   
   /** Özel not veya açıklama */
   note?: string | null;
+  
+  /** Steam ile ilgili ekstra alanlar */
+  screenshots?: {
+    id: number | string;
+    type: string;
+    url: string;
+  }[];
+  
+  /** Trend, geçici ücretsiz gibi özel işaretler */
+  isTemporaryFree?: boolean;
+  isDiscounted?: boolean;
+  
+  /** Tarih bilgileri */
+  releaseYear?: number;
+  endDate?: string;
+  
+  /** URL bilgileri */
+  url?: string;
+  
+  /** GamerPower özellikleri */
+  openGiveawayUrl?: string;
+  instructions?: string;
+  gamerPowerUrl?: string;
+  status?: string;
+  worthString?: string;
+  type?: string;
 } 

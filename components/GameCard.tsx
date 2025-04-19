@@ -5,7 +5,7 @@ import { RxExternalLink } from 'react-icons/rx';
 import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam } from 'react-icons/fa';
 import { HiOutlineTag, HiOutlineTrendingUp, HiOutlineExclamation } from 'react-icons/hi';
 import { IoIosArrowRoundForward } from 'react-icons/io';
-import { IoCloseCircle } from 'react-icons/io5';
+import { IoCloseCircle, IoPlanetOutline } from 'react-icons/io5';
 import { SiEpicgames } from 'react-icons/si';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
@@ -57,6 +57,7 @@ interface GameCardProps {
   isUpcoming?: boolean;
   trending?: boolean;
   isSteam?: boolean;
+  isGamerPower?: boolean;
   showDetails?: boolean;
   displayType?: 'list' | 'grid';
   temporaryFreeGame?: boolean;
@@ -68,6 +69,7 @@ const GameCard: React.FC<GameCardProps> = ({
   isUpcoming = false,
   trending = false,
   isSteam = false,
+  isGamerPower = false,
   showDetails = true,
   displayType = 'grid',
   temporaryFreeGame = false
@@ -314,23 +316,14 @@ const GameCard: React.FC<GameCardProps> = ({
 
   // Oyunun istors linkini oluştur
   const getStoreUrl = () => {
-    if (!game) return '#';
-    
-    // Epic Games standart URL formatı
-    const namespace = game.namespace || '';
-    const slug = game.productSlug || game.urlSlug || '';
-    
-    if (namespace && slug) {
-      return `https://store.epicgames.com/tr/p/${slug}`;
+    if (isGamerPower && game.openGiveawayUrl) {
+      return game.openGiveawayUrl; // GamerPower'daki giveaway URL'ini kullan
+    } else if (isSteam && game.url) {
+      return game.url; // Steam URL'ini kullan
+    } else {
+      // Epic Store URL'ini oluştur
+      return `https://store.epicgames.com/tr/p/${game.productSlug || game.urlSlug}`;
     }
-    
-    // Steam linkleri için
-    if (game.id && game.id.toString().startsWith('steam_')) {
-      const steamId = game.id.toString().replace('steam_', '');
-      return `https://store.steampowered.com/app/${steamId}`;
-    }
-    
-    return '#';
   };
 
   const getGamePrice = () => {
@@ -358,16 +351,28 @@ const GameCard: React.FC<GameCardProps> = ({
 
   // Platform badge component
   const renderPlatformBadge = () => {
-    const platform = game.distributionPlatform || game.platform || 'epic';
-    
-    return (
-      <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm rounded-full p-1.5 text-white" title={`Platform: ${platform === 'epic' ? 'Epic Games' : 'Steam'}`}>
-        {platform === 'epic' ? 
-          <SiEpicgames className="h-4 w-4" /> : 
-          <FaSteam className="h-4 w-4" />
-        }
-      </div>
-    );
+    if (isGamerPower) {
+      return (
+        <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-indigo-600 rounded-md font-medium text-xs text-white">
+          <IoPlanetOutline className="text-white" size={14} />
+          <span>GamerPower</span>
+        </div>
+      );
+    } else if (isSteam) {
+      return (
+        <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#171a21] rounded-md font-medium text-xs text-white">
+          <SiSteam className="text-white" size={14} />
+          <span>Steam</span>
+        </div>
+      );
+    } else {
+      return (
+        <div className="absolute left-3 bottom-3 z-10 flex items-center gap-1 px-2 py-1 bg-[#2a2a2a] rounded-md font-medium text-xs text-white">
+          <SiEpicgames className="text-white" size={14} />
+          <span>Epic</span>
+        </div>
+      );
+    }
   };
 
   // Oyun kartı oluştur

@@ -2,7 +2,9 @@ import { GetStaticProps } from "next";
 import { useState } from "react";
 import Head from "next/head";
 import { getFreeGames, getUpcomingFreeGames, getTrendingEpicGames } from "@/lib/epic-api";
-import { getFreeSteamGames, getTrendingSteamGames } from "@/lib/steam-api";
+// Steam API kaldırıldı
+// import { getFreeSteamGames, getTrendingSteamGames } from "@/lib/steam-api";
+import { getGamerPowerGamesAsEpicFormat } from "@/lib/gamerpower-api";
 import FreeGamesList from "@/components/FreeGamesList";
 import GameCard from "@/components/GameCard";
 import { ExtendedEpicGame } from "@/lib/types";
@@ -10,14 +12,16 @@ import { ExtendedEpicGame } from "@/lib/types";
 interface HomeProps {
   epicFreeGames: ExtendedEpicGame[];
   upcomingEpicGames: ExtendedEpicGame[];
-  steamFreeGames: ExtendedEpicGame[];
+  // steamFreeGames => gamerPowerGames olarak değiştirildi
+  gamerPowerGames: ExtendedEpicGame[];
   totalGames: number;
 }
 
 export default function Home({ 
   epicFreeGames, 
   upcomingEpicGames, 
-  steamFreeGames,
+  // steamFreeGames => gamerPowerGames olarak değiştirildi
+  gamerPowerGames,
   totalGames 
 }: HomeProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,8 +31,8 @@ export default function Home({
   return (
     <>
       <Head>
-        <title>EpicAPI - Epic Games ve Steam'deki Ücretsiz Oyunları Keşfedin</title>
-        <meta name="description" content="Epic Games ve Steam'deki ücretsiz ve yakında ücretsiz olacak oyunları keşfedin" />
+        <title>EpicAPI - Epic Games ve Ücretsiz Oyunları Keşfedin</title>
+        <meta name="description" content="Epic Games ve tüm platformlardaki ücretsiz oyunları keşfedin" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -38,7 +42,7 @@ export default function Home({
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
             <h1 className="text-3xl font-bold mb-4">Ücretsiz Oyunlar</h1>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Epic Games ve Steam platformlarında bulunan şu anda ücretsiz olan ve yakında ücretsiz olacak oyunları keşfedin.
+              Epic Games ve diğer platformlarda bulunan şu anda ücretsiz olan ve yakında ücretsiz olacak oyunları keşfedin.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -48,7 +52,7 @@ export default function Home({
               </div>
               
               <div className="bg-green-100 dark:bg-green-900 p-4 rounded-lg">
-                <div className="text-2xl font-bold">{epicFreeGames.length + steamFreeGames.length}</div>
+                <div className="text-2xl font-bold">{epicFreeGames.length + gamerPowerGames.length}</div>
                 <div className="text-sm text-gray-600 dark:text-gray-300">Ücretsiz Oyun</div>
               </div>
               
@@ -96,7 +100,7 @@ export default function Home({
                     <p className="text-red-700">{error}</p>
                   </div>
                 ) : (
-                  <FreeGamesList epicGames={epicFreeGames} steamGames={steamFreeGames} />
+                  <FreeGamesList epicGames={epicFreeGames} steamGames={gamerPowerGames} />
                 )}
               </>
             )}
@@ -131,10 +135,12 @@ export default function Home({
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    // Epic Games ve Steam'den ücretsiz oyunları getir
+    // Epic Games'den ücretsiz oyunları getir
     let epicFreeGames = await getFreeGames() || [];
     let upcomingEpicGames = await getUpcomingFreeGames() || [];
-    let steamFreeGames = await getFreeSteamGames() || [];
+    
+    // Steam API yerine GamerPower API'den ücretsiz oyunları getir
+    let gamerPowerGames = await getGamerPowerGamesAsEpicFormat() || [];
     
     // Serileştirme hatalarını önlemek için veriyi temizleyelim
     const safelySerialize = (data: any) => {
@@ -144,7 +150,7 @@ export const getStaticProps: GetStaticProps = async () => {
     // Verileri temizle
     epicFreeGames = safelySerialize(epicFreeGames);
     upcomingEpicGames = safelySerialize(upcomingEpicGames);
-    steamFreeGames = safelySerialize(steamFreeGames);
+    gamerPowerGames = safelySerialize(gamerPowerGames);
     
     // Oyun verilerini kontrol et ve eksik alanları tamamla
     const sanitizeEpicGames = (games: ExtendedEpicGame[]): ExtendedEpicGame[] => {
@@ -159,14 +165,15 @@ export const getStaticProps: GetStaticProps = async () => {
     // Tüm oyun listelerini temizle
     epicFreeGames = sanitizeEpicGames(epicFreeGames);
     upcomingEpicGames = sanitizeEpicGames(upcomingEpicGames);
+    gamerPowerGames = sanitizeEpicGames(gamerPowerGames);
     
-    const totalGames = epicFreeGames.length + upcomingEpicGames.length + steamFreeGames.length;
+    const totalGames = epicFreeGames.length + upcomingEpicGames.length + gamerPowerGames.length;
 
     return {
       props: {
         epicFreeGames,
         upcomingEpicGames,
-        steamFreeGames,
+        gamerPowerGames,
         totalGames
       },
       // Her 6 saatte bir yeniden oluştur
@@ -179,7 +186,7 @@ export const getStaticProps: GetStaticProps = async () => {
       props: {
         epicFreeGames: [],
         upcomingEpicGames: [],
-        steamFreeGames: [],
+        gamerPowerGames: [],
         totalGames: 0
       },
       revalidate: 60 * 60, // Bir saat sonra yeniden dene

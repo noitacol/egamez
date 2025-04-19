@@ -1,16 +1,16 @@
 import { useState } from "react";
 import GameCard from "./GameCard";
-import { FaSteam } from "react-icons/fa";
 import { SiEpicgames } from "react-icons/si";
+import { IoPlanetOutline } from "react-icons/io5";
 import { ExtendedEpicGame } from "@/lib/types";
 
 interface FreeGamesListProps {
   epicGames: ExtendedEpicGame[];
-  steamGames: ExtendedEpicGame[];
+  steamGames: ExtendedEpicGame[]; // Artık GamerPower oyunlarını içeriyor
 }
 
 const FreeGamesList = ({ epicGames, steamGames }: FreeGamesListProps) => {
-  const [filter, setFilter] = useState<"all" | "epic" | "steam">("all");
+  const [filter, setFilter] = useState<"all" | "epic" | "gamerpower">("all");
   const [sortBy, setSortBy] = useState<"name" | "release">("name");
 
   // Güvenli bir string karşılaştırma fonksiyonu
@@ -84,13 +84,13 @@ const FreeGamesList = ({ epicGames, steamGames }: FreeGamesListProps) => {
             </button>
             <button
               className={`px-4 py-2 text-sm font-medium flex items-center gap-1 rounded-r-md ${
-                filter === "steam"
+                filter === "gamerpower"
                   ? "bg-blue-600 text-white"
                   : "bg-white text-gray-700 hover:bg-gray-50"
               } border-t border-b border-r border-gray-300`}
-              onClick={() => setFilter("steam")}
+              onClick={() => setFilter("gamerpower")}
             >
-              <FaSteam /> Steam
+              <IoPlanetOutline /> GamerPower
             </button>
           </div>
           
@@ -130,7 +130,7 @@ const FreeGamesList = ({ epicGames, steamGames }: FreeGamesListProps) => {
               key={game.id} 
               game={game} 
               isFree 
-              isSteam={steamGames.some(g => g.id === game.id)}
+              isGamerPower={game.source === "gamerpower"}
             />
           ))}
         </div>
