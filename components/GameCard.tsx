@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RxExternalLink } from 'react-icons/rx';
-import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaApple, FaLinux, FaPlaystation, FaXbox, FaDesktop, FaMobileAlt } from 'react-icons/fa';
 import { HiOutlineTag, HiOutlineTrendingUp, HiOutlineExternalLink, HiOutlineShoppingCart, HiOutlineInformationCircle } from 'react-icons/hi';
 import { IoLogoWindows, IoWarningOutline, IoCalendarClearOutline, IoStopwatchOutline, IoPlanetOutline } from 'react-icons/io5';
 import { BsPlayCircle, BsPlayCircleFill, BsInfoCircle, BsLightningChargeFill, BsFillClockFill } from 'react-icons/bs';
@@ -11,7 +11,7 @@ import { GiStopwatch } from 'react-icons/gi';
 import { MdCalendarToday, MdVideogameAsset } from 'react-icons/md';
 import { TbDiscount } from 'react-icons/tb';
 import { BiTimeFive } from 'react-icons/bi';
-import { ExtendedEpicGame } from '../lib/types';
+import { ExtendedEpicGame } from '@/lib/types';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -24,26 +24,29 @@ import { motion } from 'framer-motion';
 import { format, differenceInDays } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { calculateTimeLeft } from '@/lib/utils';
-import { EpicGame } from '../lib/epic-api';
 import { IoMdClose } from 'react-icons/io';
 import { BiSolidRightArrow, BiSolidLeftArrow } from "react-icons/bi";
 import { FiExternalLink } from "react-icons/fi";
 import { IoMdPricetag } from 'react-icons/io';
 import { MdFreeBreakfast } from 'react-icons/md';
 import { AiFillStar, AiOutlineInfoCircle } from "react-icons/ai";
-import { BiChevronLeft, BiChevronRight } from "react-icons/bi";
-import { FaPlay } from "react-icons/fa";
 import PlatformIcon from './PlatformIcon';
 
-// Promosyonlar için tip tanımları
-interface DiscountSetting {
-  discountPercentage: number;
+// Media öğesi tipi
+interface MediaItem {
+  type: 'image' | 'video';
+  url: string;
+  thumbnail?: string;
+  id: string;
+  alt: string;
 }
 
 interface PromotionalOffer {
   startDate: string;
   endDate: string;
-  discountSetting: DiscountSetting;
+  discountSetting: {
+    discountPercentage: number;
+  };
 }
 
 interface PromotionalOffers {
@@ -53,15 +56,6 @@ interface PromotionalOffers {
 interface Promotions {
   promotionalOffers?: PromotionalOffers[];
   upcomingPromotionalOffers?: PromotionalOffers[];
-}
-
-// Medya öğeleri için tip tanımı
-interface MediaItem {
-  type: 'image' | 'video';
-  url: string;
-  id?: string;
-  thumbnail?: string;
-  alt?: string;
 }
 
 interface GameCardProps {
@@ -113,24 +107,25 @@ const GameCard: React.FC<GameCardProps> = ({
   const promotionEndDate = game.endDate || propEndDate;
 
   const getRemainingDays = (): number | null => {
+    // Eğer game.promotions yoksa null döndür
     if (!game.promotions) return null;
 
     // Güncel promosyonlar için kalan gün sayısı
+    const promotionalOffers = game.promotions.promotionalOffers || [];
     if (isFreeGame && 
-        game.promotions.promotionalOffers && 
-        game.promotions.promotionalOffers.length > 0 && 
-        game.promotions.promotionalOffers[0]?.promotionalOffers?.length > 0) {
-      const endDate = new Date(game.promotions.promotionalOffers[0].promotionalOffers[0].endDate);
+        promotionalOffers.length > 0 && 
+        promotionalOffers[0]?.promotionalOffers?.length > 0) {
+      const endDate = new Date(promotionalOffers[0].promotionalOffers[0].endDate);
       const now = new Date();
       return Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     }
 
     // Gelecek promosyonlar için kalan gün sayısı
+    const upcomingPromotionalOffers = game.promotions.upcomingPromotionalOffers || [];
     if (isUpcoming && 
-        game.promotions.upcomingPromotionalOffers && 
-        game.promotions.upcomingPromotionalOffers.length > 0 && 
-        game.promotions.upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0) {
-      const startDate = new Date(game.promotions.upcomingPromotionalOffers[0].promotionalOffers[0].startDate);
+        upcomingPromotionalOffers.length > 0 && 
+        upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0) {
+      const startDate = new Date(upcomingPromotionalOffers[0].promotionalOffers[0].startDate);
       const now = new Date();
       return Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     }

@@ -49,7 +49,7 @@ export interface ExtendedEpicGame extends EpicGame {
   metacritic?: {
     score: number;
     url: string;
-  };
+  } | null;
   
   /** Oyunun videoları */
   videos?: Array<{
@@ -72,6 +72,9 @@ export interface ExtendedEpicGame extends EpicGame {
   
   /** Hangi platformlarda çalıştığı */
   platformName?: string;
+  
+  /** Geçici ücretsiz oyun mu */
+  temporaryFreeGame?: boolean;
   
   /** Kategoriler - EpicGame'in categories tipini override eder */
   categories: {

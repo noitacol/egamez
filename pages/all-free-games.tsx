@@ -393,14 +393,19 @@ export const getStaticProps: GetStaticProps<AllFreeGamesProps> = async () => {
       getFreeSteamGames().then(games => games.map(convertSteamToEpicFormat)),
       getTemporaryFreeSteamGames().then(games => games.map(convertSteamToEpicFormat))
     ]);
-
-    // Tüm verileri bir araya getiriyoruz
+    
+    // Serileştirme hatalarını önlemek için veriyi temizleyelim
+    const safelySerialize = (data: any) => {
+      return JSON.parse(JSON.stringify(data || []));
+    };
+    
+    // Tüm verileri bir araya getiriyoruz ve güvenli şekilde serileştiriyoruz
     return {
       props: {
-        epicFreeGames: epicFreeGamesData as ExtendedEpicGame[],
-        epicUpcomingGames: epicUpcomingGamesData as ExtendedEpicGame[],
-        steamFreeGames: steamFreeGamesData as ExtendedEpicGame[],
-        temporaryFreeGames: temporaryFreeGamesData as ExtendedEpicGame[]
+        epicFreeGames: safelySerialize(epicFreeGamesData) as ExtendedEpicGame[],
+        epicUpcomingGames: safelySerialize(epicUpcomingGamesData) as ExtendedEpicGame[],
+        steamFreeGames: safelySerialize(steamFreeGamesData) as ExtendedEpicGame[],
+        temporaryFreeGames: safelySerialize(temporaryFreeGamesData) as ExtendedEpicGame[]
       },
       revalidate: 1800, // 30 dakikada bir yeniden oluştur
     };

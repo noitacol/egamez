@@ -1,29 +1,18 @@
 import { useState } from "react";
 import GameCard from "./GameCard";
-import { SiEpicgames } from "react-icons/si";
+import { SiEpicgames, SiSteam } from "react-icons/si";
 import { IoPlanetOutline } from "react-icons/io5";
 import { ExtendedEpicGame } from "@/lib/types";
 
 interface FreeGamesListProps {
   epicGames: ExtendedEpicGame[];
-  steamGames: ExtendedEpicGame[]; // Artık GamerPower oyunlarını içeriyor
+  steamGames: ExtendedEpicGame[];
+  gamerPowerGames: ExtendedEpicGame[];
 }
 
-const FreeGamesList = ({ epicGames, steamGames }: FreeGamesListProps) => {
-  const [filter, setFilter] = useState<"all" | "epic" | "gamerpower">("all");
+const FreeGamesList = ({ epicGames, steamGames, gamerPowerGames }: FreeGamesListProps) => {
+  const [filter, setFilter] = useState<"all" | "epic" | "steam" | "gamerpower">("all");
   const [sortBy, setSortBy] = useState<"name" | "release">("name");
-
-  // Güvenli bir string karşılaştırma fonksiyonu
-  const safeCompare = (a: string | undefined | null, b: string | undefined | null) => {
-    // Eğer her iki değer de tanımlı değilse 0 döndür (eşit kabul et)
-    if (!a && !b) return 0;
-    // Eğer sadece a tanımlı değilse b önce gelsin
-    if (!a) return 1;
-    // Eğer sadece b tanımlı değilse a önce gelsin
-    if (!b) return -1;
-    // Her iki değer de tanımlıysa normal karşılaştırma yap
-    return a.localeCompare(b);
-  };
 
   // Tüm oyunları filtre ve sıralama ayarlarına göre düzenle
   const getFilteredAndSortedGames = () => {
@@ -31,106 +20,129 @@ const FreeGamesList = ({ epicGames, steamGames }: FreeGamesListProps) => {
     
     // Filtreleme
     if (filter === "all") {
-      games = [...epicGames, ...steamGames];
+      games = [...epicGames, ...steamGames, ...gamerPowerGames];
     } else if (filter === "epic") {
       games = [...epicGames];
-    } else {
+    } else if (filter === "steam") {
       games = [...steamGames];
+    } else {
+      games = [...gamerPowerGames];
     }
     
     // Sıralama
-    if (sortBy === "name") {
-      games.sort((a, b) => safeCompare(a.title, b.title));
-    } else {
-      // Yayınlanma tarihine göre sırala (en yeni üstte)
-      games.sort((a, b) => {
-        const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : 0;
-        const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : 0;
-        return dateB - dateA;
-      });
-    }
-    
-    return games;
+    return games.sort((a, b) => {
+      if (sortBy === "name") {
+        return a.title.localeCompare(b.title);
+      } else {
+        // release date'e göre sırala (yeniden eskiye)
+        const dateA = new Date(a.effectiveDate || 0);
+        const dateB = new Date(b.effectiveDate || 0);
+        return dateB.getTime() - dateA.getTime();
+      }
+    });
   };
 
-  const filteredAndSortedGames = getFilteredAndSortedGames();
+  const filteredGames = getFilteredAndSortedGames();
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h2 className="text-2xl font-bold">Şu Anda Ücretsiz Olan Oyunlar</h2>
-        
-        <div className="flex flex-wrap gap-3">
-          <div className="flex rounded-md shadow-sm">
-            <button
-              className={`px-4 py-2 text-sm font-medium rounded-l-md ${
-                filter === "all"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
-              } border border-gray-300`}
-              onClick={() => setFilter("all")}
-            >
-              Tümü
-            </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium flex items-center gap-1 ${
-                filter === "epic"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
-              } border-t border-b border-r border-gray-300`}
-              onClick={() => setFilter("epic")}
-            >
-              <SiEpicgames /> Epic
-            </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium flex items-center gap-1 rounded-r-md ${
-                filter === "gamerpower"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
-              } border-t border-b border-r border-gray-300`}
-              onClick={() => setFilter("gamerpower")}
-            >
-              <IoPlanetOutline /> GamerPower
-            </button>
-          </div>
+      <div className="flex flex-col md:flex-row md:justify-between mb-6">
+        <div className="flex flex-col md:flex-row mb-4 md:mb-0 space-y-2 md:space-y-0 md:space-x-2">
+          <button
+            className={`px-4 py-2 rounded-md flex items-center justify-center ${
+              filter === "all"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+            }`}
+            onClick={() => setFilter("all")}
+          >
+            <span className="mr-2">Tüm Platformlar</span>
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
+              {epicGames.length + steamGames.length + gamerPowerGames.length}
+            </span>
+          </button>
           
-          <div className="flex rounded-md shadow-sm">
-            <button
-              className={`px-4 py-2 text-sm font-medium rounded-l-md ${
-                sortBy === "name"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
-              } border border-gray-300`}
-              onClick={() => setSortBy("name")}
-            >
-              Ada Göre
-            </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium rounded-r-md ${
-                sortBy === "release"
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
-              } border-t border-b border-r border-gray-300`}
-              onClick={() => setSortBy("release")}
-            >
-              Tarihe Göre
-            </button>
-          </div>
+          <button
+            className={`px-4 py-2 rounded-md flex items-center justify-center ${
+              filter === "epic"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+            }`}
+            onClick={() => setFilter("epic")}
+          >
+            <SiEpicgames className="mr-2" />
+            <span className="mr-2">Epic Games</span>
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
+              {epicGames.length}
+            </span>
+          </button>
+          
+          <button
+            className={`px-4 py-2 rounded-md flex items-center justify-center ${
+              filter === "steam"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+            }`}
+            onClick={() => setFilter("steam")}
+          >
+            <SiSteam className="mr-2" />
+            <span className="mr-2">Steam</span>
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
+              {steamGames.length}
+            </span>
+          </button>
+          
+          <button
+            className={`px-4 py-2 rounded-md flex items-center justify-center ${
+              filter === "gamerpower"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+            }`}
+            onClick={() => setFilter("gamerpower")}
+          >
+            <IoPlanetOutline className="mr-2" />
+            <span className="mr-2">GamerPower</span>
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
+              {gamerPowerGames.length}
+            </span>
+          </button>
+        </div>
+        
+        <div className="flex space-x-2">
+          <button
+            className={`px-4 py-2 rounded-md ${
+              sortBy === "name"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+            }`}
+            onClick={() => setSortBy("name")}
+          >
+            İsme Göre
+          </button>
+          <button
+            className={`px-4 py-2 rounded-md ${
+              sortBy === "release"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+            }`}
+            onClick={() => setSortBy("release")}
+          >
+            Tarihe Göre
+          </button>
         </div>
       </div>
 
-      {filteredAndSortedGames.length === 0 ? (
-        <div className="bg-gray-100 p-6 rounded-lg text-center">
-          <p>Şu anda ücretsiz oyun bulunamadı.</p>
+      {filteredGames.length === 0 ? (
+        <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg text-center">
+          <p className="text-gray-600 dark:text-gray-300">Ücretsiz oyun bulunamadı.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredAndSortedGames.map((game) => (
+          {filteredGames.map((game) => (
             <GameCard 
               key={game.id} 
-              game={game} 
-              isFree 
-              isGamerPower={game.source === "gamerpower"}
+              game={game}
+              isFree={true}
             />
           ))}
         </div>

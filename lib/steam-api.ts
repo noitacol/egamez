@@ -497,7 +497,7 @@ export async function getSteamGameNews(appid: number, count: number = 3): Promis
  * Bu fonksiyon, Steam Game'i EpicGame formatına çevirerek UI'da tutarlı bir gösterim sağlar
  */
 export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame {
-  // Metacritic puanı varsa uygun formatta ayarla, yoksa null olarak bırak
+  // Metacritic puanı varsa uygun formatta ayarla, yoksa null olarak ayarla
   const metacritic = steamGame.metacritic 
     ? { score: steamGame.metacritic.score, url: steamGame.metacritic.url } 
     : null;
@@ -580,15 +580,15 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame
     // Genişletilmiş özellikler
     videos,
     metacritic,
-    temporaryFreeGame: steamGame.isTemporaryFree || false,
-    trending: steamGame.isTrending || false,
+    isFree: steamGame.price.isFree,
+    isUpcoming: steamGame.release_date?.coming_soon || false,
+    isTrending: steamGame.isTrending || false,
+    isOnSale: steamGame.price.discount !== undefined && steamGame.price.discount > 0,
+    isCodeRedemptionOnly: false,
     platform: 'steam', 
     distributionPlatform: 'steam',
-    // undefined değerleri null ile değiştir
-    background_image: steamGame.background_image || null,
-    releaseDate: steamGame.release_date?.date || null,
-    promotionEndDate: steamGame.promotionEndDate || null,
-    // Diğer özellikler
-    note: steamGame.isTemporaryFree ? 'Bu oyun geçici olarak ücretsizdir' : null
+    steamAppId: steamGame.appid.toString(),
+    headerImage: steamGame.header_image || '',
+    publisher: steamGame.publishers?.[0] || ''
   };
 } 

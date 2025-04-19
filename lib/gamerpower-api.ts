@@ -216,26 +216,19 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
       totalPrice: {
         discountPrice: 0,
         originalPrice: price,
-        voucherDiscount: 0,
-        discount: price,
-        currencyCode: 'USD',
-        currencyInfo: {
-          decimals: 2
-        },
-        fmtPrice: {
-          originalPrice: `$${price}`,
-          discountPrice: 'Free',
-          intermediatePrice: 'Free'
-        }
+        discount: price
       }
     },
     source: 'gamerpower',
-    distributionPlatform: platforms.join(', '),
+    distributionPlatform: 'gamerpower',
     platform: platforms.includes('PC') ? 'PC' : platforms[0],
     offerType: game.type.toLowerCase(),
     endDate: game.end_date,
     url: game.open_giveaway_url,
-    categories: [game.type],
+    categories: [{
+      path: game.type.toLowerCase(),
+      name: game.type
+    }],
     isFree: true,
     isOnSale: true,
     publisher: '',
@@ -250,21 +243,17 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
           promotionalOffers: [
             {
               startDate: game.published_date,
-              endDate: game.end_date || undefined,
+              endDate: game.end_date || '',
               discountSetting: {
                 discountPercentage: 100
               }
             }
           ]
         }
-      ]
+      ],
+      upcomingPromotionalOffers: []
     },
-    status: 'ACTIVE',
-    isCodeRedemptionOnly: false,
-    catalogNs: {
-      mappings: []
-    },
-    offerMappings: []
+    isCodeRedemptionOnly: false
   };
 }
 
@@ -320,6 +309,33 @@ export async function getFilteredGamerPowerGames(
     return games.map(game => convertGamerPowerToEpicFormat(game));
   } catch (error) {
     console.error('Error fetching filtered GamerPower games:', error);
+    return [];
+  }
+}
+
+/**
+ * GamerPower API'den trend olan oyunları getirir
+ * Popülerliğe göre sıralanmış olarak sunar
+ */
+export async function getTrendingGamerPowerGames(): Promise<ExtendedEpicGame[]> {
+  try {
+    // Popülerliğe göre sıralanmış GamerPower oyunlarını getir
+    const games = await getGamerPowerGamesSorted('popularity');
+    
+    // Sadece ilk 10 oyunu al ve dönüştür 
+    const trendingGames = games.slice(0, 10).map(game => {
+      const epicFormatGame = convertGamerPowerToEpicFormat(game);
+      
+      // Trend olarak işaretle
+      return {
+        ...epicFormatGame,
+        isTrending: true
+      };
+    });
+    
+    return trendingGames;
+  } catch (error) {
+    console.error('GamerPower trending games error:', error);
     return [];
   }
 } 
