@@ -564,9 +564,9 @@ export function convertSteamToEpicFormat(steamGame: SteamGame): ExtendedEpicGame
     },
     price: {
       totalPrice: {
-        discountPrice: steamGame.price.finalPrice ? steamGame.price.finalPrice * 100 : 0,
-        originalPrice: steamGame.price.initialPrice ? steamGame.price.initialPrice * 100 : 0,
-        discount: steamGame.price.discount || 0
+        discountPrice: typeof steamGame.price.finalPrice === 'number' ? steamGame.price.finalPrice * 100 : 0,
+        originalPrice: typeof steamGame.price.initialPrice === 'number' ? steamGame.price.initialPrice * 100 : 0,
+        discount: typeof steamGame.price.discount === 'number' ? steamGame.price.discount : 0
       }
     },
     categories: steamGame.categories ? steamGame.categories.map(cat => ({ 

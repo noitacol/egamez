@@ -107,8 +107,10 @@ const GameCard: React.FC<GameCardProps> = ({
   const [isMobile, setIsMobile] = useState(false);
 
   // Promosyon ve ücretsiz oyun bilgilerini hesapla
-  const hasPromotion = game.price?.totalPrice.discountPrice === 0 || game.isFree;
-  const isFreeGame = propIsFree !== undefined ? propIsFree : hasPromotion || game.isFree;
+  const hasPromotion = 
+    (game.price?.totalPrice && typeof game.price.totalPrice.discountPrice === 'number' && game.price.totalPrice.discountPrice === 0) || 
+    game.isFree === true;
+  const isFreeGame = propIsFree !== undefined ? propIsFree : hasPromotion || game.isFree === true;
   const isUpcoming = propIsUpcoming !== undefined ? propIsUpcoming : game.isUpcoming;
   
   // Promosyon bitiş tarihini hesapla
@@ -396,26 +398,30 @@ const GameCard: React.FC<GameCardProps> = ({
   };
 
   const getGamePrice = () => {
-    if (!game.price) return { finalPrice: 'Belirtilmemiş', originalPrice: '', hasDiscount: false };
+    if (!game.price || !game.price.totalPrice) return { finalPrice: 'Belirtilmemiş', originalPrice: '', hasDiscount: false };
     
     const totalPrice = game.price.totalPrice;
     let finalPrice = 'Ücretsiz';
     let originalPrice = '';
     let hasDiscount = false;
     
-    if (totalPrice) {
-      // İndirim varsa doğru şekilde fiyatları hesapla
-      if (totalPrice.discount > 0) {
-        // İndirimli fiyat ve orijinal fiyat doğru şekilde göster
-        finalPrice = `₺${(totalPrice.discountPrice).toFixed(2)}`;
-        originalPrice = `₺${(totalPrice.originalPrice).toFixed(2)}`;
-        hasDiscount = true;
-      } else {
-        // İndirim yoksa normal fiyatı göster
-        finalPrice = totalPrice.originalPrice === 0 
-          ? 'Ücretsiz' 
-          : `₺${(totalPrice.originalPrice).toFixed(2)}`;
-      }
+    // Discount kontrolü
+    const hasValidDiscount = typeof totalPrice.discount === 'number' && totalPrice.discount > 0;
+    
+    // Fiyat kontrolü
+    const hasValidDiscountPrice = typeof totalPrice.discountPrice === 'number';
+    const hasValidOriginalPrice = typeof totalPrice.originalPrice === 'number';
+    
+    if (hasValidDiscount && hasValidDiscountPrice && hasValidOriginalPrice) {
+      // İndirimli fiyat ve orijinal fiyat doğru şekilde göster
+      finalPrice = `₺${(totalPrice.discountPrice).toFixed(2)}`;
+      originalPrice = `₺${(totalPrice.originalPrice).toFixed(2)}`;
+      hasDiscount = true;
+    } else if (hasValidOriginalPrice) {
+      // İndirim yoksa normal fiyatı göster
+      finalPrice = totalPrice.originalPrice === 0 
+        ? 'Ücretsiz' 
+        : `₺${(totalPrice.originalPrice).toFixed(2)}`;
     }
     
     return { finalPrice, originalPrice, hasDiscount };

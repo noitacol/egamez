@@ -221,7 +221,14 @@ export const getStaticProps: GetStaticProps = async () => {
         title: game.title || 'İsimsiz Oyun',
         id: game.id || `game-${Math.random().toString(36).substr(2, 9)}`,
         effectiveDate: game.effectiveDate || new Date().toISOString(),
-        categories: game.categories || []
+        categories: game.categories || [],
+        price: game.price || {
+          totalPrice: {
+            originalPrice: 0,
+            discountPrice: 0,
+            discount: 0
+          }
+        }
       })) as ExtendedEpicGame[];
     };
     
