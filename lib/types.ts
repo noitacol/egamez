@@ -18,6 +18,9 @@ export interface ExtendedEpicGame extends EpicGame {
   /** Oyunun geçici olarak ücretsiz olup olmadığını belirtir */
   isTempFree?: boolean;
   
+  /** Oyunun ücretsiz olup olmadığını belirtir */
+  isFree?: boolean;
+  
   /** Geçici olarak ücretsiz oyun */
   temporaryFreeGame?: boolean;
   

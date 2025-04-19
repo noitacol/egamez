@@ -384,9 +384,9 @@ const GameCard: React.FC<GameCardProps> = ({
       className="group relative flex flex-col bg-card border rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden h-full"
     >
       {/* Üst Etiket - Trending, Ücretsiz veya Yakında */}
-      {(game.trending || isFreeGame || isUpcomingGame || temporaryFreeGame) && (
+      {(trending || isFreeGame || isUpcomingGame || temporaryFreeGame) && (
         <div className="absolute top-0 left-0 z-10 flex gap-2 p-2">
-          {game.trending && (
+          {trending && (
             <span className="bg-amber-500 text-white text-xs font-medium px-2 py-0.5 rounded">
               Trend
             </span>
@@ -423,7 +423,8 @@ const GameCard: React.FC<GameCardProps> = ({
         </div>
       )}
       
-      {/* Platform göstergesi */}
+      {/* Platform göstergesi - Eğer gelecekte değişebilir, şimdilik kapatıldı */}
+      {/* 
       <div className="absolute top-0 right-0 z-10 p-2">
         <div className="flex bg-black/50 backdrop-blur-sm rounded-full p-1">
           {isSteam && (
@@ -431,6 +432,10 @@ const GameCard: React.FC<GameCardProps> = ({
           )}
         </div>
       </div>
+      */}
+
+      {/* Platform etiketi */}
+      {renderPlatformBadge()}
 
       {/* Resim Bölümü */}
       <div 
@@ -472,7 +477,7 @@ const GameCard: React.FC<GameCardProps> = ({
 
       {/* Oyun Bilgileri */}
       <div className="flex flex-col p-4 flex-grow">
-        <Link href={`/game/${game.id}`} className="hover:underline">
+        <Link href={game.id ? `/game/${game.id}` : '#'} className="hover:underline">
           <h3 className="text-lg font-semibold line-clamp-1">{game.title}</h3>
         </Link>
           
@@ -499,7 +504,7 @@ const GameCard: React.FC<GameCardProps> = ({
         {/* Detay Linkine Git Butonu */}
         <div className="flex items-center justify-between mt-4">
           <Link 
-            href={`/game/${game.id}`}
+            href={game.id ? `/game/${game.id}` : '#'}
             className="text-primary hover:underline text-sm font-medium flex items-center"
           >
             Detayları Gör
@@ -518,19 +523,19 @@ const GameCard: React.FC<GameCardProps> = ({
               <div className="flex flex-col">
                 <span className="line-through text-gray-500 text-xs">
                   {game.price?.totalPrice?.originalPrice 
-                    ? `₺${(game.price.totalPrice.originalPrice / 100).toFixed(2)}`
+                    ? `₺${(game.price.totalPrice.originalPrice).toFixed(2)}`
                     : ''}
                 </span>
                 <span className="text-green-600 font-semibold">
                   {game.price?.totalPrice?.discountPrice 
-                    ? `₺${(game.price.totalPrice.discountPrice / 100).toFixed(2)}`
+                    ? `₺${(game.price.totalPrice.discountPrice).toFixed(2)}`
                     : 'Bilinmiyor'}
                 </span>
               </div>
             ) : (
               <span className="font-semibold">
                 {game.price?.totalPrice?.originalPrice 
-                  ? `₺${(game.price.totalPrice.originalPrice / 100).toFixed(2)}`
+                  ? `₺${(game.price.totalPrice.originalPrice).toFixed(2)}`
                   : 'Bilinmiyor'}
               </span>
             )}
@@ -561,20 +566,21 @@ const GameCard: React.FC<GameCardProps> = ({
             
             {/* Ana Medya */}
             <div className="w-full h-full flex items-center justify-center">
-              {galleryMedia[currentMediaIndex].type === 'video' ? (
+              {galleryMedia.length > 0 && currentMediaIndex < galleryMedia.length && galleryMedia[currentMediaIndex]?.type === 'video' ? (
                 <iframe
-                  src={galleryMedia[currentMediaIndex].url}
+                  src={galleryMedia[currentMediaIndex]?.url || ''}
                   className="w-full h-full"
                   allowFullScreen
                   title={`${game.title} video ${currentMediaIndex + 1}`}
                 ></iframe>
               ) : (
                 <Image
-                  src={galleryMedia[currentMediaIndex].url}
+                  src={galleryMedia.length > 0 && currentMediaIndex < galleryMedia.length ? galleryMedia[currentMediaIndex]?.url || '' : ''}
                   alt={`${game.title} görsel ${currentMediaIndex + 1}`}
                   className="object-contain max-h-full"
                   width={1200}
                   height={675}
+                  unoptimized={true}
                 />
               )}
             </div>

@@ -8,6 +8,8 @@ const nextConfig = {
       'cdn.cloudflare.steamstatic.com',
       'epic-games-api.s3.amazonaws.com',
       'epic-games-store-api-production.up.railway.app',
+      'gamerpower.com',
+      'www.gamerpower.com',
     ],
   },
   async headers() {

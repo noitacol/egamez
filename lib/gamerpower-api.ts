@@ -94,6 +94,17 @@ export function convertGamerPowerToEpicFormat(gpGame: GamerPowerGame): ExtendedE
   // Bitiş tarihini parse et
   const endDate = gpGame.end_date ? new Date(gpGame.end_date).toISOString() : '';
   
+  // Desteklenen platform kontrolü
+  const platformToUse = platforms[0]?.toLowerCase() || '';
+  let distributionPlatform: 'epic' | 'steam' | 'gamerpower' = 'gamerpower';
+  
+  // Platformlardan bilinen bir platform var mı kontrol et
+  if (platformToUse.includes('steam')) {
+    distributionPlatform = 'steam';
+  } else if (platformToUse.includes('epic')) {
+    distributionPlatform = 'epic';
+  }
+  
   // ExtendedEpicGame formatında oyun objesi oluştur
   return {
     id: gpGame.id.toString(),
@@ -131,7 +142,7 @@ export function convertGamerPowerToEpicFormat(gpGame: GamerPowerGame): ExtendedE
     // ExtendedEpicGame'e özel alanlar
     source: 'gamerpower',
     platform: 'gamerpower',
-    distributionPlatform: platforms[0] || 'unknown',
+    distributionPlatform,
     openGiveawayUrl: gpGame.open_giveaway_url,
     instructions: gpGame.instructions,
     endDate: endDate,
