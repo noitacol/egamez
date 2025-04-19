@@ -7,7 +7,7 @@ import { SiEpicgames } from 'react-icons/si';
 import { IoLogoGameControllerB } from 'react-icons/io';
 import { MdClose } from 'react-icons/md';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ExtendedEpicGame } from '../lib/types';
+import { ExtendedEpicGame } from '@/lib/types';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -117,7 +117,6 @@ const GameCard: React.FC<GameCardProps> = ({
   const promotionEndDate = game.endDate || propEndDate;
 
   const getRemainingDays = (): number | null => {
-    // Promotions kontrolü
     if (!game.promotions) return null;
 
     // Güncel promosyonlar için kalan gün sayısı
