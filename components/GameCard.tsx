@@ -30,6 +30,7 @@ import { AiFillStar, AiOutlineInfoCircle } from "react-icons/ai";
 import { BiChevronLeft, BiChevronRight } from "react-icons/bi";
 import { FaPlay } from "react-icons/fa";
 import { SiSteam } from "react-icons/si";
+import axios from 'axios';
 
 // Promosyonlar için tip tanımları
 interface DiscountSetting {
@@ -522,20 +523,20 @@ const GameCard: React.FC<GameCardProps> = ({
             ) : game.price?.totalPrice?.discountPrice !== game.price?.totalPrice?.originalPrice ? (
               <div className="flex flex-col">
                 <span className="line-through text-gray-500 text-xs">
-                  {game.price?.totalPrice?.originalPrice 
-                    ? `₺${(game.price.totalPrice.originalPrice).toFixed(2)}`
+                  {game.price?.totalPrice?.originalPrice !== undefined
+                    ? `₺${Number(game.price.totalPrice.originalPrice).toFixed(2)}`
                     : ''}
                 </span>
                 <span className="text-green-600 font-semibold">
-                  {game.price?.totalPrice?.discountPrice 
-                    ? `₺${(game.price.totalPrice.discountPrice).toFixed(2)}`
+                  {game.price?.totalPrice?.discountPrice !== undefined
+                    ? `₺${Number(game.price.totalPrice.discountPrice).toFixed(2)}`
                     : 'Bilinmiyor'}
                 </span>
               </div>
             ) : (
               <span className="font-semibold">
-                {game.price?.totalPrice?.originalPrice 
-                  ? `₺${(game.price.totalPrice.originalPrice).toFixed(2)}`
+                {game.price?.totalPrice?.originalPrice !== undefined
+                  ? `₺${Number(game.price.totalPrice.originalPrice).toFixed(2)}`
                   : 'Bilinmiyor'}
               </span>
             )}
