@@ -1,19 +1,18 @@
 import { EpicGame } from './epic-api';
-import { SteamGame } from './steam-api';
 
 /**
- * Epic Games ve Steam oyunları için genişletilmiş tip tanımı
+ * Epic Games ve diğer platformlar için genişletilmiş tip tanımı
  * Temel EpicGame tipine ek özellikler ekler
  */
 export interface ExtendedEpicGame extends EpicGame {
-  /** Oyunun Steam veya Epic kaynaklı olduğunu belirtir */
+  /** Oyunun kaynağı (epic, gamerpower vs.) */
   source?: string;
   
   /** Oyunun yayınlandığı platform */
   platform?: string;
   
-  /** Dağıtım platformu (epic, steam, gamerpower vs.) */
-  distributionPlatform?: 'epic' | 'steam' | 'gamerpower' | string;
+  /** Dağıtım platformu (epic, gamerpower vs.) */
+  distributionPlatform?: 'epic' | 'gamerpower' | string;
   
   /** Ücretsiz olup olmadığı */
   isFree?: boolean;
@@ -58,10 +57,13 @@ export interface ExtendedEpicGame extends EpicGame {
     type?: string;
   }>;
   
-  /** Steam App ID */
+  /** İlgili platform için App ID */
+  platformAppId?: string;
+  
+  /** Steam için App ID */
   steamAppId?: string;
   
-  /** Steam başlık resmi */
+  /** Başlık resmi */
   headerImage?: string;
   
   /** Ekran görüntüleri */

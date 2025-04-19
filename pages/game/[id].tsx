@@ -4,7 +4,6 @@ import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
 import { getGameDetails } from '../../lib/epic-api';
 import { ExtendedEpicGame } from '../../lib/types';
-import { getGameDetails as getSteamGameDetails, convertSteamToEpicFormat } from '../../lib/steam-api';
 
 interface GameDetailProps {
   game: ExtendedEpicGame | null;
@@ -17,7 +16,7 @@ export default function GameDetail({ game, error }: GameDetailProps) {
   // Oyun yükleme hatası
   if (error) {
     return (
-      <Layout title="Hata | Epic Games">
+      <Layout title="Hata | Oyun Detayları">
         <div className="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 p-4 rounded-lg mb-6">
           {error}
         </div>
@@ -36,7 +35,7 @@ export default function GameDetail({ game, error }: GameDetailProps) {
   // Oyun bulunamadı
   if (!game) {
     return (
-      <Layout title="Oyun Bulunamadı | Epic Games">
+      <Layout title="Oyun Bulunamadı">
         <div className="text-center py-12">
           <h1 className="text-3xl font-bold mb-4">Oyun Bulunamadı</h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-6">
@@ -55,8 +54,8 @@ export default function GameDetail({ game, error }: GameDetailProps) {
     );
   }
   
-  // Oyun kaynağını kontrol et
-  const isSteamGame = game.id.toString().startsWith('steam_');
+  // Oyunun distribüsyon platformunu kontrol et
+  const platformSource = game.distributionPlatform || 'epic';
   
   // Oyun kapak görselini bul
   const heroImage = game.keyImages?.find(img => img.type === 'DieselGameBoxTall') || 
@@ -70,17 +69,15 @@ export default function GameDetail({ game, error }: GameDetailProps) {
   const endDate = offers?.[0]?.endDate ? new Date(offers[0].endDate) : null;
   
   // Ürün bağlantısı
-  const storeLink = isSteamGame
-    ? `https://store.steampowered.com/app/${game.id.toString().replace('steam_', '')}`
-    : `https://store.epicgames.com/tr/p/${game.productSlug || game.urlSlug || game.id}`;
+  const storeLink = game.url || game.storeUrl || `https://store.epicgames.com/tr/p/${game.productSlug || game.urlSlug || game.id}`;
   
   // Metacritic puanı (varsa)
-  const metacriticScore = (game as any).metacritic;
+  const metacriticScore = game.metacritic?.score;
   
   return (
     <Layout
-      title={`${game.title} | ${isSteamGame ? 'Steam' : 'Epic Games'}`}
-      description={game.description || `${isSteamGame ? 'Steam' : 'Epic Games'} Store'da ${game.title} oyununu ücretsiz edinin.`}
+      title={`${game.title} | ${platformSource === 'epic' ? 'Epic Games' : 'Ücretsiz Oyun'}`}
+      description={game.description || `${platformSource === 'epic' ? 'Epic Games' : 'Ücretsiz Oyun'} Store'da ${game.title} oyununu ücretsiz edinin.`}
     >
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:w-1/3">
@@ -93,6 +90,7 @@ export default function GameDetail({ game, error }: GameDetailProps) {
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 33vw"
                 priority
+                unoptimized={true}
               />
             </div>
           )}
@@ -100,7 +98,8 @@ export default function GameDetail({ game, error }: GameDetailProps) {
           {/* Mağaza bilgisi ve metacritic */}
           <div className="mt-4 flex justify-between items-center">
             <div className="text-gray-600 dark:text-gray-400">
-              {isSteamGame ? 'Steam' : 'Epic Games Store'}
+              {platformSource === 'epic' ? 'Epic Games Store' : 
+               platformSource === 'gamerpower' ? 'GamerPower' : 'Ücretsiz Oyun'}
             </div>
             
             {metacriticScore && (
@@ -157,9 +156,9 @@ export default function GameDetail({ game, error }: GameDetailProps) {
               rel="noopener noreferrer"
               className="btn btn-primary py-3 px-6 text-lg font-bold inline-block"
               tabIndex={0}
-              aria-label={`${isSteamGame ? 'Steam' : 'Epic Games'} Store'da görüntüle`}
+              aria-label="Mağazada görüntüle"
             >
-              {isSteamGame ? 'Steam' : 'Epic Games'} Store'da Görüntüle
+              Mağazada Görüntüle
             </a>
           </div>
         </div>
@@ -181,57 +180,23 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   }
   
   try {
-    // Steam veya Epic Games oyunu mu kontrol et
-    if (id.startsWith('steam_')) {
-      // Steam oyun detaylarını getir
-      const steamAppId = parseInt(id.replace('steam_', ''));
-      
-      if (isNaN(steamAppId)) {
-        return {
-          props: {
-            game: null,
-            error: 'Geçersiz Steam oyun ID\'si'
-          }
-        };
-      }
-      
-      const steamGame = await getSteamGameDetails(steamAppId);
-      
-      if (!steamGame) {
-        return {
-          props: {
-            game: null,
-            error: 'Steam oyunu bulunamadı'
-          }
-        };
-      }
-      
-      // Steam oyununu Epic formatına dönüştür
-      const epicFormatGame = convertSteamToEpicFormat(steamGame);
-      
+    // Epic Games oyun detaylarını getir
+    const epicGame = await getGameDetails(id);
+    
+    if (!epicGame) {
       return {
         props: {
-          game: epicFormatGame
-        }
-      };
-    } else {
-      // Epic Games oyun detaylarını getir
-      const epicGame = await getGameDetails(id);
-      
-      if (!epicGame) {
-        return {
-          props: {
-            game: null
-          }
-        };
-      }
-      
-      return {
-        props: {
-          game: epicGame
+          game: null,
+          error: 'Oyun bulunamadı'
         }
       };
     }
+    
+    return {
+      props: {
+        game: epicGame
+      }
+    };
   } catch (error) {
     console.error('Error fetching game details:', error);
     return {

@@ -1,35 +1,28 @@
 import { useState } from "react";
 import Image from "next/image";
-import { SteamGame } from "@/lib/steam-api";
 import { EpicGame } from "@/lib/epic-api";
 import GameCard from "./GameCard";
 import { ExtendedEpicGame } from "@/lib/types";
 
 interface TrendingGamesProps {
-  epicGames: EpicGame[];
-  steamGames: SteamGame[];
+  epicGames: ExtendedEpicGame[];
+  gamerPowerGames?: ExtendedEpicGame[];
 }
 
-const TrendingGames = ({ epicGames, steamGames }: TrendingGamesProps) => {
-  const [activeFilter, setActiveFilter] = useState<"all" | "epic" | "steam">("all");
+const TrendingGames = ({ epicGames, gamerPowerGames = [] }: TrendingGamesProps) => {
+  const [activeFilter, setActiveFilter] = useState<"all" | "epic" | "gamerpower">("all");
   
   // Oyunları kaynaklarına göre filtrele
   const filteredGames = () => {
     switch (activeFilter) {
       case "epic":
         return epicGames;
-      case "steam":
-        return steamGames.map(game => ({
-          ...game,
-          id: `steam_${game.appid}` // SteamGame'in id'si yok, appid kullanarak id oluştur
-        })) as unknown as ExtendedEpicGame[];
+      case "gamerpower":
+        return gamerPowerGames;
       default:
         return [
           ...epicGames,
-          ...steamGames.map(game => ({
-            ...game,
-            id: `steam_${game.appid}`
-          })) as unknown as ExtendedEpicGame[]
+          ...gamerPowerGames
         ];
     }
   };
@@ -53,10 +46,10 @@ const TrendingGames = ({ epicGames, steamGames }: TrendingGamesProps) => {
             Epic
           </button>
           <button 
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeFilter === "steam" ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
-            onClick={() => setActiveFilter("steam")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeFilter === "gamerpower" ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+            onClick={() => setActiveFilter("gamerpower")}
           >
-            Steam
+            GamerPower
           </button>
         </div>
       </div>

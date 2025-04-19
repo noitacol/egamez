@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RxExternalLink, RxCross2 } from 'react-icons/rx';
-import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaLinux, FaGlobeAmericas, FaWindows } from 'react-icons/fa';
+import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaLinux, FaGlobeAmericas, FaApple, FaWindows, FaPercent, FaDownload, FaShoppingCart, FaCalendar, FaChartLine, FaHeart, FaRegHeart, FaChartBar, FaGraduationCap, FaArchive, FaAngleDown } from 'react-icons/fa';
 import { MdLocalOffer } from 'react-icons/md';
 import { BsCalendarEvent, BsFillPlayFill } from 'react-icons/bs';
 import { TbFreeRights } from 'react-icons/tb';
@@ -36,10 +36,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { EpicGame } from '../lib/epic-api';
 import { ExtendedEpicGame } from '@/lib/types';
 import { SiEpicgames, SiSteam, SiGogdotcom, SiNintendoswitch, SiItchdotio } from "react-icons/si";
-import { FaPlaystation, FaXbox, FaApple, FaAndroid } from "react-icons/fa";
+import { FaPlaystation, FaXbox, FaAndroid } from "react-icons/fa";
 import { IoLogoGoogle } from "react-icons/io";
 
 // Medya öğesi tipleri
