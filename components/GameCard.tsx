@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { RxExternalLink } from 'react-icons/rx';
-import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaApple, FaLinux, FaPlaystation, FaXbox, FaDesktop, FaChrome, FaArchive, FaPause, FaPlay } from 'react-icons/fa';
-import { SiEpicgames } from 'react-icons/si';
-import { IoLogoGameControllerB, IoMdClose, IoMdPricetag } from 'react-icons/io';
-import { IoTime, IoWarningOutline, IoCalendarClearOutline, IoStopwatchOutline, IoPlanetOutline } from 'react-icons/io5';
-import { MdClose, MdFreeBreakfast, MdMovie, MdImage, MdNavigateBefore, MdNavigateNext } from 'react-icons/md';
+import { RxExternalLink, RxCross2 } from 'react-icons/rx';
+import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaLinux, FaGlobeAmericas, FaWindows } from 'react-icons/fa';
+import { MdLocalOffer } from 'react-icons/md';
+import { BsCalendarEvent, BsFillPlayFill } from 'react-icons/bs';
+import { TbFreeRights } from 'react-icons/tb';
+import { PiTimerBold } from 'react-icons/pi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FcClock } from 'react-icons/fc';
 import { BiSolidTimeFive, BiSolidRightArrow, BiSolidLeftArrow } from 'react-icons/bi';
@@ -16,7 +16,6 @@ import { cn, calculateTimeLeft } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { RxCross2 } from 'react-icons/rx';
 import { ExtendedEpicGame } from '@/lib/types';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
@@ -25,7 +24,6 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 import clsx from 'clsx';
-import { BsCalendar, BsFillPlayFill } from 'react-icons/bs';
 import { FiExternalLink } from "react-icons/fi";
 import { AiFillStar, AiOutlineInfoCircle, AiOutlineRight, AiOutlineLeft } from "react-icons/ai";
 import PlatformIcon from './PlatformIcon';
@@ -39,7 +37,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { PlatformIcons } from '@/components/PlatformIcons';
+import { EpicGame } from '../lib/epic-api';
+import { SiEpicgames, SiSteam, SiGogdotcom, SiNintendoswitch, SiItchdotio } from "react-icons/si";
+import { FaPlaystation, FaXbox, FaApple, FaAndroid } from "react-icons/fa";
+import { IoLogoGoogle } from "react-icons/io";
 
 // Medya öğesi tipleri
 interface BaseMediaItem {
@@ -136,11 +137,19 @@ const GameCard: React.FC<GameCardProps> = ({
   const promotionEndDate = game.endDate || propEndDate;
 
   const getRemainingDays = (): number | null => {
+    // Alternatif format - endDate kullanımı
+    if (game.endDate) {
+      const endDate = new Date(game.endDate);
+      const now = new Date();
+      return Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    // Eğer promotions property'si yoksa null döndür
     if (!game.promotions) return null;
 
     // Epic Games API formatı kontrolü
     if (isFreeGame && 
-        game.promotions.promotionalOffers && 
+        game.promotions?.promotionalOffers && 
         Array.isArray(game.promotions.promotionalOffers) &&
         game.promotions.promotionalOffers.length > 0 && 
         game.promotions.promotionalOffers[0]?.promotionalOffers?.length > 0) {
@@ -151,7 +160,7 @@ const GameCard: React.FC<GameCardProps> = ({
 
     // Epic Games API formatı kontrolü - yakında ücretsiz olacaklar
     if (isUpcomingGame && 
-        game.promotions.upcomingPromotionalOffers && 
+        game.promotions?.upcomingPromotionalOffers && 
         Array.isArray(game.promotions.upcomingPromotionalOffers) &&
         game.promotions.upcomingPromotionalOffers.length > 0 && 
         game.promotions.upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0) {
@@ -159,14 +168,7 @@ const GameCard: React.FC<GameCardProps> = ({
       const now = new Date();
       return Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     }
-
-    // Alternatif format - endDate kullanımı
-    if (game.endDate) {
-      const endDate = new Date(game.endDate);
-      const now = new Date();
-      return Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    }
-
+    
     return null;
   };
 
@@ -394,13 +396,21 @@ const GameCard: React.FC<GameCardProps> = ({
   };
 
   const getStoreUrl = () => {
-    if (game.distributionPlatform === 'gamerpower' && game.url) {
-      return game.url;
-    } else if (game.distributionPlatform === 'steam' && game.url) {
-      return game.url;
+    let url = '#';
+    
+    if (game.distributionPlatform === 'epic' || game.source === 'epic') {
+      const namespace = game.namespace || '';
+      url = game.storeUrl || `https://store.epicgames.com/tr/p/${namespace}`;
+    } else if (game.distributionPlatform === 'steam' || game.source === 'steam') {
+      url = game.storeUrl || `https://store.steampowered.com/app/${game.steamAppId || game.id}`;
+    } else if (game.distributionPlatform === 'gamerpower' || game.source === 'gamerpower') {
+      url = game.url || '#';
     } else {
-      return `https://store.epicgames.com/tr/p/${game.productSlug || game.urlSlug}`;
+      // Fallback logic for unknown sources
+      url = game.storeUrl || game.url || '#';
     }
+    
+    return url;
   };
 
   const getGamePrice = () => {
@@ -431,21 +441,34 @@ const GameCard: React.FC<GameCardProps> = ({
 
   const renderPlatformBadge = () => {
     if (!showPlatform) return null;
-
-    // Platform bilgisini belirleyelim
-    const platformName = game.platform || (propIsSteam ? 'steam' : propIsGamerPower ? 'gamerpower' : 'epic');
-
-    return (
-      <div className="absolute top-3 right-3 z-10">
-        <Badge variant="outline" className="bg-black/80 text-white border-0 flex items-center gap-1">
-          <PlatformIcon platform={platformName} className="w-3.5 h-3.5" />
-          <span className="text-xs font-semibold">
-            {platformName === 'steam' ? 'Steam' : 
-             platformName === 'gamerpower' ? 'GamerPower' : 'Epic'}
-          </span>
-        </Badge>
-      </div>
-    );
+    
+    const platform = game.distributionPlatform || '';
+    
+    if (platform === 'epic') {
+      return (
+        <div className="absolute top-2 right-2 bg-black/70 p-1 rounded-md">
+          <FaGamepad className="text-white" size={16} />
+        </div>
+      );
+    }
+    
+    if (platform === 'steam') {
+      return (
+        <div className="absolute top-2 right-2 bg-black/70 p-1 rounded-md">
+          <FaSteam className="text-white" size={16} />
+        </div>
+      );
+    }
+    
+    if (platform === 'gamerpower') {
+      return (
+        <div className="absolute top-2 right-2 bg-black/70 p-1 rounded-md">
+          <FaGamepad className="text-white" size={16} />
+        </div>
+      );
+    }
+    
+    return null;
   };
 
   const renderPromotionTimeRemaining = () => {
@@ -510,6 +533,47 @@ const GameCard: React.FC<GameCardProps> = ({
     }
   };
 
+  // URL oluşturma fonksiyonu
+  const getGameUrl = (): string => {
+    // Oyun ID kontrolü
+    const gameId = game.id || '';
+    
+    if (game.distributionPlatform === 'gamerpower' && game.url) {
+      return game.url;
+    }
+
+    if (game.distributionPlatform === 'epic') {
+      // Epic Games için storeUrl kullanımı
+      return game.storeUrl || `https://store.epicgames.com/tr/p/${gameId}`;
+    }
+    
+    if (game.distributionPlatform === 'steam' && game.steamAppId) {
+      return `https://store.steampowered.com/app/${game.steamAppId}`;
+    }
+    
+    // Varsayılan olarak oyunun kendi url'si veya boş string
+    return game.url || game.storeUrl || '';
+  };
+
+  // GamerPower bağlantısı için özel render fonksiyonu
+  const renderGamerPowerLink = () => {
+    if (game.distributionPlatform !== 'gamerpower' && game.source !== 'gamerpower') return null;
+    
+    return (
+      <div className="mt-2">
+        <a 
+          href={game.url || '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center"
+        >
+          <FaGamepad className="mr-1" size={14} />
+          Hediye Kodunu Al
+        </a>
+      </div>
+    );
+  };
+
   // Oyun kartı oluştur
   return (
     <>
@@ -532,7 +596,7 @@ const GameCard: React.FC<GameCardProps> = ({
           {/* Geçici ücretsiz etiketi (Epic için) */}
           {isFreeGame && game.promotions?.promotionalOffers?.length > 0 && (
             <div className="flex items-center gap-1 rounded bg-green-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
-              <MdFreeBreakfast className="h-3 w-3" />
+              <MdLocalOffer className="h-3 w-3" />
               <span>Ücretsiz</span>
             </div>
           )}
@@ -619,6 +683,21 @@ const GameCard: React.FC<GameCardProps> = ({
               </div>
             </div>
           )}
+
+          {/* GamerPower kodları varsa göster */}
+          {renderGamerPowerLink()}
+
+          {/* GamerPower için özel bilgi alanı */}
+          {game.source === 'gamerpower' && (
+            <div className="flex items-center gap-2 text-xs mt-1">
+              <Badge variant="outline" className="text-xs px-2 py-0 rounded font-normal bg-orange-50 text-orange-700 border-orange-200">
+                <Info className="w-3 h-3 mr-1" />
+                <a href={game.url || '#'} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                  Hediye Detayları
+                </a>
+              </Badge>
+            </div>
+          )}
         </CardContent>
 
         <CardFooter className="mt-auto flex justify-between p-4 pt-0">
@@ -653,7 +732,7 @@ const GameCard: React.FC<GameCardProps> = ({
               className="absolute -top-10 right-4 z-10 text-white hover:text-red-500 transition-colors"
               aria-label="Galeriyi kapat"
             >
-              <IoMdClose className="w-6 h-6" />
+              <RxCross2 className="w-6 h-6" />
             </button>
             
             {/* Medya içeriği */}
@@ -715,14 +794,14 @@ const GameCard: React.FC<GameCardProps> = ({
                     className="p-2 rounded-full bg-gray-800/50 text-white hover:bg-gray-700/50 transition-colors"
                     aria-label="Önceki medya"
                   >
-                    <MdNavigateBefore className="w-5 h-5" />
+                    <BiSolidLeftArrow className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => navigateGallery('next')}
                     className="p-2 rounded-full bg-gray-800/50 text-white hover:bg-gray-700/50 transition-colors"
                     aria-label="Sonraki medya"
                   >
-                    <MdNavigateNext className="w-5 h-5" />
+                    <BiSolidRightArrow className="w-5 h-5" />
                   </button>
                 </div>
               </div>
