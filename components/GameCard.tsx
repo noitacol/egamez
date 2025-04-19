@@ -16,7 +16,6 @@ import { cn, calculateTimeLeft } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExtendedEpicGame } from '@/lib/types';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -38,6 +37,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { EpicGame } from '../lib/epic-api';
+import { ExtendedEpicGame } from '@/lib/types';
 import { SiEpicgames, SiSteam, SiGogdotcom, SiNintendoswitch, SiItchdotio } from "react-icons/si";
 import { FaPlaystation, FaXbox, FaApple, FaAndroid } from "react-icons/fa";
 import { IoLogoGoogle } from "react-icons/io";
@@ -186,13 +186,13 @@ const GameCard: React.FC<GameCardProps> = ({
       img.type !== 'VaultClosed' && 
       img.type !== 'DieselStoreFrontTall' &&
       img.url
-    ) || []).map(img => ({ 
+    ) || []).map((img: { type: string; url: string }) => ({ 
       type: 'image' as const, 
       url: img.url, 
       id: `image-${img.url.substring(img.url.lastIndexOf('/') + 1)}`,
       alt: `${game.title} - ${img.type}`
     }) as ImageMediaItem),
-    ...(game.videos || []).map(video => {
+    ...(game.videos || []).map((video: { url: string; thumbnail?: string }) => {
       const defaultThumbnail = getBestImage();
       return { 
         type: 'video' as const, 
@@ -327,9 +327,9 @@ const GameCard: React.FC<GameCardProps> = ({
       return '/placeholder.webp';
     }
 
-    const tallImage = game.keyImages.find(img => img.type === 'Tall');
-    const wideImage = game.keyImages.find(img => img.type === 'DieselStoreFrontWide');
-    const thumbnailImage = game.keyImages.find(img => img.type === 'Thumbnail');
+    const tallImage = game.keyImages.find((img: { type: string; url: string }) => img.type === 'Tall');
+    const wideImage = game.keyImages.find((img: { type: string; url: string }) => img.type === 'DieselStoreFrontWide');
+    const thumbnailImage = game.keyImages.find((img: { type: string; url: string }) => img.type === 'Thumbnail');
     const defaultImage = game.keyImages[0];
 
     return (tallImage || wideImage || thumbnailImage || defaultImage).url;
@@ -339,14 +339,14 @@ const GameCard: React.FC<GameCardProps> = ({
     const images = game.keyImages || [];
     const videos = game.videos || [];
     
-    const imageItems: ImageMediaItem[] = images.map((img, index) => ({ 
+    const imageItems: ImageMediaItem[] = images.map((img: { type: string; url: string }, index: number) => ({ 
       type: 'image' as const, 
       url: img.url, 
       id: `image-${index}`,
       alt: img.type || `${game.title} image ${index+1}`
     }));
     
-    const videoItems: VideoMediaItem[] = videos.map((video, index) => {
+    const videoItems: VideoMediaItem[] = videos.map((video: { url: string; thumbnail?: string }, index: number) => {
       const thumbnail = video.thumbnail || getBestImage() || '/placeholder.jpg';
       return {
         type: 'video' as const,
@@ -421,10 +421,10 @@ const GameCard: React.FC<GameCardProps> = ({
     let originalPrice = '';
     let hasDiscount = false;
     
-    const hasValidDiscount = typeof totalPrice.discount === 'number' && totalPrice.discount > 0;
+    const hasValidDiscount = totalPrice && typeof totalPrice.discount === 'number' && totalPrice.discount > 0;
     
-    const hasValidDiscountPrice = typeof totalPrice.discountPrice === 'number';
-    const hasValidOriginalPrice = typeof totalPrice.originalPrice === 'number';
+    const hasValidDiscountPrice = totalPrice && typeof totalPrice.discountPrice === 'number';
+    const hasValidOriginalPrice = totalPrice && typeof totalPrice.originalPrice === 'number';
     
     if (hasValidDiscount && hasValidDiscountPrice && hasValidOriginalPrice) {
       finalPrice = `₺${(totalPrice.discountPrice).toFixed(2)}`;
@@ -659,25 +659,28 @@ const GameCard: React.FC<GameCardProps> = ({
           {!isUpcomingGame && !isFreeGame && game.price && (
             <div className="mt-2 flex flex-col">
               <div className="flex items-center gap-2">
-                {game.price.totalPrice.discount > 0 && (
+                {game.price && game.price.totalPrice && game.price.totalPrice.discount && game.price.totalPrice.discount > 0 && (
                   <span className="rounded bg-red-600 px-1.5 py-0.5 text-xs font-medium text-white">
                     -{game.price.totalPrice.discount}%
                   </span>
                 )}
                 <div className="flex items-center gap-1.5">
-                  {game.price.totalPrice.discount > 0 && (
+                  {game.price && game.price.totalPrice && game.price.totalPrice.discount && game.price.totalPrice.discount > 0 && (
                     <span className="text-sm text-muted-foreground line-through">
                       {new Intl.NumberFormat("tr-TR", {
                         style: "currency",
                         currency: "TRY",
-                      }).format(game.price.totalPrice.originalPrice)}
+                      }).format(game.price.totalPrice.originalPrice || 0)}
                     </span>
                   )}
                   <span className="text-sm font-medium">
-                    {new Intl.NumberFormat("tr-TR", {
-                      style: "currency",
-                      currency: "TRY",
-                    }).format(game.price.totalPrice.discountPrice)}
+                    {game.price && game.price.totalPrice ? 
+                      new Intl.NumberFormat("tr-TR", {
+                        style: "currency",
+                        currency: "TRY",
+                      }).format(game.price.totalPrice.discountPrice || 0)
+                      : 'Belirtilmemiş'
+                    }
                   </span>
                 </div>
               </div>

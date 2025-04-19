@@ -5,26 +5,22 @@ const nextConfig = {
     domains: [
       'cdn1.epicgames.com',
       'cdn2.epicgames.com',
+      'cdn.akamai.steamstatic.com',
+      'steamcdn-a.akamaihd.net',
+      'media.wizards.com',
+      'egs-platform-product-image.s3.amazonaws.com',
+      'w.forfun.com',
+      'wallpapercave.com',
       'cdn.cloudflare.steamstatic.com',
-      'epic-games-api.s3.amazonaws.com',
-      'epic-games-store-api-production.up.railway.app',
-      'gamerpower.com',
-      'www.gamerpower.com',
+      'external-preview.redd.it',
+      's3.us-east-1.amazonaws.com'
     ],
-  },
-  async headers() {
-    return [
+    remotePatterns: [
       {
-        // API rotalarımız için CORS başlıklarını ayarla
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT' },
-          { key: 'Access-Control-Allow-Headers', value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version' },
-        ],
+        protocol: 'https',
+        hostname: '**',
       },
-    ]
+    ],
   },
 }
 

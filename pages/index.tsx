@@ -62,9 +62,17 @@ export default function Home({
       games = [...trendingGames];
     }
 
+    // Null ve undefined oyunları temizle
+    games = games.filter(game => game && game.title);
+
     // Sonra platform bazında filtrele
     if (activePlatform !== 'all') {
       return games.filter(game => {
+        // Oyun null veya undefined ise filtrele
+        if (!game) {
+          return false;
+        }
+
         const platform = game.distributionPlatform?.toLowerCase() || '';
         const platformName = game.platform?.toLowerCase() || '';
         
@@ -384,15 +392,36 @@ export default function Home({
                         </div>
                         <div className="p-3">
                           <h3 className="font-medium text-sm line-clamp-1">{game.title}</h3>
-                          <div className="flex justify-between items-center mt-2">
-                            <span className="text-gray-400 text-xs">
-                              {game.price?.totalPrice.discountPrice === 0 ? "Ücretsiz" : 
-                               game.price?.totalPrice.originalPrice ? `₺${(game.price.totalPrice.originalPrice / 100).toFixed(2)}` : ""}
-                            </span>
-                            <Link href={`/game/${game.id}`} className="text-xs text-red-500 hover:text-red-400">
-                              Detay
-                            </Link>
-                          </div>
+                          {game.price && (
+                            <div className="mt-2 flex flex-col">
+                              <div className="flex items-center gap-2">
+                                {game.price.totalPrice && game.price.totalPrice.discount > 0 && (
+                                  <span className="rounded bg-red-600 px-1.5 py-0.5 text-xs font-medium text-white">
+                                    -{game.price.totalPrice.discount}%
+                                  </span>
+                                )}
+                                <div className="flex items-center gap-1.5">
+                                  {game.price.totalPrice && game.price.totalPrice.discount > 0 && (
+                                    <span className="text-sm text-muted-foreground line-through">
+                                      {new Intl.NumberFormat("tr-TR", {
+                                        style: "currency",
+                                        currency: "TRY",
+                                      }).format(game.price.totalPrice.originalPrice || 0)}
+                                    </span>
+                                  )}
+                                  <span className="text-sm font-medium">
+                                    {game.price.totalPrice ? 
+                                      new Intl.NumberFormat("tr-TR", {
+                                        style: "currency",
+                                        currency: "TRY",
+                                      }).format(game.price.totalPrice.discountPrice || 0)
+                                      : 'Belirtilmemiş'
+                                    }
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

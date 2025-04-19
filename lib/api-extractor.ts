@@ -6,6 +6,15 @@ import { JSDOM } from 'jsdom';
  */
 export async function scrapeSteamDBFreePromotions(): Promise<{ appId: number, name: string, endDate: string }[]> {
   try {
+    // SteamDB scrapingi devre dışı bırakılmıştır, çünkü 403 hataları build sürecini bozuyor
+    // return getStaticFreePromotions();
+
+    // Production ortamı için direkt olarak statik veri döndür
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Production ortamında SteamDB scraping devre dışı, statik veri kullanılıyor');
+      return getStaticFreePromotions();
+    }
+
     // SteamDB'nin Free Promotions sayfasını al
     const response = await axios.get('https://steamdb.info/upcoming/free/', {
       headers: {
