@@ -155,7 +155,7 @@ export default function Home({
     }
   };
 
-  const totalGames = [...epicFreeGames, ...gamerPowerGames];
+  const combinedFreeGames = [...epicFreeGames, ...gamerPowerGames];
   
   const sortedGames = [...filteredGames].sort((a, b) => {
     if (sort === "title") {

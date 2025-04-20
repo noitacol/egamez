@@ -60,4 +60,36 @@ export const formatPrice = (price: number, currency: string = 'TL'): string => {
     currency: currency === 'TL' ? 'TRY' : currency,
     minimumFractionDigits: 2
   }).format(price);
+};
+
+/**
+ * İndirim yüzdesini hesaplar
+ * @param originalPrice Orijinal fiyat
+ * @param discountPrice İndirimli fiyat
+ * @returns İndirim yüzdesi (0-100 arası)
+ */
+export const calculateDiscountPercentage = (originalPrice: number, discountPrice: number): number => {
+  if (originalPrice <= 0 || discountPrice >= originalPrice) return 0;
+  
+  const discountPercentage = Math.round(((originalPrice - discountPrice) / originalPrice) * 100);
+  return Math.min(discountPercentage, 100); // Max %100 indirim olabilir
+};
+
+/**
+ * Kaynak platforma göre platform adını döndürür
+ * @param source Platform adı ('epic', 'steam', 'gamerpower' vs.)
+ * @returns Platform adı
+ */
+export const sourcePlatformIcon = (source: string): string => {
+  const sourceLower = source?.toLowerCase() || '';
+  
+  if (sourceLower === 'epic') {
+    return 'Epic Games';
+  } else if (sourceLower === 'steam') {
+    return 'Steam';
+  } else if (sourceLower === 'gamerpower') {
+    return 'GamerPower';
+  } else {
+    return 'Diğer'; // Varsayılan değer
+  }
 }; 

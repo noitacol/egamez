@@ -41,7 +41,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { daysBetween, formatPrice, calculateDiscountPercentage } from '../lib/utils';
 import { Button } from './ui/button';
 import { useRouter } from 'next/router';
-import { sourcePlatformIcon } from '@/lib/utils';
 
 // Medya öğesi tipleri
 interface BaseMediaItem {
@@ -500,7 +499,7 @@ const GameCard: React.FC<GameCardProps> = ({
     if (platform === 'epic') {
       return (
         <div className="absolute top-2 right-2 bg-black/70 p-1 rounded-md">
-          <FaGamepad className="text-white" size={16} />
+          <SiEpicgames className="text-white" size={16} />
         </div>
       );
     }
@@ -884,7 +883,11 @@ const GameCard: React.FC<GameCardProps> = ({
         </div>
         
         {/* Platform etiketi */}
-        {renderPlatformBadge()}
+        {game.source === 'epic' && <SiEpicgames className="mr-1" size={12} />}
+        {game.source === 'steam' && <FaSteam className="mr-1" size={12} />}
+        {game.source === 'gamerpower' && <FaGamepad className="mr-1" size={12} />}
+        {!game.source || (game.source !== 'epic' && game.source !== 'steam' && game.source !== 'gamerpower') && <FaGamepad className="mr-1" size={12} />}
+        <span>{game.source}</span>
 
         {/* Resim bölümü */}
         <div 
