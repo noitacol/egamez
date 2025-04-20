@@ -4,22 +4,33 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { getFreeGames, getUpcomingFreeGames, getTrendingEpicGames } from "@/lib/epic-api";
-import { getFreeGamerPowerGames, getTrendingGamerPowerGames } from "@/lib/gamerpower-api";
+import { 
+  getGamerPowerOnlyGamesAsEpicFormat, 
+  getGamerPowerLootAsEpicFormat, 
+  getGamerPowerBetaAsEpicFormat, 
+  getTrendingGamerPowerGames 
+} from "@/lib/gamerpower-api";
 import FreeGamesList from "@/components/FreeGamesList";
 import GameCard from "@/components/GameCard";
 import { ExtendedEpicGame } from "@/lib/types";
 import { SiEpicgames, SiSteam, SiNintendoswitch, SiGogdotcom } from "react-icons/si";
-import { FaPlaystation, FaXbox, FaWindows, FaChevronLeft, FaChevronRight, FaExternalLinkAlt } from "react-icons/fa";
+import { FaPlaystation, FaXbox, FaWindows, FaChevronLeft, FaChevronRight, FaExternalLinkAlt, FaGamepad, FaFire } from "react-icons/fa";
 import { RiGamepadLine } from "react-icons/ri";
 import { GiRaceCar, GiSwordman, GiSpellBook, GiMountainRoad, GiChessKnight } from "react-icons/gi";
 import { Container } from "@/components/Container";
 import { Button } from "@/components/ui/button";
 import { MdNavigateNext, MdNavigateBefore } from "react-icons/md";
+import { BsGift } from "react-icons/bs";
+import { RiTestTubeFill } from "react-icons/ri";
+import { Toggle } from "@/components/ui/toggle";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface HomeProps {
   epicFreeGames: ExtendedEpicGame[];
   upcomingEpicGames: ExtendedEpicGame[];
   gamerPowerGames: ExtendedEpicGame[];
+  gamerPowerLoot: ExtendedEpicGame[];
+  gamerPowerBeta: ExtendedEpicGame[];
   trendingGames: ExtendedEpicGame[];
   totalGames: number;
 }
@@ -28,14 +39,18 @@ export default function Home({
   epicFreeGames, 
   upcomingEpicGames, 
   gamerPowerGames,
+  gamerPowerLoot,
+  gamerPowerBeta,
   trendingGames,
   totalGames 
 }: HomeProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'free' | 'upcoming' | 'trending'>('free');
+  const [activeTab, setActiveTab] = useState<'free' | 'upcoming' | 'trending' | 'loot' | 'beta'>('free');
   const [featuredGame, setFeaturedGame] = useState<ExtendedEpicGame | null>(null);
   const [activePlatform, setActivePlatform] = useState<'all' | 'epic' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'mobile'>('all');
+  const [filter, setFilter] = useState<"all" | "epic" | "steam">("all");
+  const [sort, setSort] = useState<"none" | "title" | "price">("none");
 
   // Ana ekranda gösterilecek öne çıkan oyunu belirle
   useEffect(() => {
@@ -57,6 +72,10 @@ export default function Home({
       games = [...upcomingEpicGames];
     } else if (activeTab === 'trending') {
       games = [...trendingGames];
+    } else if (activeTab === 'loot') {
+      games = [...gamerPowerLoot];
+    } else if (activeTab === 'beta') {
+      games = [...gamerPowerBeta];
     }
 
     // Null ve undefined oyunları temizle
@@ -110,6 +129,44 @@ export default function Home({
       ? "bg-gradient-to-br from-purple-700 to-indigo-900 text-white border-2 border-purple-500"
       : "bg-gradient-to-br from-gray-800 to-gray-900 text-gray-100 hover:from-gray-700 hover:to-gray-800 border-2 border-transparent";
   };
+
+  // Sekme aktif durumu için stil sınıfları
+  const getTabClass = (tab: 'free' | 'upcoming' | 'trending' | 'loot' | 'beta') => {
+    return activeTab === tab
+      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+      : "bg-gray-800 text-gray-300 hover:bg-gray-700";
+  };
+
+  // Kategori sayılarını göster
+  const getCategoryCount = (tab: 'free' | 'upcoming' | 'trending' | 'loot' | 'beta') => {
+    switch (tab) {
+      case 'free':
+        return epicFreeGames.length + gamerPowerGames.length;
+      case 'upcoming':
+        return upcomingEpicGames.length;
+      case 'trending':
+        return trendingGames.length;
+      case 'loot':
+        return gamerPowerLoot.length;
+      case 'beta':
+        return gamerPowerBeta.length;
+      default:
+        return 0;
+    }
+  };
+
+  const totalGames = [...epicFreeGames, ...gamerPowerGames];
+  
+  const sortedGames = [...filteredGames].sort((a, b) => {
+    if (sort === "title") {
+      return a.title.localeCompare(b.title);
+    } else if (sort === "price") {
+      const aPrice = a.price?.totalPrice?.discountPrice || 0;
+      const bPrice = b.price?.totalPrice?.discountPrice || 0;
+      return aPrice - bPrice;
+    }
+    return 0;
+  });
 
   return (
     <>
@@ -168,8 +225,68 @@ export default function Home({
           </section>
         )}
 
+        {/* Kategori Sekmeleri */}
+        <section className="container mx-auto px-4 mt-8 mb-4">
+          <div className="flex flex-wrap gap-2">
+            <button 
+              onClick={() => setActiveTab('free')} 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center ${getTabClass('free')}`}
+            >
+              <FaGamepad className="mr-2" /> 
+              Ücretsiz Oyunlar 
+              <span className="ml-2 bg-white bg-opacity-20 px-2 py-0.5 rounded-full text-xs">
+                {getCategoryCount('free')}
+              </span>
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab('upcoming')} 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center ${getTabClass('upcoming')}`}
+            >
+              <FaChevronRight className="mr-2" /> 
+              Yakında Ücretsiz 
+              <span className="ml-2 bg-white bg-opacity-20 px-2 py-0.5 rounded-full text-xs">
+                {getCategoryCount('upcoming')}
+              </span>
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab('trending')} 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center ${getTabClass('trending')}`}
+            >
+              <FaFire className="mr-2" /> 
+              Trend Oyunlar 
+              <span className="ml-2 bg-white bg-opacity-20 px-2 py-0.5 rounded-full text-xs">
+                {getCategoryCount('trending')}
+              </span>
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab('loot')} 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center ${getTabClass('loot')}`}
+            >
+              <BsGift className="mr-2" /> 
+              Loot & DLC 
+              <span className="ml-2 bg-white bg-opacity-20 px-2 py-0.5 rounded-full text-xs">
+                {getCategoryCount('loot')}
+              </span>
+            </button>
+            
+            <button 
+              onClick={() => setActiveTab('beta')} 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center ${getTabClass('beta')}`}
+            >
+              <RiTestTubeFill className="mr-2" /> 
+              Beta Testler 
+              <span className="ml-2 bg-white bg-opacity-20 px-2 py-0.5 rounded-full text-xs">
+                {getCategoryCount('beta')}
+              </span>
+            </button>
+          </div>
+        </section>
+
         {/* Platform Selection */}
-        <section className="pt-10 pb-6 container mx-auto px-4">
+        <section className="pt-4 pb-6 container mx-auto px-4">
           <h2 className="text-2xl font-bold mb-6">Platformlar</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
             <button 
@@ -224,254 +341,38 @@ export default function Home({
           </div>
         </section>
 
-        {/* Trend Oyunlar */}
-        <section className="py-10 container mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Trend Oyunlar</h2>
-            <div className="flex space-x-2">
-              <button className="bg-gray-800 hover:bg-gray-700 p-2 rounded-full">
-                <FaChevronLeft className="h-5 w-5" />
-              </button>
-              <button className="bg-gray-800 hover:bg-gray-700 p-2 rounded-full">
-                <FaChevronRight className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-            {trendingGames.slice(0, 5).map((game) => (
-              <GameCard
-                key={game.id}
-                game={game}
-                isTrending
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* Tab butonları */}
-        <section className="container mx-auto px-4 py-8">
-          <div className="border-b border-gray-700 mb-8">
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setActiveTab('free')}
-                className={`py-3 px-4 font-medium text-sm relative ${
-                  activeTab === 'free'
-                    ? 'text-white before:absolute before:bottom-0 before:left-0 before:right-0 before:h-1 before:bg-red-500'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Ücretsiz Oyunlar
-              </button>
-              <button
-                onClick={() => setActiveTab('upcoming')}
-                className={`py-3 px-4 font-medium text-sm relative ${
-                  activeTab === 'upcoming'
-                    ? 'text-white before:absolute before:bottom-0 before:left-0 before:right-0 before:h-1 before:bg-red-500'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Yakında Ücretsiz
-              </button>
-              <button
-                onClick={() => setActiveTab('trending')}
-                className={`py-3 px-4 font-medium text-sm relative ${
-                  activeTab === 'trending'
-                    ? 'text-white before:absolute before:bottom-0 before:left-0 before:right-0 before:h-1 before:bg-red-500'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Trend Oyunlar
-              </button>
-            </div>
-          </div>
+        {/* Oyun Listesi */}
+        <section className="py-6 container mx-auto px-4">
+          <h2 className="text-2xl font-bold mb-6">
+            {activeTab === 'free' && "Ücretsiz Oyunlar"}
+            {activeTab === 'upcoming' && "Yakında Ücretsiz Olacak"}
+            {activeTab === 'trending' && "Trend Oyunlar"}
+            {activeTab === 'loot' && "Loot ve DLC İçerikleri"}
+            {activeTab === 'beta' && "Beta Test Oyunları"}
+          </h2>
           
-          {/* Filtrelenmiş oyunlar */}
-          <div>
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
-              </div>
-            ) : error ? (
-              <div className="bg-red-900/30 border border-red-800 p-4 rounded-lg">
-                <p className="text-red-400">{error}</p>
-              </div>
-            ) : filteredGames.length === 0 ? (
-              <div className="bg-gray-800/50 border border-gray-700 p-8 rounded-lg text-center">
-                <RiGamepadLine className="h-12 w-12 mx-auto text-gray-500 mb-4" />
-                <p className="text-gray-400 text-lg">Seçilen kriterlere uygun oyun bulunamadı.</p>
-                <button 
-                  onClick={() => {
-                    setActivePlatform('all');
-                    setActiveTab('free');
-                  }}
-                  className="mt-4 bg-gray-700 hover:bg-gray-600 text-white py-2 px-6 rounded-md font-medium text-sm transition duration-300"
-                >
-                  Tüm oyunları göster
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {filteredGames.map((game) => (
-                  <GameCard 
-                    key={game.id} 
-                    game={game}
-                    isUpcoming={activeTab === 'upcoming' || game.isUpcoming}
-                    isFree={activeTab === 'free' || game.isFree}
-                    isTrending={activeTab === 'trending' || game.isTrending}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Yaklaşan İndirimler */}
-        <section className="py-10 container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="col-span-1 md:col-span-1 bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-6">
-              <h2 className="text-xl font-bold mb-4">Yaklaşan İndirimler</h2>
-              <p className="text-gray-400 mb-6">Kaçırılmayacak oyun indirimleri için takipte kalın.</p>
-              <div className="space-y-4">
-                {[
-                  { platform: 'Steam Yaz İndirimleri', date: '15 Haziran 2023', logo: SiSteam },
-                  { platform: 'Epic Mega İndirimler', date: '20 Haziran 2023', logo: SiEpicgames },
-                  { platform: 'PlayStation Days of Play', date: '1 Haziran 2023', logo: FaPlaystation },
-                  { platform: 'Xbox Ultimate Game Sale', date: '10 Temmuz 2023', logo: FaXbox }
-                ].map((item, index) => {
-                  const Logo = item.logo;
-                  return (
-                    <div key={index} className="flex items-center bg-gray-800/50 p-3 rounded-lg">
-                      <div className="bg-gray-700 p-2 rounded-lg mr-3">
-                        <Logo className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{item.platform}</p>
-                        <p className="text-gray-400 text-xs">{item.date}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
             </div>
-            <div className="col-span-1 md:col-span-3">
-              <h2 className="text-xl font-bold mb-4">En Popüler Oyunlar</h2>
-              <div className="overflow-x-auto pb-4">
-                <div className="flex space-x-4" style={{ minWidth: 'min-content' }}>
-                  {trendingGames.slice(0, 6).map((game) => (
-                    <div key={game.id} className="w-56 flex-shrink-0">
-                      <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg">
-                        <div className="h-32 relative">
-                          {game.keyImages && game.keyImages.length > 0 ? (
-                            <Image 
-                              src={game.keyImages[0].url || '/placeholder.jpg'} 
-                              alt={game.title || 'Game cover'} 
-                              fill 
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                              <RiGamepadLine className="h-10 w-10 text-gray-500" />
-                            </div>
-                          )}
-                          {game.metacritic && (
-                            <div className="absolute bottom-2 right-2 bg-black/70 rounded px-1.5 py-0.5 text-xs font-bold">
-                              {game.metacritic.score}
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-3">
-                          <h3 className="font-medium text-sm line-clamp-1">{game.title}</h3>
-                          {game.price && (
-                            <div className="mt-2 flex flex-col">
-                              <div className="flex items-center gap-2">
-                                {game.price.totalPrice && game.price.totalPrice.discount > 0 && (
-                                  <span className="rounded bg-red-600 px-1.5 py-0.5 text-xs font-medium text-white">
-                                    -{game.price.totalPrice.discount}%
-                                  </span>
-                                )}
-                                <div className="flex items-center gap-1.5">
-                                  {game.price.totalPrice && game.price.totalPrice.discount > 0 && (
-                                    <span className="text-sm text-muted-foreground line-through">
-                                      {new Intl.NumberFormat("tr-TR", {
-                                        style: "currency",
-                                        currency: "TRY",
-                                      }).format(game.price.totalPrice.originalPrice || 0)}
-                                    </span>
-                                  )}
-                                  <span className="text-sm font-medium">
-                                    {game.price.totalPrice ? 
-                                      new Intl.NumberFormat("tr-TR", {
-                                        style: "currency",
-                                        currency: "TRY",
-                                      }).format(game.price.totalPrice.discountPrice || 0)
-                                      : 'Belirtilmemiş'
-                                    }
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          ) : filteredGames.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {sortedGames.map((game) => (
+                <GameCard 
+                  key={game.id} 
+                  game={game} 
+                  isFree={activeTab === 'free' ? true : undefined}
+                  isUpcoming={activeTab === 'upcoming' ? true : undefined}
+                  trending={activeTab === 'trending' ? true : undefined}
+                />
+              ))}
             </div>
-          </div>
-        </section>
-
-        {/* Oyun Kategorileri */}
-        <section className="py-10 container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-6">Oyun Kategorileri</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {[
-              { name: 'Spor & Yarış', icon: GiRaceCar, color: 'from-blue-600 to-blue-800' },
-              { name: 'RPG', icon: GiSwordman, color: 'from-purple-600 to-purple-800' },
-              { name: 'Aksiyon', icon: GiChessKnight, color: 'from-red-600 to-red-800' },
-              { name: 'Macera', icon: GiMountainRoad, color: 'from-green-600 to-green-800' },
-              { name: 'Strateji', icon: GiSpellBook, color: 'from-yellow-600 to-yellow-800' },
-            ].map((category, index) => {
-              const Icon = category.icon;
-              return (
-                <div key={index} className={`bg-gradient-to-r ${category.color} rounded-lg p-6 flex flex-col items-center cursor-pointer transition-transform duration-300 transform hover:scale-105`}>
-                  <Icon className="h-12 w-12 mb-4" />
-                  <h3 className="font-medium text-center">{category.name}</h3>
-                  <span className="mt-2 text-xs text-white/70">16 Oyun</span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Son Eklenenler */}
-        <section className="py-10 container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-6">Son Eklenenler</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {epicFreeGames.slice(0, 4).map((game) => (
-              <div key={game.id} className="bg-gray-800 rounded-lg overflow-hidden group hover:bg-gray-700 transition-colors duration-300">
-                <Link href={`/game/${game.id}`}>
-                  <div className="h-40 relative overflow-hidden">
-                    {game.keyImages && game.keyImages.length > 0 ? (
-                      <Image 
-                        src={game.keyImages[0].url || '/placeholder.jpg'} 
-                        alt={game.title || 'Game cover'} 
-                        fill 
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                        <RiGamepadLine className="h-10 w-10 text-gray-500" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-3">
-                      <h3 className="font-medium text-sm">{game.title}</h3>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
-          </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-800 rounded-lg">
+              <h3 className="text-xl font-semibold mb-2">Oyun Bulunamadı</h3>
+              <p className="text-gray-400">Seçilen filtrelerle eşleşen oyun bulunamadı.</p>
+            </div>
+          )}
         </section>
       </main>
     </>
@@ -484,11 +385,13 @@ export const getStaticProps: GetStaticProps = async () => {
     let epicFreeGames = await getFreeGames();
     let upcomingEpicGames = await getUpcomingFreeGames();
     
-    // GamerPower API'sinden ücretsiz ve trend olan oyunları al
-    let gamerPowerFreeGames = await getFreeGamerPowerGames();
-    const trendingGamerPowerGames = await getTrendingGamerPowerGames();
+    // GamerPower API'sinden çeşitli içerikleri al
+    let gamerPowerGames = await getGamerPowerOnlyGamesAsEpicFormat(); // Sadece 'game' tipindeki oyunlar
+    let gamerPowerLoot = await getGamerPowerLootAsEpicFormat();
+    let gamerPowerBeta = await getGamerPowerBetaAsEpicFormat();
     
-    // Epic Games trend oyunlarını al
+    // Trend oyunlar için
+    const trendingGamerPowerGames = await getTrendingGamerPowerGames();
     const trendingEpicGames = await getTrendingEpicGames();
     
     // Tüm trend oyunları birleştir
@@ -502,7 +405,9 @@ export const getStaticProps: GetStaticProps = async () => {
     // Verileri temizle
     epicFreeGames = safelySerialize(epicFreeGames);
     upcomingEpicGames = safelySerialize(upcomingEpicGames);
-    gamerPowerFreeGames = safelySerialize(gamerPowerFreeGames);
+    gamerPowerGames = safelySerialize(gamerPowerGames);
+    gamerPowerLoot = safelySerialize(gamerPowerLoot);
+    gamerPowerBeta = safelySerialize(gamerPowerBeta);
     allTrendingGames = safelySerialize(allTrendingGames);
     
     // Oyun verilerini kontrol et ve eksik alanları tamamla
@@ -549,16 +454,20 @@ export const getStaticProps: GetStaticProps = async () => {
     // Tüm oyun listelerini temizle ve type dönüşümlerini gerçekleştir
     const epicGames = sanitizeEpicGames(epicFreeGames);
     const upcomingGames = sanitizeEpicGames(upcomingEpicGames);
-    const gamerPowerGames = sanitizeEpicGames(gamerPowerFreeGames);
+    const gpGames = sanitizeEpicGames(gamerPowerGames);
+    const gpLoot = sanitizeEpicGames(gamerPowerLoot);
+    const gpBeta = sanitizeEpicGames(gamerPowerBeta);
     const trendingGames = sanitizeEpicGames(allTrendingGames);
     
-    const totalGames = epicGames.length + upcomingGames.length + gamerPowerGames.length + trendingGames.length;
+    const totalGames = epicGames.length + upcomingGames.length + gpGames.length + gpLoot.length + gpBeta.length;
 
     return {
       props: {
         epicFreeGames: epicGames,
         upcomingEpicGames: upcomingGames,
-        gamerPowerGames: gamerPowerGames,
+        gamerPowerGames: gpGames,
+        gamerPowerLoot: gpLoot,
+        gamerPowerBeta: gpBeta,
         trendingGames: trendingGames,
         totalGames
       },
@@ -572,6 +481,8 @@ export const getStaticProps: GetStaticProps = async () => {
         epicFreeGames: [] as ExtendedEpicGame[],
         upcomingEpicGames: [] as ExtendedEpicGame[],
         gamerPowerGames: [] as ExtendedEpicGame[],
+        gamerPowerLoot: [] as ExtendedEpicGame[],
+        gamerPowerBeta: [] as ExtendedEpicGame[],
         trendingGames: [] as ExtendedEpicGame[],
         totalGames: 0
       },

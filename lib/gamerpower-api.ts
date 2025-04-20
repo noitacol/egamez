@@ -117,6 +117,59 @@ export async function getGamerPowerGamesByType(type: string): Promise<GamerPower
 }
 
 /**
+ * GamerPower API'den sadece 'game' tipindeki oyunları getirir ve Epic formatına dönüştürür
+ */
+export async function getGamerPowerOnlyGamesAsEpicFormat(): Promise<ExtendedEpicGame[]> {
+  try {
+    const games = await getGamerPowerGamesByType('game');
+    return games.map(game => convertGamerPowerToEpicFormat(game));
+  } catch (error) {
+    console.error('GamerPower games error:', error);
+    return [];
+  }
+}
+
+/**
+ * GamerPower API'den sadece 'loot' tipindeki içerikleri getirir ve Epic formatına dönüştürür
+ */
+export async function getGamerPowerLootAsEpicFormat(): Promise<ExtendedEpicGame[]> {
+  try {
+    const loot = await getGamerPowerGamesByType('loot');
+    return loot.map(item => {
+      const epicFormat = convertGamerPowerToEpicFormat(item);
+      return {
+        ...epicFormat,
+        offerType: 'loot',
+        isLoot: true,
+      };
+    });
+  } catch (error) {
+    console.error('GamerPower loot error:', error);
+    return [];
+  }
+}
+
+/**
+ * GamerPower API'den sadece 'beta' tipindeki oyunları getirir ve Epic formatına dönüştürür
+ */
+export async function getGamerPowerBetaAsEpicFormat(): Promise<ExtendedEpicGame[]> {
+  try {
+    const beta = await getGamerPowerGamesByType('beta');
+    return beta.map(item => {
+      const epicFormat = convertGamerPowerToEpicFormat(item);
+      return {
+        ...epicFormat,
+        offerType: 'beta',
+        isBeta: true,
+      };
+    });
+  } catch (error) {
+    console.error('GamerPower beta error:', error);
+    return [];
+  }
+}
+
+/**
  * GamerPower API'den oyunları sıralı şekilde getirir
  * @param sort Sıralama kriteri (date, value, popularity)
  */

@@ -29,6 +29,12 @@ export interface ExtendedEpicGame extends EpicGame {
   /** Sadece kupon kodu ile mi kullanılabilir */
   isCodeRedemptionOnly?: boolean;
   
+  /** Oyun içi ekstra içerik mi (skin, DLC vs.) */
+  isLoot?: boolean;
+  
+  /** Beta test için mi */
+  isBeta?: boolean;
+  
   /** Promosyon tipi */
   offerType?: string;
   

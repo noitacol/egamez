@@ -1,21 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RxExternalLink, RxCross2 } from 'react-icons/rx';
-import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaLinux, FaGlobeAmericas, FaApple, FaWindows, FaPercent, FaDownload, FaShoppingCart, FaCalendar, FaChartLine, FaHeart, FaRegHeart, FaChartBar, FaGraduationCap, FaArchive, FaAngleDown } from 'react-icons/fa';
-import { MdLocalOffer } from 'react-icons/md';
-import { BsCalendarEvent, BsFillPlayFill } from 'react-icons/bs';
-import { TbFreeRights } from 'react-icons/tb';
-import { PiTimerBold } from 'react-icons/pi';
+import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaLinux, FaGlobeAmericas, FaApple, FaWindows, FaPercent, FaDownload, FaShoppingCart, FaCalendarAlt, FaCalendarCheck, FaStar } from 'react-icons/fa';
+import { HiOutlineTrendingUp, HiOutlineTag, HiBeaker, HiGift, HiClock } from 'react-icons/hi';
+import { FiClock, FiLink, FiHeart, FiShoppingBag, FiInfo, FiStar } from 'react-icons/fi';
+import { MdLocalOffer, MdOutlineShoppingCart } from 'react-icons/md';
+import { BsStarFill, BsStarHalf, BsStar, BsInfoCircle, BsController, BsClockHistory } from 'react-icons/bs';
+import { Info } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+
+import { cn } from '@/lib/utils';
+import { ExtendedEpicGame } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FcClock } from 'react-icons/fc';
-import { BiSolidTimeFive, BiSolidRightArrow, BiSolidLeftArrow } from 'react-icons/bi';
-import { format, parseISO, differenceInDays, formatDistanceToNow } from 'date-fns';
-import { tr } from 'date-fns/locale';
-import { cn, calculateTimeLeft } from '@/lib/utils';
-import { Badge } from './ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -26,20 +30,16 @@ import clsx from 'clsx';
 import { FiExternalLink } from "react-icons/fi";
 import { AiFillStar, AiOutlineInfoCircle, AiOutlineRight, AiOutlineLeft } from "react-icons/ai";
 import PlatformIcon from './PlatformIcon';
-import { HiOutlineTag, HiOutlineTrendingUp, HiOutlineExternalLink, HiOutlineShoppingCart, HiOutlineInformationCircle } from 'react-icons/hi';
-import { RiGamepadLine } from "react-icons/ri";
-import { BadgeDollarSign, BadgePercent, Calendar, CalendarDays, Clock, ExternalLink, Info, Tag, TrendingUp } from 'lucide-react';
-import { GoDotFill } from 'react-icons/go';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { ExtendedEpicGame } from '@/lib/types';
 import { SiEpicgames, SiSteam, SiGogdotcom, SiNintendoswitch, SiItchdotio } from "react-icons/si";
 import { FaPlaystation, FaXbox, FaAndroid } from "react-icons/fa";
 import { IoLogoGoogle } from "react-icons/io";
+import { BiSolidTimeFive, BiSolidRightArrow, BiSolidLeftArrow } from 'react-icons/bi';
+import { format, formatDistanceToNow, isBefore, parseISO } from 'date-fns';
+import { tr } from 'date-fns/locale';
+import ReactPlayer from 'react-player/lazy';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { daysBetween, formatPrice } from '../lib/utils';
+import { Button } from './ui/button';
 
 // Medya öğesi tipleri
 interface BaseMediaItem {
@@ -74,6 +74,8 @@ interface GameCardProps {
   endDate?: string;
   isFree?: boolean;
   isUpcoming?: boolean;
+  isLoot?: boolean;
+  isBeta?: boolean;
   trending?: boolean;
   isSteam?: boolean;
   isGamerPower?: boolean;
@@ -90,6 +92,8 @@ interface GameCardProps {
   showMetacriticScore?: boolean;
   showPromotionalDates?: boolean;
   onClick?: () => void;
+  priority?: boolean;
+  onMediaLoad?: () => void;
 }
 
 const GameCard: React.FC<GameCardProps> = ({
@@ -104,6 +108,8 @@ const GameCard: React.FC<GameCardProps> = ({
   endDate: propEndDate,
   isFree: propIsFree,
   isUpcoming: propIsUpcoming,
+  isLoot = false,
+  isBeta = false,
   trending: propTrending,
   isSteam: propIsSteam,
   isGamerPower: propIsGamerPower,
@@ -120,6 +126,8 @@ const GameCard: React.FC<GameCardProps> = ({
   showMetacriticScore = false,
   showPromotionalDates = true,
   onClick,
+  priority,
+  onMediaLoad,
 }) => {
   const [imgError, setImgError] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
@@ -130,9 +138,26 @@ const GameCard: React.FC<GameCardProps> = ({
   const galleryRef = useRef<HTMLDivElement>(null);
   const mediaGalleryRef = useRef<HTMLDivElement>(null);
 
-  const isFreeGame = propIsFree !== undefined ? propIsFree : game.isFree;
-  const isUpcomingGame = propIsUpcoming !== undefined ? propIsUpcoming : game.isUpcoming;
+  const isFreeGame = game.isFree || (
+    game.price?.totalPrice?.discountPrice === 0 && 
+    game.price?.totalPrice?.originalPrice > 0 &&
+    game.promotions?.promotionalOffers?.length > 0 && 
+    game.promotions?.promotionalOffers[0]?.promotionalOffers?.length > 0
+  );
   
+  const isUpcomingFree = game.isUpcoming || (
+    game.promotions?.upcomingPromotionalOffers?.length > 0 && 
+    game.promotions?.upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0
+  );
+
+  const gameStatus = propIsFree || isFreeGame 
+    ? 'free' 
+    : (propIsUpcoming || isUpcomingFree 
+      ? 'upcoming' 
+      : (propTrending || game.isTrending 
+        ? 'trending' 
+        : 'normal'));
+
   const promotionEndDate = game.endDate || propEndDate;
 
   const getRemainingDays = (): number | null => {
@@ -158,7 +183,7 @@ const GameCard: React.FC<GameCardProps> = ({
     }
 
     // Epic Games API formatı kontrolü - yakında ücretsiz olacaklar
-    if (isUpcomingGame && 
+    if (isUpcomingFree && 
         game?.promotions?.upcomingPromotionalOffers && 
         Array.isArray(game.promotions.upcomingPromotionalOffers) &&
         game.promotions.upcomingPromotionalOffers.length > 0 && 
@@ -274,7 +299,7 @@ const GameCard: React.FC<GameCardProps> = ({
     }
 
     // Yakında ücretsiz olacaksa, başlangıç tarihini al
-    if (isUpcomingGame && 
+    if (isUpcomingFree && 
         game.promotions.upcomingPromotionalOffers && 
         Array.isArray(game.promotions.upcomingPromotionalOffers) &&
         game.promotions.upcomingPromotionalOffers.length > 0 && 
@@ -292,14 +317,35 @@ const GameCard: React.FC<GameCardProps> = ({
 
   const { endDate: promoEndDate, startDate: promoStartDate, discountPercentage: promoDiscountPercentage } = getPromotionalInfo();
 
-  const calculateRemainingDays = (endDateStr: string): number => {
-    if (!endDateStr) return 0;
+  const calculateRemainingDays = () => {
+    if (!game.promotions) return null;
     
-    const endDate = new Date(endDateStr);
+    let startDate, endDate;
+    
+    // İndirimdeki oyunlar için
+    if (game.promotions.promotionalOffers?.length > 0 && 
+        game.promotions.promotionalOffers[0]?.promotionalOffers?.length > 0) {
+      startDate = new Date(game.promotions.promotionalOffers[0].promotionalOffers[0].startDate);
+      endDate = new Date(game.promotions.promotionalOffers[0].promotionalOffers[0].endDate);
+    } 
+    // Yakında ücretsiz olacak oyunlar için
+    else if (game.promotions.upcomingPromotionalOffers?.length > 0 && 
+             game.promotions.upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0) {
+      startDate = new Date(game.promotions.upcomingPromotionalOffers[0].promotionalOffers[0].startDate);
+      endDate = new Date(game.promotions.upcomingPromotionalOffers[0].promotionalOffers[0].endDate);
+    } else if (game.endDate) {
+      // ExtendedEpicGame için endDate kontrolü
+      endDate = new Date(game.endDate);
+    } else {
+      return null;
+    }
+    
+    // İki tarih arasındaki gün farkını hesapla
     const now = new Date();
-    const diffTime = endDate.getTime() - now.getTime();
+    const diffTime = Math.abs(endDate.getTime() - now.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    return diffDays;
   };
 
   const calculateTemporaryFreeRemaining = (): { days: number, hours: number } => {
@@ -489,7 +535,7 @@ const GameCard: React.FC<GameCardProps> = ({
       }
     }
     
-    if (isFreeGame && !isUpcomingGame && !temporaryFreeGame && remainingDays !== null && remainingDays > 0) {
+    if (isFreeGame && !isUpcomingFree && !temporaryFreeGame && remainingDays !== null && remainingDays > 0) {
       return (
         <span className="bg-green-500 text-white text-xs font-medium px-2 py-0.5 rounded flex items-center">
           Ücretsiz
@@ -500,7 +546,7 @@ const GameCard: React.FC<GameCardProps> = ({
       );
     }
     
-    if (isUpcomingGame && remainingDays !== null && remainingDays > 0) {
+    if (isUpcomingFree && remainingDays !== null && remainingDays > 0) {
       return (
         <span className="bg-blue-500 text-white text-xs font-medium px-2 py-0.5 rounded flex items-center">
           Yakında Ücretsiz
@@ -513,7 +559,7 @@ const GameCard: React.FC<GameCardProps> = ({
   };
 
   const isPromotionActive = () => {
-    if (isFreeGame || isUpcomingGame) return true;
+    if (isFreeGame || isUpcomingFree) return true;
     if (game.endDate) return new Date(game.endDate) > new Date();
     return false;
   };
@@ -658,49 +704,128 @@ const GameCard: React.FC<GameCardProps> = ({
     return '/placeholder-game.jpg';
   };
 
-  // Ücretsiz oyunları kontrol et
+  // Promotional offers varsa tarih kontrollerini yap
   const checkPromotion = (): { isFreeNow: boolean, isUpcomingFree: boolean, remainingDays: number, endDate: string } => {
-    // İsPromotion fonksiyonu aktarılmış değilse bağımsız şekilde hesaplama yap
-    let isFreeNow = !!propIsFree;
-    let isUpcomingFree = !!propIsUpcoming;
+    let isFreeNow = false;
+    let isUpcomingFree = false;
     let remainingDays = 0;
     let endDate = '';
 
-    // Eğer trendingGame prop'u geldiyse standart kontrolleri atla
-    if (propTrending) {
-      return { isFreeNow, isUpcomingFree, remainingDays, endDate };
-    }
+    // Epic Promotions kontrolü
+    if (game.promotions && game.promotions.promotionalOffers) {
+      // Şu anda aktif olan promosyonları kontrol et
+      const activePromotions = game.promotions.promotionalOffers.find(
+        offer => {
+          if (!offer.promotionalOffers) return false;
+          
+          return offer.promotionalOffers.some(
+            promo => {
+              const startDate = new Date(promo.startDate);
+              const endDateObj = new Date(promo.endDate);
+              const now = new Date();
+              return now >= startDate && now <= endDateObj && promo.discountSetting?.discountPercentage === 0;
+            }
+          );
+        }
+      );
 
-    // Epic Games promosyon kontrolü
-    const promotions = (game as any)?.promotions;
-    
-    if (promotions) {
-      const promotionalOffers = promotions?.promotionalOffers || [];
-      const upcomingPromotionalOffers = promotions?.upcomingPromotionalOffers || [];
+      // Yakında gelecek promosyonları kontrol et
+      const upcomingPromotions = game.promotions.upcomingPromotionalOffers?.find(
+        offer => {
+          if (!offer.promotionalOffers) return false;
+          
+          return offer.promotionalOffers.some(
+            promo => {
+              const startDate = new Date(promo.startDate);
+              const now = new Date();
+              return startDate > now && promo.discountSetting?.discountPercentage === 0;
+            }
+          );
+        }
+      );
 
-      // Aktif promosyon kontrolü
-      if (promotionalOffers && promotionalOffers.length > 0) {
-        const currentOffer = promotionalOffers[0]?.promotionalOffers?.[0];
-        if (currentOffer) {
-          isFreeNow = currentOffer.discountSetting?.discountPercentage === 100;
-          isUpcomingFree = false;
-          endDate = currentOffer.endDate;
-          remainingDays = calculateRemainingDays(endDate);
+      // Aktif promosyon varsa oyun ücretsiz
+      if (activePromotions) {
+        isFreeNow = true;
+        
+        // End date'i bul
+        const promoOffer = activePromotions.promotionalOffers?.find(
+          promo => {
+            const startDate = new Date(promo.startDate);
+            const endDateObj = new Date(promo.endDate);
+            const now = new Date();
+            return now >= startDate && now <= endDateObj && promo.discountSetting?.discountPercentage === 0;
+          }
+        );
+        
+        if (promoOffer) {
+          endDate = promoOffer.endDate;
+          const endDateObj = new Date(promoOffer.endDate);
+          const now = new Date();
+          const diffTime = Math.abs(endDateObj.getTime() - now.getTime());
+          remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         }
       }
-
-      // Yakında ücretsiz oyunları kontrol et
-      if (upcomingPromotionalOffers && upcomingPromotionalOffers.length > 0) {
-        const upcomingOffer = upcomingPromotionalOffers[0]?.promotionalOffers?.[0];
-        if (upcomingOffer) {
-          isUpcomingFree = upcomingOffer.discountSetting?.discountPercentage === 100;
-          endDate = upcomingOffer.endDate;
-          remainingDays = calculateRemainingDays(endDate);
-        }
+      
+      // Yakında gelecek promosyon varsa yakında ücretsiz olacak
+      if (upcomingPromotions) {
+        isUpcomingFree = true;
       }
     }
 
     return { isFreeNow, isUpcomingFree, remainingDays, endDate };
+  };
+
+  // Promosyon etiketini görüntüle
+  const renderPromotionLabel = () => {
+    if (isDetailPage) return null;
+    
+    // Beta etiketi
+    if (isBeta) {
+      return (
+        <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
+          BETA
+        </div>
+      );
+    }
+    
+    // Loot etiketi
+    if (isLoot) {
+      return (
+        <div className="absolute top-2 left-2 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
+          LOOT
+        </div>
+      );
+    }
+    
+    // Ücretsiz oyun etiketi
+    if (isFreeGame) {
+      return (
+        <div className="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
+          ÜCRETSİZ
+        </div>
+      );
+    }
+    
+    // Yakında ücretsiz olacak oyun etiketi
+    if (isUpcomingFree) {
+      return (
+        <div className="absolute top-2 left-2 bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
+          YAKINDA ÜCRETSİZ
+        </div>
+      );
+    }
+    
+    // Trend oyun etiketi
+    if (isTrending || propTrending) {
+      return (
+        <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
+          TREND
+        </div>
+      );
+    }
+    
+    return null;
   };
 
   // Oyun kartı oluştur
@@ -709,7 +834,7 @@ const GameCard: React.FC<GameCardProps> = ({
       <Card className={cn(
         "group relative overflow-hidden rounded-lg border bg-card text-card-foreground shadow transition-all duration-300 hover:shadow-lg",
         isTrending && "border-amber-400",
-        isUpcomingGame && "border-purple-400",
+        isUpcomingFree && "border-purple-400",
         className
       )}>
         {/* Bilgi etiketleri */}
@@ -731,10 +856,26 @@ const GameCard: React.FC<GameCardProps> = ({
           )}
           
           {/* Yakında ücretsiz etiketi */}
-          {isUpcomingGame && (
+          {isUpcomingFree && (
             <div className="flex items-center gap-1 rounded bg-purple-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
               <HiOutlineTag className="h-3 w-3" />
               <span>Yakında Ücretsiz</span>
+            </div>
+          )}
+          
+          {/* Beta etiketi */}
+          {isBeta && (
+            <div className="flex items-center gap-1 rounded bg-blue-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
+              <HiBeaker className="h-3 w-3" />
+              <span>Beta</span>
+            </div>
+          )}
+          
+          {/* Loot etiketi */}
+          {isLoot && (
+            <div className="flex items-center gap-1 rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-medium text-white">
+              <HiGift className="h-3 w-3" />
+              <span>Loot</span>
             </div>
           )}
         </div>
@@ -786,7 +927,7 @@ const GameCard: React.FC<GameCardProps> = ({
 
         <CardContent className="p-4 pt-0">
           {/* Fiyatlandırma */}
-          {!isUpcomingGame && !isFreeGame && game.price && (
+          {!isUpcomingFree && !isFreeGame && game.price && (
             <div className="mt-2 flex flex-col">
               <div className="flex items-center gap-2">
                 {game.price && game.price.totalPrice && game.price.totalPrice.discount && game.price.totalPrice.discount > 0 && (
@@ -855,9 +996,34 @@ const GameCard: React.FC<GameCardProps> = ({
         </CardFooter>
       </Card>
 
-      {/* Gelişmiş Medya Galerisi Modal */}
+      {/* Medya galerisi gösterim butonu */}
+      {showMedia && mediaGallery.length > 0 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setCurrentMediaIndex(0);
+            setShowGallery(true);
+          }}
+          className="absolute bottom-2 right-2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 text-white transition-colors"
+          aria-label="Medya galerisini görüntüle"
+        >
+          <BsController className="w-5 h-5" />
+        </button>
+      )}
+
+      {/* Medya Galerisi Modal */}
       {showGallery && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm overscroll-none" onClick={handleCloseGallery}>
+        <div 
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              handleCloseGallery();
+            }
+          }}
+          ref={galleryRef}
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+        >
           <div className="relative w-full max-w-7xl max-h-[90vh] px-4" onClick={(e) => e.stopPropagation()}>
             {/* Modal kapatma butonu */}
             <button 
@@ -871,11 +1037,11 @@ const GameCard: React.FC<GameCardProps> = ({
             {/* Medya içeriği */}
             <div className="relative flex flex-col items-center">
               <div className="relative w-full rounded-lg overflow-hidden bg-black/50 aspect-video">
-                {mediaGallery.length > 0 && galleryMedia[currentMediaIndex] && (
-                  galleryMedia[currentMediaIndex].type === 'image' ? (
+                {mediaGallery.length > 0 && mediaGallery[currentMediaIndex] && (
+                  mediaGallery[currentMediaIndex].type === 'image' ? (
                     <Image
-                      src={galleryMedia[currentMediaIndex].url}
-                      alt={galleryMedia[currentMediaIndex].alt || gameTitle}
+                      src={mediaGallery[currentMediaIndex].url}
+                      alt={mediaGallery[currentMediaIndex].alt || gameTitle}
                       className="w-full h-full object-contain"
                       width={1920}
                       height={1080}
@@ -883,28 +1049,31 @@ const GameCard: React.FC<GameCardProps> = ({
                     />
                   ) : (
                     <div className="w-full h-full">
+                      {/* Video oynatıcı */}
                       {isVideoPlaying ? (
                         <iframe
-                          src={`${galleryMedia[currentMediaIndex].url}?autoplay=1&mute=0`}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          src={mediaGallery[currentMediaIndex].url}
+                          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
                           className="w-full h-full"
-                          title={`${gameTitle} trailer`}
                         ></iframe>
                       ) : (
                         <div 
-                          className="relative w-full h-full flex items-center justify-center cursor-pointer"
+                          className="relative w-full h-full bg-gray-900 flex items-center justify-center cursor-pointer"
                           onClick={() => setIsVideoPlaying(true)}
                         >
                           <Image
-                            src={galleryMedia[currentMediaIndex].thumbnail || getBestImage()}
+                            src={mediaGallery[currentMediaIndex].thumbnail}
                             alt={`${gameTitle} video thumbnail`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain opacity-60"
                             width={1920}
                             height={1080}
                             unoptimized
                           />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                            <FaRegPlayCircle className="w-20 h-20 text-white/80 hover:text-white transition-colors" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="rounded-full bg-red-600/90 w-16 h-16 flex items-center justify-center">
+                              <FaRegPlayCircle className="text-white w-8 h-8" />
+                            </div>
                           </div>
                         </div>
                       )}
@@ -913,10 +1082,10 @@ const GameCard: React.FC<GameCardProps> = ({
                 )}
               </div>
               
-              {/* Medya kontrolleri */}
-              <div className="mt-4 w-full flex items-center justify-between">
+              {/* Navigation */}
+              <div className="flex items-center justify-between w-full mt-4">
                 <span className="text-white font-medium text-lg">
-                  {gameTitle}{galleryMedia[currentMediaIndex]?.alt ? ` - ${galleryMedia[currentMediaIndex].alt}` : ''}
+                  {gameTitle}{mediaGallery[currentMediaIndex]?.alt ? ` - ${mediaGallery[currentMediaIndex].alt}` : ''}
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="text-gray-300 text-sm">
@@ -944,7 +1113,7 @@ const GameCard: React.FC<GameCardProps> = ({
                 <div className="mt-4 w-full grid grid-flow-col gap-2 overflow-x-auto pb-2 hide-scrollbar max-w-full">
                   {mediaGallery.map((media, idx) => (
                     <div 
-                      key={media.id}
+                      key={idx}
                       className={cn(
                         "relative cursor-pointer rounded-md overflow-hidden w-24 h-14 flex-shrink-0",
                         currentMediaIndex === idx && "ring-2 ring-blue-500"
@@ -960,6 +1129,7 @@ const GameCard: React.FC<GameCardProps> = ({
                         className="w-full h-full object-cover"
                         width={96}
                         height={54}
+                        unoptimized
                       />
                       {media.type === 'video' && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
