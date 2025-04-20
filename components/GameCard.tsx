@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RxExternalLink, RxCross2 } from 'react-icons/rx';
-import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaLinux, FaGlobeAmericas, FaApple, FaWindows, FaPercent, FaDownload, FaShoppingCart, FaCalendarAlt, FaCalendarCheck, FaStar } from 'react-icons/fa';
+import { FaRegPlayCircle, FaRegMoneyBillAlt, FaFire, FaStopwatch, FaExternalLinkAlt, FaWindowMaximize, FaTimes, FaChevronRight, FaChevronLeft, FaSteam, FaGamepad, FaArrowLeft, FaArrowRight, FaLinux, FaGlobeAmericas, FaApple, FaWindows, FaPercent, FaDownload, FaShoppingCart, FaCalendarAlt, FaCalendarCheck, FaStar, FaCalendarDay } from 'react-icons/fa';
 import { HiOutlineTrendingUp, HiOutlineTag, HiBeaker, HiGift, HiClock } from 'react-icons/hi';
 import { FiClock, FiLink, FiHeart, FiShoppingBag, FiInfo, FiStar } from 'react-icons/fi';
 import { MdLocalOffer, MdOutlineShoppingCart } from 'react-icons/md';
@@ -38,8 +38,10 @@ import { format, formatDistanceToNow, isBefore, parseISO } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import ReactPlayer from 'react-player/lazy';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { daysBetween, formatPrice } from '../lib/utils';
+import { daysBetween, formatPrice, calculateDiscountPercentage } from '../lib/utils';
 import { Button } from './ui/button';
+import { useRouter } from 'next/router';
+import { sourcePlatformIcon } from '@/lib/utils';
 
 // Medya öğesi tipleri
 interface BaseMediaItem {
@@ -129,6 +131,7 @@ const GameCard: React.FC<GameCardProps> = ({
   priority,
   onMediaLoad,
 }) => {
+  const router = useRouter();
   const [imgError, setImgError] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);

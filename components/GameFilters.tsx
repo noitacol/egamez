@@ -1,14 +1,12 @@
 import React from 'react';
-import { Check, ChevronsUpDown, Filter } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Badge } from '@/components/ui/badge';
+import { Toggle } from '@/components/ui/toggle';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ExtendedEpicGame } from '@/lib/types';
+import { FaSteam, FaFilter, FaSort, FaTimes } from 'react-icons/fa';
+import { SiEpicgames } from 'react-icons/si';
+import { RiGamepadLine } from 'react-icons/ri';
 
 export type SortOption = 'newest' | 'oldest' | 'alphabetical-asc' | 'alphabetical-desc' | 'price-asc' | 'price-desc';
 export type FilterOption = 'all' | 'free' | 'upcoming' | 'loot' | 'trending' | 'discount';
@@ -73,15 +71,12 @@ const GameFilters: React.FC<GameFiltersProps> = ({
   setSearchQuery,
   games,
 }) => {
-  const [openSort, setOpenSort] = React.useState(false);
-  const [openSource, setOpenSource] = React.useState(false);
-
   return (
-    <div className="w-full border-b border-border pb-4">
+    <div className="w-full border-b border-gray-200 dark:border-gray-800 pb-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight">Oyun Kütüphanesi</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Toplam {totalGames} oyun bulundu
           </p>
         </div>
@@ -104,110 +99,48 @@ const GameFilters: React.FC<GameFiltersProps> = ({
             </ToggleGroupItem>
           </ToggleGroup>
           
-          {/* Sıralama Seçenekleri */}
-          <Popover open={openSort} onOpenChange={setOpenSort}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={openSort}
-                className="w-auto justify-between"
-              >
-                {sortOrder ? sortOptions.find((option) => option.value === sortOrder)?.label : "Sırala"}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
-              <Command>
-                <CommandInput placeholder="Sıralama seçeneği ara..." />
-                <CommandEmpty>Eşleşen sıralama bulunamadı.</CommandEmpty>
-                <CommandGroup>
-                  {sortOptions.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={(currentValue) => {
-                        setSortOrder(currentValue as SortOption);
-                        setOpenSort(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          sortOrder === option.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {option.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Command>
-            </PopoverContent>
-          </Popover>
-          
-          {/* Kaynak Platform Seçenekleri */}
-          <Popover open={openSource} onOpenChange={setOpenSource}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={openSource}
-                className="w-auto justify-between"
-              >
-                {activeSource ? sourceOptions.find((option) => option.value === activeSource)?.label : "Platform"}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
-              <Command>
-                <CommandInput placeholder="Platform ara..." />
-                <CommandEmpty>Eşleşen platform bulunamadı.</CommandEmpty>
-                <CommandGroup>
-                  {sourceOptions.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={(currentValue) => {
-                        setActiveSource(currentValue as SourceOption);
-                        setOpenSource(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          activeSource === option.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {option.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Command>
-            </PopoverContent>
-          </Popover>
-          
-          {/* Sadece Ücretsiz Oyunlar Filtresi */}
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="onlyFree" 
-              checked={onlyFreeGames}
-              onCheckedChange={(checked) => {
-                setOnlyFreeGames(checked === true);
-              }}
-            />
-            <label
-              htmlFor="onlyFree"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          {/* Sıralama Dropdown Yerine Basit Toggle */}
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setSortOrder('newest')}
+              className={sortOrder === 'newest' ? 'bg-gray-200 dark:bg-gray-700' : ''}
             >
-              Sadece Ücretsiz
-            </label>
+              En Yeni
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setSortOrder('alphabetical-asc')}
+              className={sortOrder === 'alphabetical-asc' ? 'bg-gray-200 dark:bg-gray-700' : ''}
+            >
+              A-Z
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setSortOrder('price-asc')}
+              className={sortOrder === 'price-asc' ? 'bg-gray-200 dark:bg-gray-700' : ''}
+            >
+              Fiyat ↑
+            </Button>
           </div>
+          
+          {/* Sadece Ücretsiz Oyunlar */}
+          <Toggle 
+            pressed={onlyFreeGames}
+            onPressedChange={setOnlyFreeGames}
+            className="px-3"
+          >
+            Sadece Ücretsiz
+          </Toggle>
         </div>
       </div>
       
       {/* Kategori Filtreleri */}
-      <div className="overflow-x-auto hide-scrollbar pb-2">
-        <div className="flex space-x-2 min-w-max">
+      <div className="overflow-x-auto pb-2">
+        <div className="flex space-x-2">
           {filterOptions.map((option) => (
             <Button
               key={option.value}
@@ -222,11 +155,44 @@ const GameFilters: React.FC<GameFiltersProps> = ({
         </div>
       </div>
       
+      {/* Platform Seçimi */}
+      <div className="mt-4 flex space-x-2">
+        <Button
+          variant={activeSource === 'all' ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveSource('all')}
+          className="flex items-center gap-2"
+        >
+          <RiGamepadLine className="w-4 h-4" />
+          Tüm Platformlar
+        </Button>
+        
+        <Button
+          variant={activeSource === 'epic' ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveSource('epic')}
+          className="flex items-center gap-2"
+        >
+          <SiEpicgames className="w-4 h-4" />
+          Epic
+        </Button>
+        
+        <Button
+          variant={activeSource === 'steam' ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveSource('steam')}
+          className="flex items-center gap-2"
+        >
+          <FaSteam className="w-4 h-4" />
+          Steam
+        </Button>
+      </div>
+      
       {/* Aktif Filtreler */}
       {(activeFilter !== 'all' || activeSource !== 'all' || onlyFreeGames || searchQuery) && (
         <div className="flex flex-wrap gap-2 mt-4">
-          <div className="text-sm text-muted-foreground mr-2 flex items-center">
-            <Filter className="w-4 h-4 mr-1" /> Aktif Filtreler:
+          <div className="text-sm text-gray-500 dark:text-gray-400 mr-2 flex items-center">
+            <FaFilter className="w-4 h-4 mr-1" /> Aktif Filtreler:
           </div>
           
           {activeFilter !== 'all' && (
@@ -234,9 +200,9 @@ const GameFilters: React.FC<GameFiltersProps> = ({
               {filterOptions.find(f => f.value === activeFilter)?.label}
               <button 
                 onClick={() => setActiveFilter('all')}
-                className="ml-1 hover:bg-muted rounded-full"
+                className="ml-1 rounded-full"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                <FaTimes className="w-3 h-3" />
               </button>
             </Badge>
           )}
@@ -246,9 +212,9 @@ const GameFilters: React.FC<GameFiltersProps> = ({
               {sourceOptions.find(s => s.value === activeSource)?.label}
               <button 
                 onClick={() => setActiveSource('all')}
-                className="ml-1 hover:bg-muted rounded-full"
+                className="ml-1 rounded-full"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                <FaTimes className="w-3 h-3" />
               </button>
             </Badge>
           )}
@@ -258,9 +224,9 @@ const GameFilters: React.FC<GameFiltersProps> = ({
               Sadece Ücretsiz
               <button 
                 onClick={() => setOnlyFreeGames(false)}
-                className="ml-1 hover:bg-muted rounded-full"
+                className="ml-1 rounded-full"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                <FaTimes className="w-3 h-3" />
               </button>
             </Badge>
           )}
@@ -270,9 +236,9 @@ const GameFilters: React.FC<GameFiltersProps> = ({
               Arama: {searchQuery}
               <button 
                 onClick={() => setSearchQuery('')}
-                className="ml-1 hover:bg-muted rounded-full"
+                className="ml-1 rounded-full"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                <FaTimes className="w-3 h-3" />
               </button>
             </Badge>
           )}
