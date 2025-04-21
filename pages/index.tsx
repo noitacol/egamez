@@ -90,6 +90,51 @@ export default function Home({
     setFeaturedGames(shuffled.slice(0, 10));
   }, [freebieGames, trendingGames, steamFreeGames]);
 
+  // Bir oyun için en kaliteli kapak görselini seç
+  const getBestGameImage = (game: ExtendedEpicGame): string => {
+    if (!game || !game.keyImages || game.keyImages.length === 0) {
+      return '/placeholder.jpg';
+    }
+
+    // Tercih edilen görsel tiplerine göre sırala
+    const preferredTypes = [
+      'OfferImageWide', // Geniş banner görsel
+      'DieselStoreFrontWide', // Epic Store'da kullanılan geniş görsel
+      'Screenshot', // Ekran görüntüsü - daha detaylı
+      'Thumbnail', // Küçük görsel genelde daha yüksek kalite olur
+      'VaultClosed', // Epic'in bazı oyunlar için özel banner'ı 
+      'DieselGameBox', // Oyun kutusu görseli - detaylı
+      'DieselGameBoxTall', // Dikey oyun kutusu - detaylı
+      'DieselGameBoxLogo', // Logo - genelde düşük kalite
+      'cover', // GamerPower'dan gelen kapak görseli
+      'thumbnail' // GamerPower'dan gelen küçük görsel
+    ];
+
+    // Önce tercih edilen tiplere göre ara
+    for (const type of preferredTypes) {
+      const image = game.keyImages.find(img => img.type && img.type.toLowerCase() === type.toLowerCase());
+      if (image && image.url) {
+        return image.url;
+      }
+    }
+
+    // Alternatif olarak, Steam oyunları için bazı özel alanları kontrol et
+    if (game.distributionPlatform === 'steam') {
+      // Steam ekran görüntülerini kontrol et
+      if (game.screenshots && game.screenshots.length > 0) {
+        return game.screenshots[0].url;
+      }
+      
+      // Header image'i kontrol et
+      if (game.headerImage) {
+        return game.headerImage;
+      }
+    }
+
+    // Bulunamadıysa ilk görüntüyü kullan
+    return game.keyImages[0].url || '/placeholder.jpg';
+  };
+
   // 10 saniyede bir öne çıkan oyunu değiştir
   useEffect(() => {
     if (featuredGames.length <= 1) return;
@@ -240,24 +285,31 @@ export default function Home({
         {/* Hero Banner - Featured Games Slider */}
         {featuredGames.length > 0 && (
           <section className="relative w-full h-[500px] md:h-[600px] overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 z-10"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-gray-900 z-10"></div>
             
             {/* Slider Görselleri */}
             {featuredGames.map((game, index) => (
               <div 
                 key={`hero-${game.id}`} 
-                className={`absolute inset-0 z-0 transition-opacity duration-1000 ${
-                  index === currentFeaturedIndex ? 'opacity-100' : 'opacity-0'
+                className={`absolute inset-0 z-0 transition-all duration-1500 transform ${
+                  index === currentFeaturedIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
                 }`}
               >
                 {game.keyImages && game.keyImages.length > 0 && (
-                  <Image 
-                    src={game.keyImages[0].url || '/placeholder.jpg'} 
-                    alt={game.title || 'Featured Game'} 
-                    fill 
-                    style={{ objectFit: 'cover' }}
-                    priority={index === currentFeaturedIndex}
-                  />
+                  <>
+                    <Image 
+                      src={getBestGameImage(game)} 
+                      alt={game.title || 'Featured Game'} 
+                      fill 
+                      style={{ objectFit: 'cover', objectPosition: 'center top' }}
+                      priority={index === currentFeaturedIndex}
+                      sizes="100vw"
+                      quality={90}
+                      className="transform hover:scale-105 transition-transform duration-10000 filter brightness-[0.85]"
+                    />
+                    {/* Görüntü üzerine ince ızgara deseni ekle */}
+                    <div className="absolute inset-0 bg-[url('/patterns/grid-pattern.png')] opacity-20 mix-blend-multiply"></div>
+                  </>
                 )}
               </div>
             ))}
@@ -266,10 +318,10 @@ export default function Home({
             <div className="container mx-auto h-full flex flex-col justify-end pb-8 md:pb-16 relative z-20">
               {/* Platform Badge */}
               <div className="mb-4">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-lg ${
                   featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
-                    ? 'bg-blue-600' 
-                    : 'bg-purple-600'
+                    ? 'bg-blue-600/80' 
+                    : 'bg-purple-600/80'
                 }`}>
                   {featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
                     ? <><SiSteam className="mr-1" /> Steam</>
@@ -281,25 +333,25 @@ export default function Home({
               </div>
               
               {/* Oyun Başlığı */}
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 text-shadow-lg">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-fade-in-right">
                 {featuredGames[currentFeaturedIndex]?.title}
               </h1>
               
               {/* Oyun Açıklaması */}
-              <p className="text-sm md:text-base lg:text-lg max-w-3xl mb-4 md:mb-6 text-shadow-md">
+              <p className="text-sm md:text-base lg:text-lg max-w-3xl mb-4 md:mb-6 text-gray-100 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] animate-fade-in-up backdrop-blur-[2px] bg-black/20 p-3 rounded-lg">
                 {featuredGames[currentFeaturedIndex]?.description?.slice(0, 150)}
                 {featuredGames[currentFeaturedIndex]?.description && 
                   featuredGames[currentFeaturedIndex]?.description.length > 150 ? '...' : ''}
               </p>
               
               {/* Butonlar */}
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 animate-fade-in-up">
                 {featuredGames[currentFeaturedIndex]?.url && (
                   <Link 
                     href={featuredGames[currentFeaturedIndex].url || '#'} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-all"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
                     tabIndex={0}
                   >
                     <span>Görüntüle</span>
@@ -308,7 +360,7 @@ export default function Home({
                 )}
                 <Link
                   href="/games"
-                  className="bg-gray-800 hover:bg-gray-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-all"
+                  className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
                   tabIndex={0}
                 >
                   <span>Tüm Oyunlar</span>
@@ -321,17 +373,17 @@ export default function Home({
                 <div className="flex justify-between items-center w-full absolute left-0 top-1/2 -translate-y-1/2 z-30 px-4">
                   <button 
                     onClick={goToPrevFeatured}
-                    className="bg-black/30 hover:bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="bg-black/40 hover:bg-black/60 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform hover:scale-110 shadow-lg"
                     aria-label="Önceki oyun"
                   >
-                    <MdNavigateBefore className="text-2xl" />
+                    <MdNavigateBefore className="text-3xl" />
                   </button>
                   <button 
                     onClick={goToNextFeatured}
-                    className="bg-black/30 hover:bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="bg-black/40 hover:bg-black/60 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform hover:scale-110 shadow-lg"
                     aria-label="Sonraki oyun"
                   >
-                    <MdNavigateNext className="text-2xl" />
+                    <MdNavigateNext className="text-3xl" />
                   </button>
                 </div>
               )}
@@ -343,10 +395,10 @@ export default function Home({
                     <button
                       key={`indicator-${index}`}
                       onClick={() => setCurrentFeaturedIndex(index)}
-                      className={`h-2 rounded-full transition-all ${
+                      className={`transition-all duration-300 rounded-full shadow-md ${
                         index === currentFeaturedIndex 
-                          ? 'w-6 bg-white' 
-                          : 'w-2 bg-white/50 hover:bg-white/80'
+                          ? 'w-12 h-3 bg-white/90' 
+                          : 'w-3 h-3 bg-white/40 hover:bg-white/60'
                       }`}
                       aria-label={`Oyun ${index + 1}`}
                     />
