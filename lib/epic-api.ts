@@ -96,58 +96,69 @@ const EPIC_API_URL = `${BASE_URL}${isServer ? '?locale=tr-TR&country=TR&allowCou
  * Oyun URL'sini düzelt ve optimize et
  */
 const fixGameUrl = (game: EpicGame | ExtendedEpicGame): string => {
-  // Bilinen özel durumlar için sabit URL'ler
+  // Bilinen özel durumlar için sabit URL'ler - Bu liste genişletilebilir
   const specialGameUrls: Record<string, string> = {
     "Firestone Online Idle RPG": "https://store.epicgames.com/tr/p/firestone-online-idle-rpg-bfd04b",
-    // Diğer özel durumlar buraya eklenebilir
+    // Diğer bilinen problemli oyunlar için buraya eklemeler yapılabilir
   };
 
-  // Özel durum kontrolü
+  // Başlığa göre özel durum kontrolü
   if (game.title && specialGameUrls[game.title]) {
     return specialGameUrls[game.title];
   }
 
+  // Epic Games'in en güncel URL formatını kullan
+  // Not: Epic Games düzenli olarak URL formatlarını değiştirebilir
+  
   try {
-    // Eğer productSlug veya urlSlug varsa ve "-" içeriyorsa
-    // (Bu genellikle tam slug'ın varlığını gösterir, ör: "game-name-12345")
-    if (game.productSlug && game.productSlug.includes('-')) {
-      return `https://store.epicgames.com/tr/p/${game.productSlug}`;
+    // Çeşitli URL oluşturma denemeleri
+    
+    // 1. URL halihazırda varsa ve çalışıyorsa kullan (en doğru kaynak)
+    if (game.url && typeof game.url === 'string' && game.url.includes('store.epicgames.com')) {
+      // URL'yi Türkçe dil ayarına sahip olacak şekilde düzenle
+      const parsedUrl = new URL(game.url);
+      
+      // Yol kısmını koru, sadece dil kodunu değiştir (/en-US/ -> /tr/)
+      const pathParts = parsedUrl.pathname.split('/');
+      const pathWithoutLang = pathParts.slice(pathParts.length > 2 ? 2 : 1).join('/');
+      
+      return `https://store.epicgames.com/tr/${pathWithoutLang}`;
     }
     
-    // Eğer urlSlug varsa ve formatı uygunsa
-    if (game.urlSlug && game.urlSlug.includes('-')) {
+    // 2. Slug kullanarak URL oluştur
+    if (game.productSlug && typeof game.productSlug === 'string') {
+      // Eğer slug'ın içinde "/" karakteri varsa, düzgün bir biçime getir
+      const cleanSlug = game.productSlug.split('/').pop() || game.productSlug;
+      return `https://store.epicgames.com/tr/p/${cleanSlug}`;
+    }
+    
+    // 3. urlSlug kullanarak URL oluştur
+    if (game.urlSlug && typeof game.urlSlug === 'string') {
       return `https://store.epicgames.com/tr/p/${game.urlSlug}`;
     }
     
-    // Eğer productSlug varsa ancak ekleri yoksa (temiz slug)
-    if (game.productSlug) {
-      // Url kısmına bakarak slug eki var mı kontrol et
-      if (game.url && game.url.includes('/p/')) {
-        const urlParts = game.url.split('/p/');
-        if (urlParts.length > 1) {
-          const fullSlug = urlParts[1].split('?')[0]; // Parametreleri temizle
-          return `https://store.epicgames.com/tr/p/${fullSlug}`;
-        }
-      }
-      return `https://store.epicgames.com/tr/p/${game.productSlug}`;
-    }
-    
-    // Alternatif olarak başlığı kullanarak slug oluştur
-    if (game.title) {
-      const slug = game.title
+    // 4. Başlığı slug'a dönüştürerek URL oluştur (En az güvenilir yöntem)
+    if (game.title && typeof game.title === 'string') {
+      const slugifiedTitle = game.title
         .toLowerCase()
-        .replace(/[^\w\s-]/g, '') // Özel karakterleri temizle
-        .replace(/\s+/g, '-')     // Boşlukları tire ile değiştir
-        .replace(/-+/g, '-');     // Birden fazla tireyi tek tireye indir
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
       
-      return `https://store.epicgames.com/tr/p/${slug}`;
+      return `https://store.epicgames.com/tr/p/${slugifiedTitle}`;
     }
   } catch (error) {
-    console.error('URL düzeltme hatası:', error);
+    console.error(`URL oluşturma hatası (${game.title}):`, error);
   }
   
-  // Hiçbir bilgi yoksa ID'yi kullan
-  return `https://store.epicgames.com/tr/p/${game.id}`;
+  // 5. Eğer hiçbir yöntem işe yaramazsa, alternatif bir URL yapısı dene
+  if (game.id && game.namespace) {
+    return `https://store.epicgames.com/tr/p/unknown-game?id=${game.id}&namespace=${game.namespace}`;
+  }
+  
+  // Son çare: Direkt Epic Games ana sayfasına yönlendir ve console'a hata bas
+  console.error(`${game.title || 'Bilinmeyen oyun'} için geçerli URL oluşturulamadı`);
+  return 'https://store.epicgames.com/tr/browse';
 };
 
 /**
@@ -166,8 +177,9 @@ export const fetchFreeGames = async (): Promise<ExtendedEpicGame[]> => {
     });
 
     // URL'leri düzelt ve oyunları döndür
-    const gamesWithUrls = freeGames.map((game: EpicGame) => {
-      const gameWithUrl = {
+    return freeGames.map((game: EpicGame) => {
+      // Oyun bilgilerini genişlet
+      const extendedGame: ExtendedEpicGame = {
         ...game,
         source: 'epic',
         sourceLabel: 'Epic Games',
@@ -175,36 +187,23 @@ export const fetchFreeGames = async (): Promise<ExtendedEpicGame[]> => {
         isFree: true,
         isOnSale: false,
         platform: 'PC',
-        url: fixGameUrl(game)
+        url: fixGameUrl(game) // Doğru URL'yi belirle
       };
       
-      return gameWithUrl;
-    });
-
-    // Özel durum kontrolü: GraphQL API'yi yalnızca gerekli durumlar için kullan
-    // Bu işlem asenkron olarak yapılır ve sonuçlar daha sonra güncellenir
-    const gameUrlPromises = gamesWithUrls.map(async (game: ExtendedEpicGame) => {
-      // Özel durum: Bilinen hatalı URL'ler (404 veren oyunlar)
-      const needsGraphQLFix = game.title === "Firestone Online Idle RPG" || 
-                              (game.url && !game.url.includes('-') && game.productSlug);
-      
-      if (needsGraphQLFix && game.productSlug) {
-        try {
-          const accurateUrl = await getAccurateGameUrl(game.title, game.productSlug);
-          if (accurateUrl) {
-            console.log(`GraphQL API ile düzeltildi: ${game.title} -> ${accurateUrl}`);
-            game.url = accurateUrl;
-          }
-        } catch (error) {
-          console.error(`GraphQL API hatası (${game.title}):`, error);
-        }
+      // Eğer oyun adı daha önce tespit edilen problemli URL'lere sahip olabilecek bir oyunsa,
+      // URL'yi özel olarak kontrol et ve düzelt
+      if (extendedGame.title && extendedGame.url && (
+          extendedGame.title === "Firestone Online Idle RPG" ||
+          // Burada diğer problemli oyun adları eklenebilir
+          extendedGame.url.includes('/en-US/') // Yanlış dil koduna sahip URL'ler
+      )) {
+        console.log(`Özel URL kontrolü: ${extendedGame.title}`);
+        // URL'yi tekrar sağlama amaçlı düzelt
+        extendedGame.url = fixGameUrl(extendedGame);
       }
       
-      return game;
+      return extendedGame;
     });
-    
-    // Tüm asenkron işlemleri tamamla
-    return await Promise.all(gameUrlPromises);
   } catch (error) {
     console.error('Epic ücretsiz oyunları getirme hatası:', error);
     return [];
@@ -227,8 +226,9 @@ export const fetchUpcomingFreeGames = async (): Promise<ExtendedEpicGame[]> => {
     });
 
     // URL'leri düzelt ve oyunları döndür
-    const gamesWithUrls = upcomingFreeGames.map((game: EpicGame) => {
-      const gameWithUrl = {
+    return upcomingFreeGames.map((game: EpicGame) => {
+      // Oyun bilgilerini genişlet
+      const extendedGame: ExtendedEpicGame = {
         ...game,
         source: 'epic',
         sourceLabel: 'Epic Games',
@@ -237,35 +237,22 @@ export const fetchUpcomingFreeGames = async (): Promise<ExtendedEpicGame[]> => {
         isUpcoming: true,
         isOnSale: false,
         platform: 'PC',
-        url: fixGameUrl(game)
+        url: fixGameUrl(game) // Doğru URL'yi belirle
       };
       
-      return gameWithUrl;
-    });
-
-    // Özel durum kontrolü: GraphQL API'yi yalnızca gerekli durumlar için kullan
-    // Bu işlem asenkron olarak yapılır ve sonuçlar daha sonra güncellenir
-    const gameUrlPromises = gamesWithUrls.map(async (game: ExtendedEpicGame) => {
-      // Özel durum: Bilinen hatalı URL'ler (404 veren oyunlar)
-      const needsGraphQLFix = (game.url && !game.url.includes('-') && game.productSlug);
-      
-      if (needsGraphQLFix && game.productSlug) {
-        try {
-          const accurateUrl = await getAccurateGameUrl(game.title, game.productSlug);
-          if (accurateUrl) {
-            console.log(`GraphQL API ile düzeltildi: ${game.title} -> ${accurateUrl}`);
-            game.url = accurateUrl;
-          }
-        } catch (error) {
-          console.error(`GraphQL API hatası (${game.title}):`, error);
-        }
+      // Eğer oyun adı daha önce tespit edilen problemli URL'lere sahip olabilecek bir oyunsa,
+      // URL'yi özel olarak kontrol et ve düzelt
+      if (extendedGame.title && extendedGame.url && (
+          extendedGame.url.includes('/en-US/') || // Yanlış dil koduna sahip URL'ler
+          !extendedGame.url.includes('/p/') // URL yapısında sorun olabilecek durumlar
+      )) {
+        console.log(`Özel URL kontrolü (Yakında): ${extendedGame.title}`);
+        // URL'yi tekrar sağlama amaçlı düzelt
+        extendedGame.url = fixGameUrl(extendedGame);
       }
       
-      return game;
+      return extendedGame;
     });
-    
-    // Tüm asenkron işlemleri tamamla
-    return await Promise.all(gameUrlPromises);
   } catch (error) {
     console.error('Epic yakında ücretsiz olacak oyunları getirme hatası:', error);
     return [];
