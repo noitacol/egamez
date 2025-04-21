@@ -52,7 +52,7 @@ export default function Home({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'free' | 'upcoming' | 'trending' | 'loot' | 'beta'>('free');
   const [featuredGame, setFeaturedGame] = useState<ExtendedEpicGame | null>(null);
-  const [activePlatform, setActivePlatform] = useState<'all' | 'epic' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'mobile' | 'android' | 'ios'>('all');
+  const [activePlatform, setActivePlatform] = useState<'all' | 'epic' | 'steam' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'mobile' | 'android' | 'ios'>('all');
   const [filter, setFilter] = useState<"all" | "epic" | "steam">("all");
   const [sort, setSort] = useState<"none" | "title" | "price">("none");
 
@@ -99,6 +99,8 @@ export default function Home({
         switch (activePlatform) {
           case 'epic':
             return platform.includes('epic') || platformName.includes('epic');
+          case 'steam':
+            return platform.includes('steam') || platformName.includes('steam');
           case 'playstation':
             return platformName.includes('playstation') || platformName.includes('ps4') || platformName.includes('ps5');
           case 'xbox':
@@ -252,6 +254,16 @@ export default function Home({
               >
                 <SiEpicgames className="h-6 w-6 mb-2" />
                 <span className="text-sm font-medium">Epic</span>
+              </button>
+              
+              <button
+                onClick={() => setActivePlatform('steam')}
+                className={`flex flex-col items-center justify-center p-4 rounded-lg transition-all ${getPlatformCardClass('steam')}`}
+                aria-label="Steam Oyunları"
+                tabIndex={0}
+              >
+                <SiSteam className="h-6 w-6 mb-2" />
+                <span className="text-sm font-medium">Steam</span>
               </button>
               
               <button
