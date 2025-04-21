@@ -236,14 +236,20 @@ export function convertSteamToEpicFormat(game: SteamGame): ExtendedEpicGame {
   })) : [];
   
   // Fiyat bilgisini Epic Games formatına dönüştür
-  const totalPrice = game.price_overview ? {
-    discountPrice: game.price_overview.final / 100, // Steam'de kuruş olarak geliyor
-    originalPrice: game.price_overview.initial / 100,
-    discount: game.price_overview.discount_percent
-  } : {
-    discountPrice: 0,
-    originalPrice: 0,
-    discount: 0
+  const totalPrice = {
+    discountPrice: game.price_overview ? game.price_overview.final / 100 : 0,
+    originalPrice: game.price_overview ? game.price_overview.initial / 100 : 0,
+    voucherDiscount: 0,
+    discount: game.price_overview ? game.price_overview.discount_percent : 0,
+    currencyCode: game.price_overview ? game.price_overview.currency : "USD",
+    currencyInfo: {
+      decimals: 2
+    },
+    fmtPrice: {
+      originalPrice: game.price_overview ? game.price_overview.initial_formatted : "$0.00",
+      discountPrice: game.price_overview ? game.price_overview.final_formatted : "$0.00",
+      intermediatePrice: "$0.00"
+    }
   };
   
   // İndirim yüzdesi kontrolü
@@ -265,6 +271,7 @@ export function convertSteamToEpicFormat(game: SteamGame): ExtendedEpicGame {
         startDate,
         endDate,
         discountSetting: {
+          discountType: "PERCENTAGE",
           discountPercentage: game.is_free ? 100 : (game.price_overview?.discount_percent || 0)
         }
       }]
@@ -278,8 +285,12 @@ export function convertSteamToEpicFormat(game: SteamGame): ExtendedEpicGame {
     namespace: `steam_${game.appid}`,
     description: game.short_description,
     effectiveDate: game.release_date.date,
+    expiryDate: null,
+    status: "ACTIVE",
+    isCodeRedemptionOnly: false,
     keyImages,
     seller: {
+      id: `steam_publisher_${game.appid}`,
       name: game.publishers?.[0] || "Steam"
     },
     price: {
@@ -295,9 +306,12 @@ export function convertSteamToEpicFormat(game: SteamGame): ExtendedEpicGame {
     isFree: game.is_free,
     productSlug: game.name.toLowerCase().replace(/\s+/g, '-'),
     urlSlug: game.name.toLowerCase().replace(/\s+/g, '-'),
+    items: [],
+    customAttributes: [],
     videos,
     metacritic: game.metacritic,
     isTrending: true,
-    distributionPlatform: "steam"
+    distributionPlatform: "steam",
+    url: `https://store.steampowered.com/app/${game.appid}`
   };
 } 

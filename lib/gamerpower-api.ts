@@ -355,6 +355,9 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
     namespace: `gamerpower-${game.id}`,
     description: game.description,
     effectiveDate: game.published_date,
+    expiryDate: game.end_date,
+    status: "ACTIVE",
+    offerType: game.type.toLowerCase(),
     keyImages,
     price: {
       totalPrice: {
@@ -374,7 +377,6 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
     distributionPlatform: platformInfo.distributionPlatform,
     platformList: platformInfo.platformList,
     platform: platformInfo.platform,
-    offerType: game.type.toLowerCase(),
     endDate: game.end_date,
     url: game.open_giveaway_url,
     categories: [{
@@ -408,6 +410,8 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
       upcomingPromotionalOffers: []
     },
     isCodeRedemptionOnly: false,
+    items: [],
+    customAttributes: [],
     isGamerPower: true
   };
 }

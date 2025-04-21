@@ -4,7 +4,7 @@ import { EpicGame } from './epic-api';
  * Epic Games ve diğer platformlar için genişletilmiş tip tanımı
  * Temel EpicGame tipine ek özellikler ekler
  */
-export interface ExtendedEpicGame extends EpicGame {
+export interface ExtendedEpicGame extends Omit<EpicGame, 'categories' | 'isCodeRedemptionOnly' | 'offerType'> {
   /** Oyunun kaynağı (epic, gamerpower vs.) */
   source?: string;
   
@@ -29,7 +29,7 @@ export interface ExtendedEpicGame extends EpicGame {
   /** İndirimde mi */
   isOnSale?: boolean;
   
-  /** Sadece kupon kodu ile mi kullanılabilir */
+  /** Sadece kupon kodu ile mi kullanılabilir - EpicGame'den override ediyoruz */
   isCodeRedemptionOnly?: boolean;
   
   /** Oyun içi ekstra içerik mi (skin, DLC vs.) */
@@ -38,14 +38,14 @@ export interface ExtendedEpicGame extends EpicGame {
   /** Beta test için mi */
   isBeta?: boolean;
   
-  /** Promosyon tipi */
+  /** Promosyon tipi - EpicGame'den override ediyoruz */
   offerType?: string;
   
   /** Promosyon bitiş tarihi */
   endDate?: string | null;
   
   /** Oyunun URL'si */
-  url?: string;
+  url: string | null;
   
   /** Mağaza URL'si */
   storeUrl?: string;
@@ -87,17 +87,17 @@ export interface ExtendedEpicGame extends EpicGame {
   /** Geçici ücretsiz oyun mu */
   temporaryFreeGame?: boolean;
   
-  /** Kategoriler - EpicGame'in categories tipini override eder */
-  categories: {
-    path: string;
-    name: string;
-  }[];
-  
   /** Platformların listesi */
   platformList?: string[];
   
   /** GamerPower oyunu mu */
   isGamerPower?: boolean;
+  
+  /** Kategoriler - EpicGame'den devraldık ancak override ediyoruz */
+  categories?: {
+    path: string;
+    name: string;
+  }[];
 }
 
 /**
