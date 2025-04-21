@@ -272,6 +272,34 @@ export default function Home({
     return 0;
   });
 
+  // YouTube video URL'sinden video ID'sini çıkarma
+  const getYouTubeVideoId = (url: string): string => {
+    if (!url) return '';
+    
+    // Youtube URL formatları:
+    // https://www.youtube.com/watch?v=VIDEO_ID
+    // https://youtu.be/VIDEO_ID
+    // https://www.youtube.com/embed/VIDEO_ID
+    
+    let videoId = '';
+    
+    // watch?v= formatını kontrol et
+    if (url.includes('watch?v=')) {
+      const urlParams = new URLSearchParams(url.split('?')[1]);
+      videoId = urlParams.get('v') || '';
+    } 
+    // youtu.be/ formatını kontrol et
+    else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1].split('?')[0];
+    }
+    // embed/ formatını kontrol et
+    else if (url.includes('embed/')) {
+      videoId = url.split('embed/')[1].split('?')[0];
+    }
+    
+    return videoId;
+  };
+
   return (
     <>
       <Head>
@@ -287,7 +315,7 @@ export default function Home({
           <section className="relative w-full h-[500px] md:h-[600px] overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-gray-900 z-10"></div>
             
-            {/* Slider Görselleri */}
+            {/* Slider Görselleri ve YouTube Videoları */}
             {featuredGames.map((game, index) => (
               <div 
                 key={`hero-${game.id}`} 
@@ -295,21 +323,40 @@ export default function Home({
                   index === currentFeaturedIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
                 }`}
               >
-                {game.keyImages && game.keyImages.length > 0 && (
-                  <>
-                    <Image 
-                      src={getBestGameImage(game)} 
-                      alt={game.title || 'Featured Game'} 
-                      fill 
-                      style={{ objectFit: 'cover', objectPosition: 'center top' }}
-                      priority={index === currentFeaturedIndex}
-                      sizes="100vw"
-                      quality={90}
-                      className="transform hover:scale-105 transition-transform duration-10000 filter brightness-[0.85]"
-                    />
-                    {/* Görüntü üzerine ince ızgara deseni ekle */}
+                {index === currentFeaturedIndex && game.videos && game.videos.length > 0 ? (
+                  // YouTube video varsa göster
+                  <div className="relative w-full h-full">
+                    <iframe 
+                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(game.videos[0].url)}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${getYouTubeVideoId(game.videos[0].url)}&start=30`}
+                      title={game.title || 'Featured Game'} 
+                      width="100%" 
+                      height="100%" 
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{ pointerEvents: 'none' }}
+                    ></iframe>
+                    {/* Video üzerine ince ızgara deseni ekle */}
                     <div className="absolute inset-0 bg-[url('/patterns/grid-pattern.png')] opacity-20 mix-blend-multiply"></div>
-                  </>
+                  </div>
+                ) : (
+                  // Video yoksa görseli göster
+                  game.keyImages && game.keyImages.length > 0 && (
+                    <>
+                      <Image 
+                        src={getBestGameImage(game)} 
+                        alt={game.title || 'Featured Game'} 
+                        fill 
+                        style={{ objectFit: 'cover', objectPosition: 'center top' }}
+                        priority={index === currentFeaturedIndex}
+                        sizes="100vw"
+                        quality={90}
+                        className="transform hover:scale-105 transition-transform duration-10000 filter brightness-[0.85]"
+                      />
+                      {/* Görüntü üzerine ince ızgara deseni ekle */}
+                      <div className="absolute inset-0 bg-[url('/patterns/grid-pattern.png')] opacity-20 mix-blend-multiply"></div>
+                    </>
+                  )
                 )}
               </div>
             ))}
