@@ -29,7 +29,6 @@ import {
   GiPerspectiveDiceSixFacesRandom 
 } from "react-icons/gi";
 import { SiSteam } from "react-icons/si";
-import { GamerPowerGame } from '@/lib/gamerpower-api';
 
 interface GameCardProps {
   game: ExtendedEpicGame;
@@ -86,20 +85,17 @@ export const GameCard = ({
       );
     }
     
-    // GamerPower oyunları için
-    if (game.isGamerPower) {
-      // GamerPowerGame'in worth özelliğine özel olarak erişim sağla
-      const worth = (game as ExtendedEpicGame & { worth?: string })?.worth;
-      if (worth) {
-        return (
-          <div className="flex flex-col">
-            <span className="text-green-500 font-bold">Ücretsiz</span>
-            <span className="text-sm text-muted-foreground line-through">
-              {worth}
-            </span>
-          </div>
-        );
-      }
+    // Diğer oyunlar için
+    const extendedGame = game as ExtendedEpicGame & { worth?: string };
+    if (extendedGame.worth) {
+      return (
+        <div className="flex flex-col">
+          <span className="text-green-500 font-bold">Ücretsiz</span>
+          <span className="text-sm text-muted-foreground line-through">
+            {extendedGame.worth}
+          </span>
+        </div>
+      );
     }
     
     // Diğer durumlar
@@ -172,7 +168,7 @@ export const GameCard = ({
       return game.keyImages[0].url;
     }
     
-    // GamerPower veya diğer API'lardan gelen görsel alanlarını kontrol et
+    // Diğer API'lardan gelen görsel alanlarını kontrol et
     const extendedGame = game as ExtendedEpicGame & { 
       image?: string, 
       thumbnail?: string 

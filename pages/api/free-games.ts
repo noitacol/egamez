@@ -33,7 +33,7 @@ export default async function handler(
 
     // Ücretsiz oyunları al
     let epicGames: ExtendedEpicGame[] = [];
-    let gamerPowerGames: ExtendedEpicGame[] = [];
+    let externalGames: ExtendedEpicGame[] = [];
     let steamGames: ExtendedEpicGame[] = [];
 
     // Sorgu parametrelerine göre veri getir
@@ -45,38 +45,60 @@ export default async function handler(
         ...game,
         source: 'epic',
         platform: 'epic',
-        distributionPlatform: 'epic'
+        distributionPlatform: 'epic',
+        sourceLabel: 'Epic Store'
       }));
     }
 
     if (source === 'all' || source === 'steam') {
       steamGames = await getFreeSteamGames() || [];
+      
+      // Steam oyunlarına kaynak bilgisi ekle
+      steamGames = steamGames.map(game => ({
+        ...game,
+        source: 'steam',
+        sourceLabel: 'Steam'
+      }));
     }
 
-    if (source === 'all' || source === 'gamerpower') {
-      // GamerPower filtre parametreleri varsa gelişmiş filtreleme yap
+    if (source === 'all' || source === 'external') {
+      // Harici platform filtre parametreleri varsa gelişmiş filtreleme yap
       if (platform || type || sortBy) {
         const validSortBy = ['date', 'value', 'popularity'].includes(String(sortBy))
           ? (String(sortBy) as 'date' | 'value' | 'popularity')
           : undefined;
         
-        gamerPowerGames = await getFilteredGamerPowerGames(
+        externalGames = await getFilteredGamerPowerGames(
           type ? String(type) : undefined,
           platform ? String(platform) : undefined,
           validSortBy
         );
+        
+        // Harici kaynak bilgilerini güncelle
+        externalGames = externalGames.map(game => ({
+          ...game,
+          source: 'external',
+          sourceLabel: 'Ücretsiz'
+        }));
       } else {
         // Filtre yoksa tüm ücretsiz oyunları getir
-        const gpGames = await getFreeGamerPowerGames();
-        gamerPowerGames = gpGames.map(game => convertGamerPowerToEpicFormat(game));
+        const freeGames = await getFreeGamerPowerGames();
+        externalGames = freeGames.map(game => {
+          const converted = convertGamerPowerToEpicFormat(game);
+          return {
+            ...converted,
+            source: 'external',
+            sourceLabel: 'Ücretsiz'
+          };
+        });
       }
     }
 
     // Tüm oyunları birleştir
-    const allGames = [...epicGames, ...gamerPowerGames, ...steamGames];
+    const allGames = [...epicGames, ...externalGames, ...steamGames];
     
-    // Sıralama kriterine göre sırala (eğer sortBy parametresi verilmişse ve GamerPower endpointi kullanılmamışsa)
-    if (sortBy && !(source === 'gamerpower' && (platform || type))) {
+    // Sıralama kriterine göre sırala
+    if (sortBy) {
       if (sortBy === 'name') {
         allGames.sort((a, b) => a.title.localeCompare(b.title));
       } else if (sortBy === 'date') {
