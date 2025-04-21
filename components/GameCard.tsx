@@ -185,6 +185,39 @@ export const GameCard = ({
     return "/images/placeholder.png";
   };
 
+  // URL'nin geçerli olup olmadığını kontrol et
+  const isValidUrl = (urlString: string): boolean => {
+    try {
+      // Basit URL kontrolü
+      const url = new URL(urlString);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (error) {
+      return false;
+    }
+  };
+
+  // Oyun için güvenli URL döndür
+  const getSafeUrl = (): string | undefined => {
+    // URL yoksa undefined döndür
+    if (!game.url) return undefined;
+
+    // URL geçerli mi kontrol et
+    if (isValidUrl(game.url)) {
+      return game.url;
+    }
+    
+    // Eğer özel bir oyunsa (örneğin Firestone), özel bir işlem uygula
+    if (game.title === "Firestone Online Idle RPG") {
+      return "https://firestone.playwill.io/"; // Düzeltilmiş URL
+    }
+    
+    // Geçersiz URL'ler için undefined döndür
+    return undefined;
+  };
+  
+  // Güvenli URL'yi al
+  const safeUrl = getSafeUrl();
+
   return (
     <Card className="overflow-hidden group h-full flex flex-col transition-shadow hover:shadow-md">
       <CardHeader className="p-0 aspect-[16/9] relative overflow-hidden">
@@ -216,21 +249,25 @@ export const GameCard = ({
         </div>
       </CardContent>
       <CardFooter className="p-3 sm:p-4 pt-0">
-        {game.url && (
-          <Link href={game.url} target="_blank" className="w-full">
+        {safeUrl ? (
+          <Link href={safeUrl} target="_blank" className="w-full">
             <Button variant="outline" size="sm" className="w-full gap-1 sm:gap-2 font-normal text-[10px] sm:text-xs h-8">
               <FaExternalLinkAlt className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               Detaylar
             </Button>
           </Link>
-        )}
-        {game.id && !game.url && (
+        ) : game.id ? (
           <Link href={`/games/${game.id}`} className="w-full">
             <Button variant="outline" size="sm" className="w-full gap-1 sm:gap-2 font-normal text-[10px] sm:text-xs h-8">
               <FaExternalLinkAlt className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               Detaylar
             </Button>
           </Link>
+        ) : (
+          <Button variant="outline" size="sm" className="w-full gap-1 sm:gap-2 font-normal text-[10px] sm:text-xs h-8" disabled>
+            <FaExternalLinkAlt className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+            Detaylar
+          </Button>
         )}
       </CardFooter>
     </Card>
