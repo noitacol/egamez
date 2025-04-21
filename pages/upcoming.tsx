@@ -3,7 +3,7 @@ import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Layout from '../components/Layout';
 import GameCard from '../components/GameCard';
-import { getUpcomingFreeGames } from '../lib/epic-api';
+import { fetchUpcomingFreeGames } from '../lib/epic-api';
 import { EpicGame } from '../lib/epic-api';
 
 interface UpcomingPageProps {
@@ -53,7 +53,7 @@ export default function UpcomingPage({ upcomingGames }: UpcomingPageProps) {
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    const upcomingGames = await getUpcomingFreeGames();
+    const upcomingGames = await fetchUpcomingFreeGames();
     
     return {
       props: {
