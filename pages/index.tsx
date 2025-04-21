@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
-import { fetchFreeGames, fetchUpcomingFreeGames, fetchTrendingGames } from "@/lib/epic-api";
+// Epic API çağrıları geçici olarak devre dışı bırakıldı
+// import { fetchFreeGames, fetchUpcomingFreeGames, fetchTrendingGames } from "@/lib/epic-api";
 import { 
   getGamerPowerOnlyGamesAsEpicFormat, 
   getGamerPowerLootAsEpicFormat, 
@@ -28,8 +29,9 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BiGift } from "react-icons/bi";
 
 interface HomeProps {
-  epicFreeGames: ExtendedEpicGame[];
-  upcomingEpicGames: ExtendedEpicGame[];
+  // Epic API oyunları geçici olarak kaldırıldı
+  // epicFreeGames: ExtendedEpicGame[];
+  // upcomingEpicGames: ExtendedEpicGame[];
   freebieGames: ExtendedEpicGame[];
   freeLoots: ExtendedEpicGame[];
   freeBetas: ExtendedEpicGame[];
@@ -39,8 +41,9 @@ interface HomeProps {
 }
 
 export default function Home({ 
-  epicFreeGames, 
-  upcomingEpicGames, 
+  // Epic API oyunları geçici olarak kaldırıldı
+  // epicFreeGames, 
+  // upcomingEpicGames, 
   freebieGames,
   freeLoots,
   freeBetas,
@@ -52,18 +55,18 @@ export default function Home({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'free' | 'upcoming' | 'trending' | 'loot' | 'beta'>('free');
   const [featuredGame, setFeaturedGame] = useState<ExtendedEpicGame | null>(null);
-  const [activePlatform, setActivePlatform] = useState<'all' | 'epic' | 'steam' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'mobile' | 'android' | 'ios'>('all');
-  const [filter, setFilter] = useState<"all" | "epic" | "steam">("all");
+  const [activePlatform, setActivePlatform] = useState<'all' | 'steam' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'android' | 'ios'>('all');
+  const [filter, setFilter] = useState<"all" | "steam">("all");
   const [sort, setSort] = useState<"none" | "title" | "price">("none");
 
   // Ana ekranda gösterilecek öne çıkan oyunu belirle
   useEffect(() => {
     if (trendingGames && trendingGames.length > 0) {
       setFeaturedGame(trendingGames[0]);
-    } else if (epicFreeGames && epicFreeGames.length > 0) {
-      setFeaturedGame(epicFreeGames[0]);
+    } else if (freebieGames && freebieGames.length > 0) {
+      setFeaturedGame(freebieGames[0]);
     }
-  }, [trendingGames, epicFreeGames]);
+  }, [trendingGames, freebieGames]);
 
   // Aktif platform için oyunları filtrele
   const getFilteredGames = () => {
@@ -71,9 +74,10 @@ export default function Home({
 
     // İlk olarak sekme bazında oyunları seç
     if (activeTab === 'free') {
-      games = [...epicFreeGames, ...freebieGames];
+      games = [...freebieGames];
     } else if (activeTab === 'upcoming') {
-      games = [...upcomingEpicGames];
+      // Şimdilik hiç yakında çıkacak oyun göstermeyelim çünkü epic oyunları kaldırıldı
+      games = [];
     } else if (activeTab === 'trending') {
       games = [...trendingGames];
     } else if (activeTab === 'loot') {
@@ -97,8 +101,6 @@ export default function Home({
         const platformName = game.platform?.toLowerCase() || '';
         
         switch (activePlatform) {
-          case 'epic':
-            return platform.includes('epic') || platformName.includes('epic');
           case 'steam':
             return platform.includes('steam') || platformName.includes('steam');
           case 'playstation':
@@ -113,8 +115,6 @@ export default function Home({
             return platformName.includes('android');
           case 'ios':
             return platformName.includes('ios') || platformName.includes('apple');
-          case 'mobile':
-            return platformName.includes('android') || platformName.includes('ios') || platformName.includes('mobile');
           default:
             return true;
         }
@@ -151,9 +151,9 @@ export default function Home({
   const getCategoryCount = (tab: 'free' | 'upcoming' | 'trending' | 'loot' | 'beta') => {
     switch (tab) {
       case 'free':
-        return epicFreeGames.length + freebieGames.length;
+        return freebieGames.length;
       case 'upcoming':
-        return upcomingEpicGames.length;
+        return 0; // Epic API devre dışı olduğu için yakında çıkacak oyun yok
       case 'trending':
         return trendingGames.length;
       case 'loot':
@@ -164,8 +164,6 @@ export default function Home({
         return 0;
     }
   };
-
-  const combinedFreeGames = [...epicFreeGames, ...freebieGames];
   
   const sortedGames = [...filteredGames].sort((a, b) => {
     if (sort === "title") {
@@ -182,7 +180,7 @@ export default function Home({
     <>
       <Head>
         <title>FRPG Gaming - Ücretsiz Oyunları Keşfedin</title>
-        <meta name="description" content="Epic Games ve tüm platformlardaki ücretsiz oyunları keşfedin" />
+        <meta name="description" content="Tüm platformlardaki ücretsiz oyunları keşfedin" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -198,167 +196,177 @@ export default function Home({
                   src={featuredGame.keyImages[0].url || '/placeholder.jpg'} 
                   alt={featuredGame.title || 'Featured Game'} 
                   fill 
-                  className="object-cover opacity-50"
+                  style={{ objectFit: 'cover' }}
                   priority
-                  unoptimized={true}
                 />
               )}
             </div>
-            <div className="container mx-auto px-4 h-full flex flex-col justify-end pb-20 relative z-20">
-              <h1 className="text-4xl md:text-6xl font-bold mb-2 text-white">
-                {featuredGame.title}
-              </h1>
-              <p className="text-lg md:text-xl text-gray-200 mb-6 max-w-2xl">
-                Ücretsiz oyunlar ve içerikler burada! Hemen indirip oynamaya başlayın.
+
+            <div className="container mx-auto h-full flex flex-col justify-end pb-8 md:pb-16 relative z-20">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 text-shadow-lg">{featuredGame.title}</h1>
+              <p className="text-sm md:text-base lg:text-lg max-w-3xl mb-4 md:mb-6 text-shadow-md">
+                {featuredGame.description?.slice(0, 150)}
+                {featuredGame.description && featuredGame.description.length > 150 ? '...' : ''}
               </p>
               <div className="flex flex-wrap gap-3">
-                <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                  <Link href="#games" aria-label="Oyunlara Git" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}>
-                    Oyunları Keşfet
-                  </Link>
-                </Button>
-                
                 {featuredGame.url && (
-                  <Button asChild variant="outline" size="lg">
-                    <Link href={featuredGame.url} target="_blank" aria-label="Talep Et" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.click()}>
-                      <FaExternalLinkAlt className="mr-2 h-4 w-4" />
-                      Talep Et
-                    </Link>
-                  </Button>
+                  <Link 
+                    href={featuredGame.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-all"
+                    tabIndex={0}
+                  >
+                    <span>Görüntüle</span>
+                    <FaExternalLinkAlt />
+                  </Link>
                 )}
+                <Link
+                  href="/games"
+                  className="bg-gray-800 hover:bg-gray-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-all"
+                  tabIndex={0}
+                >
+                  <span>Tüm Oyunlar</span>
+                  <MdNavigateNext />
+                </Link>
               </div>
             </div>
           </section>
         )}
 
         {/* Platform Selection */}
-        <section className="py-6 md:py-8 bg-gradient-to-b from-gray-900 to-gray-950">
-          <div className="container mx-auto px-3 md:px-4">
-            <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center">Platformlar</h2>
-            <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-9 gap-2 md:gap-3">
-              <button
-                onClick={() => setActivePlatform('all')}
-                className={`flex flex-col items-center justify-center p-2 md:p-4 rounded-lg transition-all ${getPlatformCardClass('all')}`}
-                aria-label="Tüm Platformlar"
-                tabIndex={0}
-              >
-                <RiGamepadLine className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs md:text-sm font-medium">Tümü</span>
-              </button>
-              
-              <button
-                onClick={() => setActivePlatform('epic')}
-                className={`flex flex-col items-center justify-center p-2 md:p-4 rounded-lg transition-all ${getPlatformCardClass('epic')}`}
-                aria-label="Epic Games"
-                tabIndex={0}
-              >
-                <SiEpicgames className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs md:text-sm font-medium">Epic</span>
-              </button>
-              
-              <button
-                onClick={() => setActivePlatform('steam')}
-                className={`flex flex-col items-center justify-center p-2 md:p-4 rounded-lg transition-all ${getPlatformCardClass('steam')}`}
-                aria-label="Steam Oyunları"
-                tabIndex={0}
-              >
-                <SiSteam className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs md:text-sm font-medium">Steam</span>
-              </button>
-              
-              <button
-                onClick={() => setActivePlatform('pc')}
-                className={`flex flex-col items-center justify-center p-2 md:p-4 rounded-lg transition-all ${getPlatformCardClass('pc')}`}
-                aria-label="PC Oyunları"
-                tabIndex={0}
-              >
-                <FaWindows className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs md:text-sm font-medium">PC</span>
-              </button>
-              
-              <button
-                onClick={() => setActivePlatform('playstation')}
-                className={`flex flex-col items-center justify-center p-2 md:p-4 rounded-lg transition-all ${getPlatformCardClass('playstation')}`}
-                aria-label="PlayStation Oyunları"
-                tabIndex={0}
-              >
-                <FaPlaystation className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs md:text-sm font-medium">PlayStation</span>
-              </button>
-              
-              <button
-                onClick={() => setActivePlatform('xbox')}
-                className={`flex flex-col items-center justify-center p-2 md:p-4 rounded-lg transition-all ${getPlatformCardClass('xbox')}`}
-                aria-label="Xbox Oyunları"
-                tabIndex={0}
-              >
-                <FaXbox className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs md:text-sm font-medium">Xbox</span>
-              </button>
-              
-              <button
-                onClick={() => setActivePlatform('switch')}
-                className={`flex flex-col items-center justify-center p-2 md:p-4 rounded-lg transition-all ${getPlatformCardClass('switch')}`}
-                aria-label="Nintendo Switch Oyunları"
-                tabIndex={0}
-              >
-                <SiNintendoswitch className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs md:text-sm font-medium">Switch</span>
-              </button>
-              
-              <button
-                onClick={() => setActivePlatform('android')}
-                className={`flex flex-col items-center justify-center p-2 md:p-4 rounded-lg transition-all ${getPlatformCardClass('android')}`}
-                aria-label="Android Oyunları"
-                tabIndex={0}
-              >
-                <SiAndroid className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs md:text-sm font-medium">Android</span>
-              </button>
-              
-              <button
-                onClick={() => setActivePlatform('ios')}
-                className={`flex flex-col items-center justify-center p-2 md:p-4 rounded-lg transition-all ${getPlatformCardClass('ios')}`}
-                aria-label="iOS Oyunları"
-                tabIndex={0}
-              >
-                <SiApple className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs md:text-sm font-medium">iOS</span>
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Game Categories */}
-        <section id="games" className="py-12">
+        <section className="py-8 md:py-16 relative overflow-hidden">
           <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold">Ücretsiz Oyunlar</h2>
-              <div className="text-sm text-gray-400">
-                Toplam: {totalGames} oyun bulundu
-              </div>
+            <h2 className="text-2xl lg:text-3xl font-bold mb-6 flex items-center gap-2">
+              <FaGamepad />
+              <span>Platformlar</span>
+            </h2>
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-4 mb-10">
+              <button
+                className={`${getPlatformCardClass('all')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                onClick={() => setActivePlatform('all')}
+                tabIndex={0}
+                aria-label="Tüm platformlar"
+                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('all')}
+              >
+                <RiGamepadLine className="h-6 w-6 mb-2" />
+                <span className="text-xs sm:text-sm">Tümü</span>
+              </button>
+
+              {/* Epic Games Platformu geçici olarak devre dışı bırakıldı */}
+              {/*
+              <button
+                className={`${getPlatformCardClass('epic')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                onClick={() => setActivePlatform('epic')}
+                tabIndex={0}
+                aria-label="Epic Games platformu"
+                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('epic')}
+              >
+                <SiEpicgames className="h-6 w-6 mb-2" />
+                <span className="text-xs sm:text-sm">Epic</span>
+              </button>
+              */}
+
+              <button
+                className={`${getPlatformCardClass('steam')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                onClick={() => setActivePlatform('steam')}
+                tabIndex={0}
+                aria-label="Steam platformu"
+                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('steam')}
+              >
+                <SiSteam className="h-6 w-6 mb-2" />
+                <span className="text-xs sm:text-sm">Steam</span>
+              </button>
+
+              <button
+                className={`${getPlatformCardClass('pc')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                onClick={() => setActivePlatform('pc')}
+                tabIndex={0}
+                aria-label="PC platformu"
+                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('pc')}
+              >
+                <FaWindows className="h-6 w-6 mb-2" />
+                <span className="text-xs sm:text-sm">PC</span>
+              </button>
+
+              <button
+                className={`${getPlatformCardClass('playstation')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                onClick={() => setActivePlatform('playstation')}
+                tabIndex={0}
+                aria-label="PlayStation platformu"
+                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('playstation')}
+              >
+                <FaPlaystation className="h-6 w-6 mb-2" />
+                <span className="text-xs sm:text-sm">PlayStation</span>
+              </button>
+
+              <button
+                className={`${getPlatformCardClass('xbox')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                onClick={() => setActivePlatform('xbox')}
+                tabIndex={0}
+                aria-label="Xbox platformu"
+                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('xbox')}
+              >
+                <FaXbox className="h-6 w-6 mb-2" />
+                <span className="text-xs sm:text-sm">Xbox</span>
+              </button>
+
+              <button
+                className={`${getPlatformCardClass('switch')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                onClick={() => setActivePlatform('switch')}
+                tabIndex={0}
+                aria-label="Nintendo Switch platformu"
+                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('switch')}
+              >
+                <SiNintendoswitch className="h-6 w-6 mb-2" />
+                <span className="text-xs sm:text-sm">Switch</span>
+              </button>
+
+              <button
+                className={`${getPlatformCardClass('android')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                onClick={() => setActivePlatform('android')}
+                tabIndex={0}
+                aria-label="Android platformu"
+                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('android')}
+              >
+                <SiAndroid className="h-6 w-6 mb-2" />
+                <span className="text-xs sm:text-sm">Android</span>
+              </button>
+
+              <button
+                className={`${getPlatformCardClass('ios')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                onClick={() => setActivePlatform('ios')}
+                tabIndex={0}
+                aria-label="iOS platformu"
+                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('ios')}
+              >
+                <SiApple className="h-6 w-6 mb-2" />
+                <span className="text-xs sm:text-sm">iOS</span>
+              </button>
             </div>
 
-            {/* Category Tabs */}
-            <div className="flex flex-wrap gap-2 mb-8">
+            {/* Game Categories */}
+            <div className="flex flex-wrap gap-3 mb-6">
               <button
+                className={`${getTabClass('free')} px-4 py-2 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105 shadow-md`}
                 onClick={() => setActiveTab('free')}
-                className={`flex items-center gap-1 py-2 px-4 rounded-lg text-sm font-medium transition ${getTabClass('free')}`}
-                aria-label="Ücretsiz Oyunlar"
                 tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('free')}
               >
-                <BsGift className="h-4 w-4" />
-                <span>Ücretsiz</span>
+                <BiGift className="h-4 w-4" />
+                <span>Ücretsiz Oyunlar</span>
                 <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
                   {getCategoryCount('free')}
                 </span>
               </button>
-              
+
+              {/* Upcoming Epic Games sekmesi geçici olarak devre dışı bırakıldı */}
+              {/*
               <button
+                className={`${getTabClass('upcoming')} px-4 py-2 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105 shadow-md`}
                 onClick={() => setActiveTab('upcoming')}
-                className={`flex items-center gap-1 py-2 px-4 rounded-lg text-sm font-medium transition ${getTabClass('upcoming')}`}
-                aria-label="Yakında Ücretsiz Olacak"
                 tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('upcoming')}
               >
                 <MdOutlineAccessTime className="h-4 w-4" />
                 <span>Yakında</span>
@@ -366,12 +374,13 @@ export default function Home({
                   {getCategoryCount('upcoming')}
                 </span>
               </button>
-              
+              */}
+
               <button
+                className={`${getTabClass('trending')} px-4 py-2 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105 shadow-md`}
                 onClick={() => setActiveTab('trending')}
-                className={`flex items-center gap-1 py-2 px-4 rounded-lg text-sm font-medium transition ${getTabClass('trending')}`}
-                aria-label="Trend Oyunlar"
                 tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('trending')}
               >
                 <FaFire className="h-4 w-4" />
                 <span>Trend</span>
@@ -379,25 +388,25 @@ export default function Home({
                   {getCategoryCount('trending')}
                 </span>
               </button>
-              
+
               <button
+                className={`${getTabClass('loot')} px-4 py-2 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105 shadow-md`}
                 onClick={() => setActiveTab('loot')}
-                className={`flex items-center gap-1 py-2 px-4 rounded-lg text-sm font-medium transition ${getTabClass('loot')}`}
-                aria-label="Oyun İçi Öğeler"
                 tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('loot')}
               >
-                <BiGift className="h-4 w-4" />
-                <span>Oyun İçi</span>
+                <BsGift className="h-4 w-4" />
+                <span>Loot</span>
                 <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
                   {getCategoryCount('loot')}
                 </span>
               </button>
-              
+
               <button
+                className={`${getTabClass('beta')} px-4 py-2 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105 shadow-md`}
                 onClick={() => setActiveTab('beta')}
-                className={`flex items-center gap-1 py-2 px-4 rounded-lg text-sm font-medium transition ${getTabClass('beta')}`}
-                aria-label="Beta Sürümler"
                 tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('beta')}
               >
                 <RiTestTubeFill className="h-4 w-4" />
                 <span>Beta</span>
@@ -468,23 +477,27 @@ export default function Home({
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
+    // Epic API çağrıları geçici olarak devre dışı bırakıldı
     // Tüm API çağrılarını paralel olarak yap
     const [
-      epicGames,
-      upcomingGames,
+      // epicGames,
+      // upcomingGames,
       gpOnlyGames,
       gpLoot,
       gpBeta,
       steamGames,
-      trendingGames
+      // Epic API trendings devre dışı
+      // trendingGames
+      trendingGamerPowerGames
     ] = await Promise.all([
-      fetchFreeGames(),
-      fetchUpcomingFreeGames(),
+      // fetchFreeGames(),
+      // fetchUpcomingFreeGames(),
       getGamerPowerOnlyGamesAsEpicFormat(),
       getGamerPowerLootAsEpicFormat(),
       getGamerPowerBetaAsEpicFormat(),
       getFreeSteamGames(),
-      fetchTrendingGames(),
+      // fetchTrendingGames(),
+      getTrendingGamerPowerGames()
     ]);
 
     // Boş veri durumunda hata olmasın diye boş dizi kullan ve düzgün serileştirme yap
@@ -502,7 +515,8 @@ export const getStaticProps: GetStaticProps = async () => {
       }
     };
 
-    // Epic oyunlarını temizle ve hazırla
+    // Epic oyunlarını temizle ve hazırla fonksiyonu şimdilik kullanılmıyor
+    /*
     const sanitizeEpicGames = (games: any[]): ExtendedEpicGame[] => {
       return (games || []).map(game => ({
         ...game,
@@ -511,10 +525,11 @@ export const getStaticProps: GetStaticProps = async () => {
         distributionPlatform: 'epic'
       }));
     };
+    */
 
-    // Tüm oyunları bir araya getir ve tüm verileri düzgün serileştir 
+    // Tüm oyunları bir araya getir - Epic oyunları dahil edilmedi
     const allGames = [
-      ...(epicGames || []), 
+      // ...(epicGames || []), 
       ...(gpOnlyGames || []),
       ...(gpLoot || []), 
       ...(gpBeta || []),
@@ -524,13 +539,15 @@ export const getStaticProps: GetStaticProps = async () => {
     // Statik props olarak döndür
     return {
       props: {
-        epicFreeGames: safelySerialize(sanitizeEpicGames(epicGames || [])),
-        upcomingEpicGames: safelySerialize(sanitizeEpicGames(upcomingGames || [])),
+        // Epic API oyunları geçici olarak devre dışı bırakıldı
+        // epicFreeGames: safelySerialize(sanitizeEpicGames(epicGames || [])),
+        // upcomingEpicGames: safelySerialize(sanitizeEpicGames(upcomingGames || [])),
         freebieGames: safelySerialize(gpOnlyGames || []),
         freeLoots: safelySerialize(gpLoot || []),
         freeBetas: safelySerialize(gpBeta || []),
         steamFreeGames: safelySerialize(steamGames || []),
-        trendingGames: safelySerialize(trendingGames || []),
+        // trendingGames: safelySerialize(trendingGames || []),
+        trendingGames: safelySerialize(trendingGamerPowerGames || []),
         totalGames: allGames.length,
       },
       // Her 6 saatte bir yeniden oluştur
@@ -542,8 +559,9 @@ export const getStaticProps: GetStaticProps = async () => {
     // Hata durumunda boş verilerle devam et
     return {
       props: {
-        epicFreeGames: [],
-        upcomingEpicGames: [],
+        // Epic API oyunları geçici olarak kaldırıldı
+        // epicFreeGames: [],
+        // upcomingEpicGames: [],
         freebieGames: [],
         freeLoots: [],
         freeBetas: [],
