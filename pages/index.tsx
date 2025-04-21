@@ -461,15 +461,18 @@ export const getStaticProps: GetStaticProps = async () => {
       fetchTrendingGames(),
     ]);
 
-    // Boş veri durumunda hata olmasın diye boş dizi kullan
+    // Boş veri durumunda hata olmasın diye boş dizi kullan ve düzgün serileştirme yap
     const safelySerialize = (data: any) => {
       try {
-        // Tarih objelerini string formatına dönüştür
+        // Önce JSON.stringify ile test et, düzgün serileştirme için
         JSON.stringify(data);
         return data;
       } catch (e) {
-        console.error('Data serialization failed:', e);
-        return [];
+        console.error('Serileştirme hatası:', e);
+        // Hataya neden olan undefined değerleri null olarak değiştir
+        return JSON.parse(JSON.stringify(data, (key, value) => 
+          value === undefined ? null : value
+        ));
       }
     };
 
@@ -483,7 +486,7 @@ export const getStaticProps: GetStaticProps = async () => {
       }));
     };
 
-    // Tüm oyunları bir araya getir
+    // Tüm oyunları bir araya getir ve tüm verileri düzgün serileştir 
     const allGames = [
       ...(epicGames || []), 
       ...(gpOnlyGames || []),

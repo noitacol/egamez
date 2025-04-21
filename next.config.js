@@ -22,6 +22,18 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/epic-store',
+        destination: 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions',
+      },
+      {
+        source: '/api/steam-store/:path*',
+        destination: 'https://store.steampowered.com/api/:path*',
+      }
+    ];
+  }
 }
 
 module.exports = nextConfig 

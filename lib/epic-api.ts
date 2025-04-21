@@ -80,21 +80,19 @@ export interface EpicGame {
   sourceLabel?: string;
 }
 
-// API URL'leri
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions';
-const EPIC_API_URL = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=TR&allowCountries=TR';
-const PROXY_URL = process.env.NODE_ENV === 'production' ? 'api/proxy' : 'http://localhost:3000/api/proxy';
+// API URL'leri - statik derleme sırasında tam URL kullanılır
+const isServer = typeof window === 'undefined';
+const BASE_URL = isServer 
+  ? 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions' 
+  : '/api/epic-store';
+const EPIC_API_URL = `${BASE_URL}${isServer ? '?locale=en-US&country=TR&allowCountries=TR' : '?locale=en-US&country=TR&allowCountries=TR'}`;
 
 /**
  * Epic Games'ten ücretsiz oyunları getirir
  */
 export const fetchFreeGames = async (): Promise<ExtendedEpicGame[]> => {
   try {
-    const response = await axios.get(PROXY_URL, {
-      params: {
-        url: EPIC_API_URL
-      }
-    });
+    const response = await axios.get(EPIC_API_URL);
 
     const games = response.data.data.Catalog.searchStore.elements;
     
@@ -125,11 +123,7 @@ export const fetchFreeGames = async (): Promise<ExtendedEpicGame[]> => {
  */
 export const fetchUpcomingFreeGames = async (): Promise<ExtendedEpicGame[]> => {
   try {
-    const response = await axios.get(PROXY_URL, {
-      params: {
-        url: EPIC_API_URL
-      }
-    });
+    const response = await axios.get(EPIC_API_URL);
 
     const games = response.data.data.Catalog.searchStore.elements;
     

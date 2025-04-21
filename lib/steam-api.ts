@@ -3,7 +3,8 @@ import { ExtendedEpicGame } from './types';
 
 // Steam API sabitleri
 const STEAM_API_KEY = 'YOUR_STEAM_API_KEY'; // Gerçek kullanımda API anahtarı eklenmelidir
-const STEAM_STORE_API = 'https://store.steampowered.com/api';
+const isServer = typeof window === 'undefined';
+const STEAM_STORE_API = isServer ? 'https://store.steampowered.com/api' : '/api/steam-store';
 const STEAM_API = 'https://api.steampowered.com';
 
 // Trend olabilecek ücretsiz Steam oyun ID'leri
@@ -279,6 +280,12 @@ export function convertSteamToEpicFormat(game: SteamGame): ExtendedEpicGame {
     upcomingPromotionalOffers: []
   };
   
+  // Metacritic bilgisini işle - undefined değerini null olarak ayarla
+  const metacritic = game.metacritic ? {
+    score: game.metacritic.score,
+    url: game.metacritic.url
+  } : null;
+  
   return {
     id: String(game.appid),
     title: game.name,
@@ -309,7 +316,7 @@ export function convertSteamToEpicFormat(game: SteamGame): ExtendedEpicGame {
     items: [],
     customAttributes: [],
     videos,
-    metacritic: game.metacritic,
+    metacritic: metacritic,
     isTrending: true,
     distributionPlatform: "steam",
     url: `https://store.steampowered.com/app/${game.appid}`
