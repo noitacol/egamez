@@ -96,57 +96,20 @@ const EPIC_API_URL = `${BASE_URL}${isServer ? '?locale=tr-TR&country=TR&allowCou
  * Oyun URL'sini düzelt ve optimize et
  */
 const fixGameUrl = (game: EpicGame | ExtendedEpicGame): string => {
-  // UUID/ID formatındaki oyunlar için özel eşleştirme tablosu
-  const knownGameIds: Record<string, string> = {
-    "3c32d774010245b6b1095ff2d3df6b2e": "fallout-3-game-of-the-year-edition",
-    "1185abfe7c554a1e8c528aba37bf3d0f": "the-sims-4"
-    // Zamanla daha fazla ID-slug eşleştirmesi eklenebilir
-  };
-  
-  // URL'nin ID formatında olup olmadığını kontrol et
-  const isUuidFormat = (path: string): boolean => {
-    // UUID formatı: 8-4-4-4-12 karakter (32 karakter + 4 tire)
-    // veya 32 karakterli hex ID'ler 
-    return /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(path) || 
-           /^[0-9a-f]{32}$/i.test(path);
-  };
-  
-  // URL path'inden ID'yi çıkar
-  const extractIdFromPath = (path: string): string | null => {
-    // /tr/p/1185abfe7c554a1e8c528aba37bf3d0f formatından ID'yi çıkar
-    const match = path.match(/\/p\/([0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12})/i) ||
-                  path.match(/\/p\/([0-9a-f]{32})/i);
-    return match ? match[1] : null;
-  };
-  
   try {
-    // 1. Oyunun kendi ID'si bilinen ID'lerden biriyse, hemen eşleşen slug'ı kullan
-    if (game.id && knownGameIds[game.id]) {
-      return `https://store.epicgames.com/tr/p/${knownGameIds[game.id]}`;
+    // 1. ProductSlug varsa ve doğruysa kullan (API'den doğrudan gelen slug)
+    if (game.productSlug && typeof game.productSlug === 'string') {
+      // Eğer slug'ın içinde "/" karakteri varsa, düzgün bir biçime getir
+      const cleanSlug = game.productSlug.split('/').pop() || game.productSlug;
+      return `https://store.epicgames.com/tr/p/${cleanSlug}`;
     }
     
-    // 2. URL halihazırda varsa kontrol et
+    // 2. URL halihazırda varsa (API'den) ve geçerli formatta ise kullan
     if (game.url && typeof game.url === 'string' && game.url.includes('store.epicgames.com')) {
+      // URL'yi Türkçe dil ayarına sahip olacak şekilde düzenle
       const parsedUrl = new URL(game.url);
       
-      // URL'den ID'yi çıkar
-      const idFromPath = extractIdFromPath(parsedUrl.pathname);
-      
-      // URL'de UUID/ID formatı varsa ve bilinen ID'lerden biriyse, eşleşen slug'ı kullan
-      if (idFromPath && knownGameIds[idFromPath]) {
-        return `https://store.epicgames.com/tr/p/${knownGameIds[idFromPath]}`;
-      }
-      
-      // URL'nin path kısmı UUID formatında mı kontrol et
-      const pathParts = parsedUrl.pathname.split('/');
-      if (pathParts.length >= 3) {
-        const possibleId = pathParts[pathParts.length - 1];
-        if (isUuidFormat(possibleId) && knownGameIds[possibleId]) {
-          return `https://store.epicgames.com/tr/p/${knownGameIds[possibleId]}`;
-        }
-      }
-      
-      // URL'yi Türkçe dil ayarına sahip olacak şekilde düzenle
+      // Yol kısmını koru, sadece dil kodunu değiştir (/en-US/ -> /tr/)
       let newPathParts = parsedUrl.pathname.split('/');
       
       // URL'nin başında dil kodu olabilir (/en-US/, /en/ gibi)
@@ -160,28 +123,26 @@ const fixGameUrl = (game: EpicGame | ExtendedEpicGame): string => {
       
       // Path parçalarını birleştir
       const newPath = newPathParts.join('/');
-      
-      // GraphQL API kullanarak gerçek URL'yi almayı dene (arka planda çalışacak)
-      if (game.id && game.productSlug) {
-        getAccurateGameUrl(game.title || 'Bilinmeyen Oyun', game.productSlug)
-          .then(accurateUrl => {
-            if (accurateUrl) {
-              console.log(`GraphQL API URL düzeltme (${game.title}): ${accurateUrl}`);
-              // URL düzeltildiğinde bir sonraki kullanımda doğru URL dönecek
-              if (game.url !== accurateUrl) {
-                game.url = accurateUrl; // Referans üzerinden güncelle
-              }
-            }
-          })
-          .catch(error => {
-            console.error(`GraphQL API URL sorgusu hatası (${game.title}):`, error);
-          });
-      }
-      
       return `https://store.epicgames.com${newPath}`;
     }
     
-    // 3. GraphQL API kullanarak gerçek URL'yi almayı dene
+    // 3. urlSlug kullanarak URL oluştur (Epic'in tercih ettiği format)
+    if (game.urlSlug && typeof game.urlSlug === 'string') {
+      return `https://store.epicgames.com/tr/p/${game.urlSlug}`;
+    }
+    
+    // 4. Başlığı slug'a dönüştürerek URL oluştur
+    if (game.title && typeof game.title === 'string') {
+      const slugifiedTitle = game.title
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+      
+      return `https://store.epicgames.com/tr/p/${slugifiedTitle}`;
+    }
+    
+    // 5. GraphQL API kullanarak gerçek URL'yi almayı dene
     if (game.id && game.productSlug) {
       // Bu çağrı asenkron olduğu için başlatacağız ancak beklemeyeceğiz
       // URL sonradan düzeltilecek
@@ -198,29 +159,6 @@ const fixGameUrl = (game: EpicGame | ExtendedEpicGame): string => {
         .catch(error => {
           console.error(`GraphQL API URL sorgusu hatası (${game.title}):`, error);
         });
-    }
-    
-    // 4. urlSlug kullanarak URL oluştur (Epic'in tercih ettiği format)
-    if (game.urlSlug && typeof game.urlSlug === 'string') {
-      return `https://store.epicgames.com/tr/p/${game.urlSlug}`;
-    }
-    
-    // 5. productSlug kullanarak URL oluştur
-    if (game.productSlug && typeof game.productSlug === 'string') {
-      // Eğer slug'ın içinde "/" karakteri varsa, düzgün bir biçime getir
-      const cleanSlug = game.productSlug.split('/').pop() || game.productSlug;
-      return `https://store.epicgames.com/tr/p/${cleanSlug}`;
-    }
-    
-    // 6. Başlığı slug'a dönüştürerek URL oluştur
-    if (game.title && typeof game.title === 'string') {
-      const slugifiedTitle = game.title
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-');
-      
-      return `https://store.epicgames.com/tr/p/${slugifiedTitle}`;
     }
   } catch (error) {
     console.error(`URL oluşturma hatası (${game.title}):`, error);
