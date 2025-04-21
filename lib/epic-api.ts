@@ -1,209 +1,196 @@
 import axios from 'axios';
+import { ExtendedEpicGame } from './types';
 
-const EPIC_API_URL = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions';
-const EPIC_STORE_URL = 'https://store-site-backend-static.ak.epicgames.com/storefront/v1/public/catalog';
-
+/**
+ * Epic Games oyun tip tanımı
+ */
 export interface EpicGame {
-  title: string;
   id: string;
   namespace: string;
+  title: string;
   description: string;
-  effectiveDate: string;
-  keyImages: {
+  offerType: string;
+  expiryDate: string | null;
+  effectiveDate: string | null;
+  status: string;
+  isCodeRedemptionOnly: boolean;
+  keyImages: Array<{
     type: string;
     url: string;
-  }[];
+  }>;
   seller: {
+    id: string;
     name: string;
   };
+  productSlug: string;
+  urlSlug: string;
+  url: string | null;
+  items: Array<{
+    id: string;
+    namespace: string;
+  }>;
+  customAttributes: Array<{
+    key: string;
+    value: string;
+  }>;
+  categories: Array<{
+    path: string;
+    name: string;
+  }>;
   price: {
     totalPrice: {
       discountPrice: number;
       originalPrice: number;
+      voucherDiscount: number;
       discount: number;
+      currencyCode: string;
+      currencyInfo: {
+        decimals: number;
+      };
+      fmtPrice: {
+        originalPrice: string;
+        discountPrice: string;
+        intermediatePrice: string;
+      };
     };
   };
   promotions: {
-    promotionalOffers: {
-      promotionalOffers: {
+    promotionalOffers: Array<{
+      promotionalOffers: Array<{
         startDate: string;
         endDate: string;
         discountSetting: {
+          discountType: string;
           discountPercentage: number;
         };
-      }[];
-    }[];
-    upcomingPromotionalOffers: {
-      promotionalOffers: {
+      }>;
+    }>;
+    upcomingPromotionalOffers: Array<{
+      promotionalOffers: Array<{
         startDate: string;
         endDate: string;
         discountSetting: {
+          discountType: string;
           discountPercentage: number;
         };
-      }[];
-    }[];
+      }>;
+    }>;
   };
-  categories: {
-    path: string;
-    name: string;
-  }[];
-  productSlug: string;
-  urlSlug: string;
+  releaseDate?: string;
+  sourceLabel?: string;
 }
 
-export async function getFreeGames(): Promise<EpicGame[]> {
+// API URL'leri
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions';
+const EPIC_API_URL = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=TR&allowCountries=TR';
+const PROXY_URL = process.env.NODE_ENV === 'production' ? 'api/proxy' : 'http://localhost:3000/api/proxy';
+
+/**
+ * Epic Games'ten ücretsiz oyunları getirir
+ */
+export const fetchFreeGames = async (): Promise<ExtendedEpicGame[]> => {
   try {
-    const response = await axios.get(EPIC_API_URL, {
+    const response = await axios.get(PROXY_URL, {
       params: {
-        locale: 'tr',
-        country: 'TR',
-        allowCountries: 'TR',
-      },
+        url: EPIC_API_URL
+      }
     });
 
-    const games = response.data?.data?.Catalog?.searchStore?.elements || [];
+    const games = response.data.data.Catalog.searchStore.elements;
     
-    // Şu anda ücretsiz olan oyunlar
-    const currentFreeGames = games.filter((game: EpicGame) => {
-      const promotionalOffers = game.promotions?.promotionalOffers;
-      return (
-        promotionalOffers &&
-        promotionalOffers.length > 0 &&
-        promotionalOffers[0]?.promotionalOffers?.length > 0 &&
-        promotionalOffers[0]?.promotionalOffers[0]?.discountSetting?.discountPercentage === 0
-      );
+    // Şu anda ücretsiz olan oyunları filtrele
+    const freeGames = games.filter((game: EpicGame) => {
+      const { promotionalOffers } = game.promotions || { promotionalOffers: [] };
+      return promotionalOffers && promotionalOffers.length > 0;
     });
 
-    return currentFreeGames;
+    return freeGames.map((game: EpicGame) => ({
+      ...game,
+      source: 'epic',
+      sourceLabel: 'Epic Games',
+      distributionPlatform: 'epic',
+      isFree: true,
+      isOnSale: false,
+      platform: 'PC',
+      url: `https://store.epicgames.com/en-US/p/${game.productSlug || game.urlSlug}`
+    }));
   } catch (error) {
-    console.error('Epic Games API error:', error);
+    console.error('Epic ücretsiz oyunları getirme hatası:', error);
     return [];
   }
-}
+};
 
-export async function getUpcomingFreeGames(): Promise<EpicGame[]> {
+/**
+ * Epic Games'ten yakında ücretsiz olacak oyunları getirir
+ */
+export const fetchUpcomingFreeGames = async (): Promise<ExtendedEpicGame[]> => {
   try {
-    const response = await axios.get(EPIC_API_URL, {
+    const response = await axios.get(PROXY_URL, {
       params: {
-        locale: 'tr',
-        country: 'TR',
-        allowCountries: 'TR',
-      },
+        url: EPIC_API_URL
+      }
     });
 
-    const games = response.data?.data?.Catalog?.searchStore?.elements || [];
+    const games = response.data.data.Catalog.searchStore.elements;
     
-    // Yakında ücretsiz olacak oyunlar
+    // Yakında ücretsiz olacak oyunları filtrele
     const upcomingFreeGames = games.filter((game: EpicGame) => {
-      const upcomingPromotionalOffers = game.promotions?.upcomingPromotionalOffers;
-      return (
-        upcomingPromotionalOffers &&
-        upcomingPromotionalOffers.length > 0 &&
-        upcomingPromotionalOffers[0]?.promotionalOffers?.length > 0
-      );
+      const { upcomingPromotionalOffers } = game.promotions || { upcomingPromotionalOffers: [] };
+      return upcomingPromotionalOffers && upcomingPromotionalOffers.length > 0;
     });
 
-    return upcomingFreeGames;
+    return upcomingFreeGames.map((game: EpicGame) => ({
+      ...game,
+      source: 'epic',
+      sourceLabel: 'Epic Games',
+      distributionPlatform: 'epic',
+      isFree: false,
+      isUpcoming: true,
+      isOnSale: false,
+      platform: 'PC',
+      url: `https://store.epicgames.com/en-US/p/${game.productSlug || game.urlSlug}`
+    }));
   } catch (error) {
-    console.error('Epic Games API error:', error);
+    console.error('Epic yakında ücretsiz olacak oyunları getirme hatası:', error);
     return [];
   }
-}
+};
 
-export async function getGameDetails(namespace: string): Promise<EpicGame | null> {
+/**
+ * Epic Games'ten oyun detaylarını getirir
+ */
+export const fetchGameDetails = async (id: string): Promise<ExtendedEpicGame | null> => {
   try {
-    const response = await axios.get(EPIC_API_URL, {
-      params: {
-        locale: 'tr',
-        country: 'TR',
-        allowCountries: 'TR',
-      },
-    });
-
-    const games = response.data?.data?.Catalog?.searchStore?.elements || [];
-    
-    const game = games.find((game: EpicGame) => game.namespace === namespace);
-    
-    return game || null;
+    // Gerçek implementasyon eklenmeli
+    return null;
   } catch (error) {
-    console.error('Epic Games API error:', error);
+    console.error('Epic oyun detaylarını getirme hatası:', error);
     return null;
   }
-}
+};
 
 /**
- * Epic Games'deki trend olan oyunları getirir
+ * Epic Games'ten trend oyunları getirir
  */
-export async function getTrendingEpicGames(): Promise<EpicGame[]> {
+export const fetchTrendingGames = async (): Promise<ExtendedEpicGame[]> => {
   try {
-    // Epic Games'in katalog sayfasından veri çek
-    const response = await axios.get(EPIC_STORE_URL, {
-      params: {
-        locale: 'tr',
-        country: 'TR',
-        allowCountries: 'TR',
-        count: 30,
-        sortBy: 'relevancy',
-        sortDir: 'DESC',
-        start: 0,
-        tag: 'trending',
-      }
-    });
-
-    const games = response.data?.data?.Catalog?.searchStore?.elements || [];
-    
-    // Ücretsiz olan trending oyunları filtrele
-    const trendingFreeGames = games.filter((game: EpicGame) => {
-      // Ücretsiz oyun kontrolü
-      return game.price?.totalPrice?.discountPrice === 0 || game.price?.totalPrice?.originalPrice === 0;
-    });
-
-    // Trending olarak işaretle
-    const trendingGamesWithFlag = trendingFreeGames.map((game: EpicGame) => ({
-      ...game,
-      isTrending: true
-    }));
-
-    return trendingGamesWithFlag;
+    // Gerçek implementasyon eklenmeli
+    return [];
   } catch (error) {
-    console.error('Epic Games trending API error:', error);
+    console.error('Epic trend oyunları getirme hatası:', error);
     return [];
   }
-}
+};
 
 /**
- * Epic Games'deki indirimde olan oyunları getirir
+ * Epic Games'ten indirimli oyunları getirir
  */
-export async function getDiscountedEpicGames(): Promise<EpicGame[]> {
+export const fetchDiscountedGames = async (): Promise<ExtendedEpicGame[]> => {
   try {
-    // Epic Games'in katalog sayfasından veri çek
-    const response = await axios.get(EPIC_STORE_URL, {
-      params: {
-        locale: 'tr',
-        country: 'TR',
-        allowCountries: 'TR',
-        count: 30,
-        sortBy: 'relevancy',
-        sortDir: 'DESC',
-        start: 0,
-        tag: 'discounted',
-      }
-    });
-
-    const games = response.data?.data?.Catalog?.searchStore?.elements || [];
-    
-    // İndirimde olan oyunları filtrele
-    const discountedGames = games.filter((game: EpicGame) => {
-      // İndirimde olan fakat hala bir fiyatı olan oyunlar
-      return (
-        game.price?.totalPrice?.discount > 0 && 
-        game.price?.totalPrice?.discountPrice > 0
-      );
-    }).slice(0, 12);
-
-    return discountedGames;
+    // Gerçek implementasyon eklenmeli
+    return [];
   } catch (error) {
-    console.error('Epic Games discounted API error:', error);
+    console.error('Epic indirimli oyunları getirme hatası:', error);
     return [];
   }
-} 
+}; 

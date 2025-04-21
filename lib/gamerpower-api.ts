@@ -260,48 +260,81 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
   
   // Platforma göre dağıtım platformunu belirle
   const getPlatformInfo = (platformStr: string) => {
-    const platforms = platformStr.toLowerCase();
+    const platformsLower = platformStr.toLowerCase();
     
-    if (platforms.includes('steam')) {
+    // Oyunun yer aldığı tüm platformları ayrı ayrı tanımla
+    const platformArray = platformsLower.split(', ').map(p => p.trim());
+    
+    // Önce Steam platformunu kontrol et
+    if (platformsLower.includes('steam')) {
       return {
         distributionPlatform: 'steam',
-        platform: 'Steam'
+        platform: 'Steam',
+        platformList: platformArray
       };
-    } else if (platforms.includes('epic')) {
+    } 
+    // Epic Games platform kontrolü
+    else if (platformsLower.includes('epic')) {
       return {
         distributionPlatform: 'epic',
-        platform: 'Epic Games'
+        platform: 'Epic Games',
+        platformList: platformArray
       };
-    } else if (platforms.includes('playstation') || platforms.includes('ps4') || platforms.includes('ps5')) {
+    } 
+    // PlayStation platform kontrolü
+    else if (platformsLower.includes('playstation') || platformsLower.includes('ps4') || platformsLower.includes('ps5')) {
       return {
         distributionPlatform: 'playstation',
-        platform: 'PlayStation'
+        platform: 'PlayStation',
+        platformList: platformArray
       };
-    } else if (platforms.includes('xbox')) {
+    } 
+    // Xbox platform kontrolü
+    else if (platformsLower.includes('xbox')) {
       return {
         distributionPlatform: 'xbox',
-        platform: 'Xbox'
+        platform: 'Xbox',
+        platformList: platformArray
       };
-    } else if (platforms.includes('pc')) {
+    } 
+    // Nintendo kontrolü
+    else if (platformsLower.includes('nintendo') || platformsLower.includes('switch')) {
+      return {
+        distributionPlatform: 'nintendo',
+        platform: 'Nintendo Switch',
+        platformList: platformArray
+      };
+    } 
+    // Genel PC kontrolü
+    else if (platformsLower.includes('pc')) {
       return {
         distributionPlatform: 'pc',
-        platform: 'PC'
+        platform: 'PC',
+        platformList: platformArray
       };
-    } else if (platforms.includes('android')) {
+    } 
+    // Android kontrolü
+    else if (platformsLower.includes('android')) {
       return {
         distributionPlatform: 'android',
-        platform: 'Android'
+        platform: 'Android',
+        platformList: platformArray
       };
-    } else if (platforms.includes('ios')) {
+    } 
+    // iOS kontrolü
+    else if (platformsLower.includes('ios')) {
       return {
         distributionPlatform: 'ios',
-        platform: 'iOS'
+        platform: 'iOS',
+        platformList: platformArray
       };
-    } else {
-      // Varsayılan dağıtım platformu
+    } 
+    // Diğer platformlar
+    else {
       return {
         distributionPlatform: 'other',
-        platform: platforms
+        platform: platformStr || 'Diğer',
+        platformList: platformArray
       };
     }
   };
@@ -324,8 +357,11 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
       }
     },
     source: 'gamerpower',
+    sourceLabel: 'GamerPower',
     distributionPlatform: platformInfo.distributionPlatform,
+    platformList: platformInfo.platformList,
     platform: platformInfo.platform,
+    platforms: game.platforms,
     offerType: game.type.toLowerCase(),
     endDate: game.end_date,
     url: game.open_giveaway_url,
@@ -357,7 +393,8 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
       ],
       upcomingPromotionalOffers: []
     },
-    isCodeRedemptionOnly: false
+    isCodeRedemptionOnly: false,
+    isGamerPower: true
   };
 }
 

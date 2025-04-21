@@ -291,6 +291,7 @@ export function convertSteamToEpicFormat(game: SteamGame): ExtendedEpicGame {
       name: category.description
     })) || [],
     source: "steam",
+    sourceLabel: "Steam",
     isFree: game.is_free,
     productSlug: game.name.toLowerCase().replace(/\s+/g, '-'),
     urlSlug: game.name.toLowerCase().replace(/\s+/g, '-'),

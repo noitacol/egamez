@@ -8,11 +8,14 @@ export interface ExtendedEpicGame extends EpicGame {
   /** Oyunun kaynağı (epic, gamerpower vs.) */
   source?: string;
   
+  /** Kaynak için gösterilecek etiket */
+  sourceLabel?: string;
+  
   /** Oyunun yayınlandığı platform */
   platform?: string;
   
   /** Dağıtım platformu (epic, gamerpower vs.) */
-  distributionPlatform?: 'epic' | 'gamerpower' | string;
+  distributionPlatform?: 'epic' | 'gamerpower' | 'steam' | string;
   
   /** Ücretsiz olup olmadığı */
   isFree?: boolean;
@@ -89,6 +92,12 @@ export interface ExtendedEpicGame extends EpicGame {
     path: string;
     name: string;
   }[];
+  
+  /** Platformların listesi */
+  platformList?: string[];
+  
+  /** GamerPower oyunu mu */
+  isGamerPower?: boolean;
 }
 
 /**
