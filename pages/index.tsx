@@ -14,7 +14,7 @@ import { getFreeSteamGames, getTrendingSteamGames } from "@/lib/steam-api";
 import FreeGamesList from "@/components/FreeGamesList";
 import GameCard from "@/components/GameCard";
 import { ExtendedEpicGame } from "@/lib/types";
-import { SiEpicgames, SiSteam, SiNintendoswitch, SiGogdotcom } from "react-icons/si";
+import { SiEpicgames, SiSteam, SiNintendoswitch, SiGogdotcom, SiAndroid, SiApple } from "react-icons/si";
 import { FaPlaystation, FaXbox, FaWindows, FaChevronLeft, FaChevronRight, FaExternalLinkAlt, FaGamepad, FaFire } from "react-icons/fa";
 import { RiGamepadLine } from "react-icons/ri";
 import { GiRaceCar, GiSwordman, GiSpellBook, GiMountainRoad, GiChessKnight } from "react-icons/gi";
@@ -52,7 +52,7 @@ export default function Home({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'free' | 'upcoming' | 'trending' | 'loot' | 'beta'>('free');
   const [featuredGame, setFeaturedGame] = useState<ExtendedEpicGame | null>(null);
-  const [activePlatform, setActivePlatform] = useState<'all' | 'epic' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'mobile'>('all');
+  const [activePlatform, setActivePlatform] = useState<'all' | 'epic' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'mobile' | 'android' | 'ios'>('all');
   const [filter, setFilter] = useState<"all" | "epic" | "steam">("all");
   const [sort, setSort] = useState<"none" | "title" | "price">("none");
 
@@ -107,6 +107,10 @@ export default function Home({
             return platformName.includes('switch');
           case 'pc':
             return platformName.includes('pc') || platformName.includes('windows');
+          case 'android':
+            return platformName.includes('android');
+          case 'ios':
+            return platformName.includes('ios') || platformName.includes('apple');
           case 'mobile':
             return platformName.includes('android') || platformName.includes('ios') || platformName.includes('mobile');
           default:
@@ -229,7 +233,7 @@ export default function Home({
         <section className="py-8 bg-gradient-to-b from-gray-900 to-gray-950">
           <div className="container mx-auto px-4">
             <h2 className="text-2xl font-bold mb-6 text-center">Platformlar</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <button
                 onClick={() => setActivePlatform('all')}
                 className={`flex flex-col items-center justify-center p-4 rounded-lg transition-all ${getPlatformCardClass('all')}`}
@@ -291,13 +295,23 @@ export default function Home({
               </button>
               
               <button
-                onClick={() => setActivePlatform('mobile')}
-                className={`flex flex-col items-center justify-center p-4 rounded-lg transition-all ${getPlatformCardClass('mobile')}`}
-                aria-label="Mobil Oyunlar"
+                onClick={() => setActivePlatform('android')}
+                className={`flex flex-col items-center justify-center p-4 rounded-lg transition-all ${getPlatformCardClass('android')}`}
+                aria-label="Android Oyunları"
                 tabIndex={0}
               >
-                <SiGogdotcom className="h-6 w-6 mb-2" />
-                <span className="text-sm font-medium">Mobil</span>
+                <SiAndroid className="h-6 w-6 mb-2" />
+                <span className="text-sm font-medium">Android</span>
+              </button>
+              
+              <button
+                onClick={() => setActivePlatform('ios')}
+                className={`flex flex-col items-center justify-center p-4 rounded-lg transition-all ${getPlatformCardClass('ios')}`}
+                aria-label="iOS Oyunları"
+                tabIndex={0}
+              >
+                <SiApple className="h-6 w-6 mb-2" />
+                <span className="text-sm font-medium">iOS</span>
               </button>
             </div>
           </div>

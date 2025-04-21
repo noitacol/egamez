@@ -155,8 +155,27 @@ export const fetchUpcomingFreeGames = async (): Promise<ExtendedEpicGame[]> => {
  */
 export const fetchGameDetails = async (id: string): Promise<ExtendedEpicGame | null> => {
   try {
-    // Gerçek implementasyon eklenmeli
-    return null;
+    // Epic Games API üzerinden tüm oyunları getir
+    const allGames = await fetchFreeGames();
+    const upcomingGames = await fetchUpcomingFreeGames();
+    
+    // ID ile eşleşen oyunu bul
+    const game = [...allGames, ...upcomingGames].find(game => game.id === id);
+    
+    if (!game) {
+      console.error(`Epic: ${id} ID'sine sahip oyun bulunamadı`);
+      return null;
+    }
+
+    // Var olan oyun verisini döndür
+    return {
+      ...game,
+      source: 'epic',
+      sourceLabel: 'Epic Games',
+      distributionPlatform: 'epic',
+      platform: 'PC',
+      url: `https://store.epicgames.com/en-US/p/${game.productSlug || game.urlSlug}`
+    };
   } catch (error) {
     console.error('Epic oyun detaylarını getirme hatası:', error);
     return null;

@@ -74,21 +74,23 @@ export default async function handler(
           validSortBy
         );
         
-        // Harici kaynak bilgilerini güncelle
-        externalGames = externalGames.map(game => ({
-          ...game,
-          source: 'external',
-          sourceLabel: 'Ücretsiz'
-        }));
+        // Her oyunun kaynak bilgisini, dağıtım platformuna göre güncelle
+        externalGames = externalGames.map(game => {
+          // sourceLabel kendi platformunu gösterdiği için burada değiştirmeye gerek yok
+          return {
+            ...game,
+            source: game.distributionPlatform || 'external'
+          };
+        });
       } else {
         // Filtre yoksa tüm ücretsiz oyunları getir
         const freeGames = await getFreeGamerPowerGames();
         externalGames = freeGames.map(game => {
           const converted = convertGamerPowerToEpicFormat(game);
+          // Her oyun kendi platformunun etiketini taşıyacak
           return {
             ...converted,
-            source: 'external',
-            sourceLabel: 'Ücretsiz'
+            source: converted.distributionPlatform || 'external'
           };
         });
       }

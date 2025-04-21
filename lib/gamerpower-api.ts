@@ -342,6 +342,14 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
   // Platform bilgilerini al
   const platformInfo = getPlatformInfo(game.platforms);
   
+  // Kaynak etiketini platformdan al
+  let sourceLabel = platformInfo.platform;
+  
+  // Eğer platform diğer ise, daha genel bir etiket kullan
+  if (platformInfo.distributionPlatform === 'other') {
+    sourceLabel = 'Ücretsiz Oyun';
+  }
+  
   // Formatlı fiyat bilgisi
   const fmtPrice = {
     originalPrice: `$${price.toFixed(2)}`,
@@ -372,8 +380,8 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
         fmtPrice
       }
     },
-    source: 'gamerpower',
-    sourceLabel: 'GamerPower',
+    source: platformInfo.distributionPlatform,
+    sourceLabel: sourceLabel,
     distributionPlatform: platformInfo.distributionPlatform,
     platformList: platformInfo.platformList,
     platform: platformInfo.platform,
@@ -387,11 +395,11 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
     isOnSale: true,
     publisher: '',
     seller: {
-      id: `gamerpower-${game.id}`,
-      name: 'GamerPower'
+      id: `${platformInfo.distributionPlatform}-${game.id}`,
+      name: sourceLabel
     },
-    productSlug: `gamerpower-${game.id}`,
-    urlSlug: `gamerpower-${game.id}`,
+    productSlug: `${platformInfo.distributionPlatform}-${game.id}`,
+    urlSlug: `${platformInfo.distributionPlatform}-${game.id}`,
     promotions: {
       promotionalOffers: [
         {
@@ -412,7 +420,7 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
     isCodeRedemptionOnly: false,
     items: [],
     customAttributes: [],
-    isGamerPower: true
+    worth: game.worth
   };
 }
 

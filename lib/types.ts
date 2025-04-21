@@ -5,7 +5,7 @@ import { EpicGame } from './epic-api';
  * Temel EpicGame tipine ek özellikler ekler
  */
 export interface ExtendedEpicGame extends Omit<EpicGame, 'categories' | 'isCodeRedemptionOnly' | 'offerType'> {
-  /** Oyunun kaynağı (epic, gamerpower vs.) */
+  /** Oyunun kaynağı (epic, steam vs.) */
   source?: string;
   
   /** Kaynak için gösterilecek etiket */
@@ -14,8 +14,8 @@ export interface ExtendedEpicGame extends Omit<EpicGame, 'categories' | 'isCodeR
   /** Oyunun yayınlandığı platform */
   platform?: string;
   
-  /** Dağıtım platformu (epic, gamerpower vs.) */
-  distributionPlatform?: 'epic' | 'gamerpower' | 'steam' | string;
+  /** Dağıtım platformu (epic, steam, xbox, playstation vs.) */
+  distributionPlatform?: 'epic' | 'steam' | 'xbox' | 'playstation' | 'nintendo' | 'pc' | 'android' | 'ios' | 'other' | string;
   
   /** Ücretsiz olup olmadığı */
   isFree?: boolean;
@@ -90,8 +90,8 @@ export interface ExtendedEpicGame extends Omit<EpicGame, 'categories' | 'isCodeR
   /** Platformların listesi */
   platformList?: string[];
   
-  /** GamerPower oyunu mu */
-  isGamerPower?: boolean;
+  /** Harici kaynaklardan gelen oyunun orijinal değeri (örn. $19.99) */
+  worth?: string;
   
   /** Kategoriler - EpicGame'den devraldık ancak override ediyoruz */
   categories?: {
