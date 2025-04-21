@@ -62,15 +62,22 @@ export default function Home({
 
   // Steam ve Epic platformlarındaki oyunları topla ve öne çıkan oyunlar listesini oluştur
   useEffect(() => {
-    // Tüm oyunları içeren bir dizi oluştur
-    const allGames = [...freebieGames, ...trendingGames, ...freeLoots, ...freeBetas, ...steamFreeGames];
+    // Tüm oyunları içeren bir dizi oluştur - sadece gerçek oyunları al (loot ve beta olmayanlar)
+    const allGames = [...freebieGames, ...trendingGames, ...steamFreeGames];
     
     // Sadece Steam veya Epic oyunlarını filtrele
     const steamAndEpicGames = allGames.filter(game => {
       if (!game) return false;
       
+      // Sadece Steam veya Epic platformundaki oyunları al
       const platform = game.distributionPlatform?.toLowerCase() || '';
-      return platform === 'steam' || platform === 'epic';
+      
+      // loot veya beta olanları hariç tut
+      const isLoot = game.isLoot || game.offerType === 'loot';
+      const isBeta = game.isBeta || game.offerType === 'beta';
+      
+      // Sadece gerçek oyunları dahil et (loot ve beta olmayanlar)
+      return (platform === 'steam' || platform === 'epic') && !isLoot && !isBeta;
     });
     
     // Öne çıkan oyunların listesini benzersiz olacak şekilde oluştur
@@ -81,7 +88,7 @@ export default function Home({
     // Rastgele sırala ve en fazla 10 oyun göster
     const shuffled = [...uniqueGames].sort(() => 0.5 - Math.random());
     setFeaturedGames(shuffled.slice(0, 10));
-  }, [freebieGames, trendingGames, freeLoots, freeBetas, steamFreeGames]);
+  }, [freebieGames, trendingGames, steamFreeGames]);
 
   // 10 saniyede bir öne çıkan oyunu değiştir
   useEffect(() => {
