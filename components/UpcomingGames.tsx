@@ -1,8 +1,8 @@
-import { EpicGame } from "@/lib/epic-api";
+import { ExtendedEpicGame } from "@/lib/types";
 import GameCard from "./GameCard";
 
 interface UpcomingGamesProps {
-  upcomingGames: EpicGame[];
+  upcomingGames: ExtendedEpicGame[];
 }
 
 const UpcomingGames = ({ upcomingGames }: UpcomingGamesProps) => {

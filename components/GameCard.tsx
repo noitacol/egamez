@@ -6,7 +6,7 @@ import { SiEpicgames } from 'react-icons/si';
 import { FaFire } from 'react-icons/fa';
 import { BiGift } from 'react-icons/bi';
 import { MdOutlineAccessTime } from 'react-icons/md';
-import { ExtendedEpicGame } from '@/lib/types';
+import { ExtendedEpicGame, Price } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -15,70 +15,109 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { FaExternalLinkAlt } from "react-icons/fa";
+import { TbGift } from "react-icons/tb";
+import { formatPrice } from "@/lib/utils";
+import { 
+  GiAntarctica, 
+  GiGameConsole, 
+  GiPc, 
+  GiMicrophone, 
+  GiTrophy, 
+  GiPerspectiveDiceSixFacesRandom 
+} from "react-icons/gi";
+import { SiSteam } from "react-icons/si";
+import { GamerPowerGame } from '@/lib/gamerpower-api';
 
 interface GameCardProps {
   game: ExtendedEpicGame;
   isFree?: boolean;
+  isUpcoming?: boolean;
+  trending?: boolean;
+  isLoot?: boolean;
+  isBeta?: boolean;
+  showPlatform?: boolean;
 }
 
-export const GameCard = ({ game, isFree }: GameCardProps) => {
+export const GameCard = ({ 
+  game, 
+  isFree, 
+  isUpcoming, 
+  trending,
+  isLoot,
+  isBeta,
+  showPlatform = true
+}: GameCardProps) => {
   // Pricing bileşeni - oyunun fiyat durumunu gösterir
   const Pricing = () => {
-    // Promosyonlu ürün kontrolü
-    const hasPromotion = game.promotions && 
-      game.promotions.promotionalOffers && 
-      game.promotions.promotionalOffers.length > 0 && 
-      game.promotions.promotionalOffers[0].promotionalOffers && 
-      game.promotions.promotionalOffers[0].promotionalOffers.length > 0;
-
-    // Eğer oyun zaten ücretsizse veya fiyat bilgisi yoksa
-    if (game.isFree || !game.price) {
+    // Oyunun fiyat bilgileri varsa
+    if (game.price) {
+      const totalPrice = (game.price as Price).totalPrice;
+      const { fmtPrice, discountPrice, originalPrice } = totalPrice;
+      
+      // Ücretsiz veya 0 fiyatlı ise
+      if (isFree || game.isFree || discountPrice === 0) {
+        return (
+          <div className="flex flex-col">
+            <span className="text-green-500 font-bold">Ücretsiz</span>
+            {originalPrice > 0 && (
+              <span className="text-sm text-muted-foreground line-through">
+                {formatPrice(originalPrice, totalPrice?.currencyCode)}
+              </span>
+            )}
+          </div>
+        );
+      }
+      
+      // İndirimli ürün göstergesi
       return (
         <div className="flex flex-col">
-          <span className="text-sm font-medium">
-            Ücretsiz
+          <span className="font-semibold">
+            {formatPrice(discountPrice, totalPrice?.currencyCode)}
           </span>
-        </div>
-      );
-    }
-
-    // Eğer oyun promosyonda değilse normal fiyatını göster
-    if (!hasPromotion) {
-      return (
-        <div className="flex flex-col">
-          <span className="text-sm font-medium">
-            {game.price.totalPrice?.fmtPrice?.originalPrice || 'Fiyat bilgisi yok'}
-          </span>
-        </div>
-      );
-    }
-
-    // Eğer oyun promosyonda ise indirimli fiyatı göster
-    return (
-      <div className="flex flex-col">
-        <div className="flex items-center gap-2">
-          {game.price.totalPrice?.fmtPrice?.originalPrice && (
-            <span className="text-xs line-through text-muted-foreground">
-              {game.price.totalPrice.fmtPrice.originalPrice}
+          {discountPrice < originalPrice && (
+            <span className="text-sm text-muted-foreground line-through">
+              {formatPrice(originalPrice, totalPrice?.currencyCode)}
             </span>
           )}
-          <span className="text-sm font-medium text-green-500">
-            {game.price.totalPrice?.fmtPrice?.discountPrice || 'Ücretsiz'}
-          </span>
         </div>
-      </div>
+      );
+    }
+    
+    // GamerPower oyunları için
+    if (game.isGamerPower) {
+      // GamerPowerGame'in worth özelliğine özel olarak erişim sağla
+      const worth = (game as ExtendedEpicGame & { worth?: string })?.worth;
+      if (worth) {
+        return (
+          <div className="flex flex-col">
+            <span className="text-green-500 font-bold">Ücretsiz</span>
+            <span className="text-sm text-muted-foreground line-through">
+              {worth}
+            </span>
+          </div>
+        );
+      }
+    }
+    
+    // Diğer durumlar
+    return (
+      <span className="text-green-500 font-bold">
+        {isFree || game.isFree ? "Ücretsiz" : ""}
+      </span>
     );
   };
 
   // Kaynak ikonunu döndüren yardımcı fonksiyon
   const SourceIcon = () => {
-    switch (game.source) {
-      case 'epic':
-        return <SiEpicgames className="h-4 w-4" />;
-      case 'steam':
-        return <FaSteam className="h-4 w-4" />;
-      default:
-        return <FaWindows className="h-4 w-4" />;
+    if (game.distributionPlatform === 'epic') {
+      return <SiEpicgames className="h-4 w-4" />;
+    } else if (game.distributionPlatform === 'steam') {
+      return <SiSteam className="h-4 w-4" />;
+    } else {
+      return <TbGift className="h-4 w-4" />;
     }
   };
 
@@ -86,85 +125,112 @@ export const GameCard = ({ game, isFree }: GameCardProps) => {
   const StatusBadge = () => {
     if (isFree || game.isFree) {
       return (
-        <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
-          <BiGift className="h-3 w-3" />
+        <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
           Ücretsiz
-        </div>
+        </Badge>
       );
     }
     
-    if (game.isUpcoming) {
+    if (isUpcoming) {
       return (
-        <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
-          <MdOutlineAccessTime className="h-3 w-3" />
-          Yakında Ücretsiz
-        </div>
+        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+          Yakında
+        </Badge>
       );
     }
     
-    if (game.isTrending) {
+    if (trending) {
       return (
-        <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
-          <FaFire className="h-3 w-3" />
+        <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20">
           Trend
-        </div>
+        </Badge>
+      );
+    }
+    
+    if (isLoot) {
+      return (
+        <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20">
+          Oyun İçi
+        </Badge>
+      );
+    }
+    
+    if (isBeta) {
+      return (
+        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+          Beta
+        </Badge>
       );
     }
     
     return null;
   };
 
+  // Kapak resmi için kaynağı belirle
+  const getImageSource = () => {
+    if (game.keyImages && game.keyImages.length > 0) {
+      return game.keyImages[0].url;
+    }
+    
+    // GamerPower veya diğer API'lardan gelen görsel alanlarını kontrol et
+    const extendedGame = game as ExtendedEpicGame & { 
+      image?: string, 
+      thumbnail?: string 
+    };
+    
+    if (typeof extendedGame.image === 'string') {
+      return extendedGame.image;
+    }
+    
+    if (typeof extendedGame.thumbnail === 'string') {
+      return extendedGame.thumbnail;
+    }
+    
+    return "/images/placeholder.png";
+  };
+
   return (
-    <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative aspect-[16/9] w-full overflow-hidden">
-        {/* Oyun durumu badge'i */}
-        <StatusBadge />
-        
-        {/* Platform etiketi */}
-        <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
-          <SourceIcon />
-          {game.sourceLabel || game.platform}
+    <Card className="overflow-hidden group h-full flex flex-col">
+      <CardHeader className="p-0 aspect-[16/9] relative overflow-hidden">
+        <Image
+          src={getImageSource()}
+          alt={game.title}
+          fill
+          className="object-cover transition-all group-hover:scale-105"
+        />
+        <div className="absolute top-2 right-2">
+          <StatusBadge />
         </div>
-        
-        {/* Oyun kapak resmi */}
-        {game.keyImages && game.keyImages.length > 0 ? (
-          <Image
-            src={game.keyImages[0].url}
-            alt={game.title}
-            fill
-            className="object-cover transition-transform hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-400">Resim yok</span>
-          </div>
-        )}
-      </div>
-      
-      <CardHeader className="p-4 pb-0">
-        <CardTitle className="text-lg line-clamp-1">{game.title}</CardTitle>
-        <CardDescription className="line-clamp-2">
-          {game.description || 'Açıklama yok'}
-        </CardDescription>
       </CardHeader>
-      
-      <CardContent className="p-4 pt-2">
-        <Pricing />
-      </CardContent>
-      
-      <CardFooter className="p-4 pt-0 flex justify-between">
-        <div className="text-xs text-muted-foreground">
-          {game.effectiveDate && new Date(game.effectiveDate).toLocaleDateString('tr-TR')}
+      <CardContent className="p-4 flex-grow">
+        <div className="flex justify-between items-start gap-2">
+          <h3 className="font-semibold leading-tight hover:text-primary transition-colors">{game.title}</h3>
+          {showPlatform && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <SourceIcon />
+              <span className="text-xs">{game.sourceLabel || game.source}</span>
+            </div>
+          )}
         </div>
-        
+        <div className="mt-2">
+          <Pricing />
+        </div>
+      </CardContent>
+      <CardFooter className="p-4 pt-0">
         {game.url && (
-          <Link
-            href={game.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-blue-500 hover:underline"
-          >
-            Detaylar
+          <Link href={game.url} target="_blank" className="w-full">
+            <Button variant="outline" size="sm" className="w-full gap-2 font-normal text-xs">
+              <FaExternalLinkAlt className="h-3 w-3" />
+              Detaylar
+            </Button>
+          </Link>
+        )}
+        {game.id && !game.url && (
+          <Link href={`/games/${game.id}`} className="w-full">
+            <Button variant="outline" size="sm" className="w-full gap-2 font-normal text-xs">
+              <FaExternalLinkAlt className="h-3 w-3" />
+              Detaylar
+            </Button>
           </Link>
         )}
       </CardFooter>

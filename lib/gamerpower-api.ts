@@ -342,6 +342,13 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
   // Platform bilgilerini al
   const platformInfo = getPlatformInfo(game.platforms);
   
+  // Formatlı fiyat bilgisi
+  const fmtPrice = {
+    originalPrice: `$${price.toFixed(2)}`,
+    discountPrice: "$0.00",
+    intermediatePrice: "$0.00"
+  };
+  
   return {
     id: `gp-${game.id}`,
     title: game.title,
@@ -353,7 +360,13 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
       totalPrice: {
         discountPrice: 0,
         originalPrice: price,
-        discount: price
+        voucherDiscount: 0,
+        discount: price,
+        currencyCode: "USD",
+        currencyInfo: {
+          decimals: 2
+        },
+        fmtPrice
       }
     },
     source: 'gamerpower',
@@ -361,7 +374,6 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
     distributionPlatform: platformInfo.distributionPlatform,
     platformList: platformInfo.platformList,
     platform: platformInfo.platform,
-    platforms: game.platforms,
     offerType: game.type.toLowerCase(),
     endDate: game.end_date,
     url: game.open_giveaway_url,
@@ -373,6 +385,7 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
     isOnSale: true,
     publisher: '',
     seller: {
+      id: `gamerpower-${game.id}`,
       name: 'GamerPower'
     },
     productSlug: `gamerpower-${game.id}`,
@@ -385,6 +398,7 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
               startDate: game.published_date,
               endDate: game.end_date || '',
               discountSetting: {
+                discountType: "PERCENTAGE",
                 discountPercentage: 100
               }
             }
