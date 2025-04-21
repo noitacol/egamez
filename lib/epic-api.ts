@@ -147,17 +147,43 @@ export const fetchFreeGames = async (): Promise<ExtendedEpicGame[]> => {
  * Epic Games Store için gerçek URL'yi dinamik olarak belirler
  */
 const getDynamicEpicUrl = (game: EpicGame | Partial<ExtendedEpicGame>): string => {
-  // Epic Games URL için temel domain
-  const BASE_URL = 'https://store.epicgames.com';
-  
-  // Bilinen özel ID-Slug eşleştirmeleri
-  const KNOWN_MAPPINGS: Record<string, string> = {
-    // Firestone Online Idle RPG için özel eşleştirme
-    "1185abfe7c554a1e8c528aba37bf3d0f": "firestone-online-idle-rpg-bfd04b",
-    // Diğer bilinen özel durumlar buraya eklenebilir
+  // STEAM URL EŞLEŞTIRME TABLOSU
+  // Epic Games'den gelen bazı oyunlar Epic Store'da bulunmayabilir veya URL'leri hatalı olabilir
+  // Bu durumda oyunu Steam'de arayıp oradaki URL'ye yönlendiriyoruz
+  const STEAM_URLS: Record<string, string> = {
+    // Firestone Online Idle RPG için Steam mağazası linki
+    "Firestone Online Idle RPG": "https://store.steampowered.com/app/1013320/Firestone_Idle_RPG",
+    // Diğer problemli oyunlar için Steam linkleri eklenebilir
   };
-  
+
   try {
+    // 1. Oyun adı doğrudan Steam eşleştirme tablosunda var mı?
+    if (game.title && STEAM_URLS[game.title]) {
+      console.log(`${game.title} için Steam URL'sine yönlendiriliyor`);
+      return STEAM_URLS[game.title];
+    }
+    
+    // 2. Oyun adı kısmi olarak Steam eşleştirme tablosunda var mı?
+    if (game.title) {
+      for (const [key, url] of Object.entries(STEAM_URLS)) {
+        if (game.title.includes(key) || key.includes(game.title)) {
+          console.log(`${game.title} için kısmi eşleşme ile Steam URL'sine yönlendiriliyor`);
+          return url;
+        }
+      }
+    }
+    
+    // 3. Epic Games Mağazası URL'si oluştur
+    // Epic Games URL için temel domain
+    const BASE_URL = 'https://store.epicgames.com';
+    
+    // Bilinen özel ID-Slug eşleştirmeleri
+    const KNOWN_MAPPINGS: Record<string, string> = {
+      // Firestone Online Idle RPG için özel eşleştirme
+      "1185abfe7c554a1e8c528aba37bf3d0f": "firestone-online-idle-rpg-bfd04b",
+      // Diğer bilinen özel durumlar buraya eklenebilir
+    };
+    
     // 0. Bilinen özel ID-Slug eşleştirmesi var mı?
     if (game.id && KNOWN_MAPPINGS[game.id]) {
       return `${BASE_URL}/tr/p/${KNOWN_MAPPINGS[game.id]}`;
@@ -229,7 +255,7 @@ const getDynamicEpicUrl = (game: EpicGame | Partial<ExtendedEpicGame>): string =
   }
   
   // Başarısızlık durumunda genel Epic Store ana sayfası
-  return `${BASE_URL}/tr/browse`;
+  return 'https://store.epicgames.com/tr/browse';
 };
 
 /**
