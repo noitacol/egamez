@@ -85,7 +85,25 @@ const isServer = typeof window === 'undefined';
 const BASE_URL = isServer 
   ? 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions' 
   : '/api/epic-store';
-const EPIC_API_URL = `${BASE_URL}${isServer ? '?locale=en-US&country=TR&allowCountries=TR' : '?locale=en-US&country=TR&allowCountries=TR'}`;
+const EPIC_API_URL = `${BASE_URL}${isServer ? '?locale=tr-TR&country=TR&allowCountries=TR' : '?locale=tr-TR&country=TR&allowCountries=TR'}`;
+
+/**
+ * Oyun URL'sini düzelt ve optimize et
+ */
+const fixGameUrl = (game: EpicGame | ExtendedEpicGame): string => {
+  // Firestone Online Idle RPG için özel düzeltme
+  if (game.title === "Firestone Online Idle RPG") {
+    return "https://store.epicgames.com/tr/p/firestone-online-idle-rpg-bfd04b";
+  }
+  
+  // Slug bilgisi varsa kullan
+  if (game.productSlug || game.urlSlug) {
+    return `https://store.epicgames.com/tr/p/${game.productSlug || game.urlSlug}`;
+  }
+  
+  // ID'yi kullanarak alternatif URL oluştur
+  return `https://store.epicgames.com/tr/p/${game.id}`;
+};
 
 /**
  * Epic Games'ten ücretsiz oyunları getirir
@@ -110,7 +128,7 @@ export const fetchFreeGames = async (): Promise<ExtendedEpicGame[]> => {
       isFree: true,
       isOnSale: false,
       platform: 'PC',
-      url: `https://store.epicgames.com/en-US/p/${game.productSlug || game.urlSlug}`
+      url: fixGameUrl(game)
     }));
   } catch (error) {
     console.error('Epic ücretsiz oyunları getirme hatası:', error);
@@ -142,7 +160,7 @@ export const fetchUpcomingFreeGames = async (): Promise<ExtendedEpicGame[]> => {
       isUpcoming: true,
       isOnSale: false,
       platform: 'PC',
-      url: `https://store.epicgames.com/en-US/p/${game.productSlug || game.urlSlug}`
+      url: fixGameUrl(game)
     }));
   } catch (error) {
     console.error('Epic yakında ücretsiz olacak oyunları getirme hatası:', error);
@@ -174,7 +192,7 @@ export const fetchGameDetails = async (id: string): Promise<ExtendedEpicGame | n
       sourceLabel: 'Epic Games',
       distributionPlatform: 'epic',
       platform: 'PC',
-      url: `https://store.epicgames.com/en-US/p/${game.productSlug || game.urlSlug}`
+      url: fixGameUrl(game)
     };
   } catch (error) {
     console.error('Epic oyun detaylarını getirme hatası:', error);
