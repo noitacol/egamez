@@ -18,23 +18,36 @@ import {
 
 interface GameCardProps {
   game: ExtendedEpicGame;
+  isFree?: boolean;
 }
 
-export const GameCard = ({ game }: GameCardProps) => {
+export const GameCard = ({ game, isFree }: GameCardProps) => {
   // Pricing bileşeni - oyunun fiyat durumunu gösterir
   const Pricing = () => {
     // Promosyonlu ürün kontrolü
-    const hasPromotion = game.promotionalOffers && 
-      game.promotionalOffers.length > 0 && 
-      game.promotionalOffers[0].promotionalOffers && 
-      game.promotionalOffers[0].promotionalOffers.length > 0;
+    const hasPromotion = game.promotions && 
+      game.promotions.promotionalOffers && 
+      game.promotions.promotionalOffers.length > 0 && 
+      game.promotions.promotionalOffers[0].promotionalOffers && 
+      game.promotions.promotionalOffers[0].promotionalOffers.length > 0;
+
+    // Eğer oyun zaten ücretsizse veya fiyat bilgisi yoksa
+    if (game.isFree || !game.price) {
+      return (
+        <div className="flex flex-col">
+          <span className="text-sm font-medium">
+            Ücretsiz
+          </span>
+        </div>
+      );
+    }
 
     // Eğer oyun promosyonda değilse normal fiyatını göster
     if (!hasPromotion) {
       return (
         <div className="flex flex-col">
           <span className="text-sm font-medium">
-            {game.price === '0' ? 'Ücretsiz' : `${game.price}`}
+            {game.price.totalPrice?.fmtPrice?.originalPrice || 'Fiyat bilgisi yok'}
           </span>
         </div>
       );
@@ -44,13 +57,13 @@ export const GameCard = ({ game }: GameCardProps) => {
     return (
       <div className="flex flex-col">
         <div className="flex items-center gap-2">
-          {game.originalPrice && game.originalPrice !== '0' && (
+          {game.price.totalPrice?.fmtPrice?.originalPrice && (
             <span className="text-xs line-through text-muted-foreground">
-              {game.originalPrice}
+              {game.price.totalPrice.fmtPrice.originalPrice}
             </span>
           )}
           <span className="text-sm font-medium text-green-500">
-            {game.price === '0' ? 'Ücretsiz' : game.price}
+            {game.price.totalPrice?.fmtPrice?.discountPrice || 'Ücretsiz'}
           </span>
         </div>
       </div>
@@ -71,7 +84,7 @@ export const GameCard = ({ game }: GameCardProps) => {
 
   // Oyun durumunu gösteren badge
   const StatusBadge = () => {
-    if (game.status === 'free') {
+    if (isFree || game.isFree) {
       return (
         <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
           <BiGift className="h-3 w-3" />
@@ -80,7 +93,7 @@ export const GameCard = ({ game }: GameCardProps) => {
       );
     }
     
-    if (game.status === 'upcoming') {
+    if (game.isUpcoming) {
       return (
         <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
           <MdOutlineAccessTime className="h-3 w-3" />
@@ -89,7 +102,7 @@ export const GameCard = ({ game }: GameCardProps) => {
       );
     }
     
-    if (game.trending) {
+    if (game.isTrending) {
       return (
         <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
           <FaFire className="h-3 w-3" />
