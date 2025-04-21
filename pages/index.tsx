@@ -1,5 +1,5 @@
 import { GetStaticProps } from "next";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -54,19 +54,63 @@ export default function Home({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'free' | 'upcoming' | 'trending' | 'loot' | 'beta'>('free');
-  const [featuredGame, setFeaturedGame] = useState<ExtendedEpicGame | null>(null);
+  const [featuredGames, setFeaturedGames] = useState<ExtendedEpicGame[]>([]);
+  const [currentFeaturedIndex, setCurrentFeaturedIndex] = useState(0);
   const [activePlatform, setActivePlatform] = useState<'all' | 'steam' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'android' | 'ios'>('all');
   const [filter, setFilter] = useState<"all" | "steam">("all");
   const [sort, setSort] = useState<"none" | "title" | "price">("none");
 
-  // Ana ekranda gösterilecek öne çıkan oyunu belirle
+  // Steam ve Epic platformlarındaki oyunları topla ve öne çıkan oyunlar listesini oluştur
   useEffect(() => {
-    if (trendingGames && trendingGames.length > 0) {
-      setFeaturedGame(trendingGames[0]);
-    } else if (freebieGames && freebieGames.length > 0) {
-      setFeaturedGame(freebieGames[0]);
-    }
-  }, [trendingGames, freebieGames]);
+    // Tüm oyunları içeren bir dizi oluştur
+    const allGames = [...freebieGames, ...trendingGames, ...freeLoots, ...freeBetas, ...steamFreeGames];
+    
+    // Sadece Steam veya Epic oyunlarını filtrele
+    const steamAndEpicGames = allGames.filter(game => {
+      if (!game) return false;
+      
+      const platform = game.distributionPlatform?.toLowerCase() || '';
+      return platform === 'steam' || platform === 'epic';
+    });
+    
+    // Öne çıkan oyunların listesini benzersiz olacak şekilde oluştur
+    const uniqueGames = steamAndEpicGames.filter((game, index, self) => 
+      index === self.findIndex(g => g.id === game.id)
+    );
+    
+    // Rastgele sırala ve en fazla 10 oyun göster
+    const shuffled = [...uniqueGames].sort(() => 0.5 - Math.random());
+    setFeaturedGames(shuffled.slice(0, 10));
+  }, [freebieGames, trendingGames, freeLoots, freeBetas, steamFreeGames]);
+
+  // 10 saniyede bir öne çıkan oyunu değiştir
+  useEffect(() => {
+    if (featuredGames.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentFeaturedIndex(prevIndex => 
+        prevIndex === featuredGames.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [featuredGames]);
+
+  // Manuel olarak önceki öne çıkan oyuna geç
+  const goToPrevFeatured = useCallback(() => {
+    if (featuredGames.length <= 1) return;
+    setCurrentFeaturedIndex(prevIndex => 
+      prevIndex === 0 ? featuredGames.length - 1 : prevIndex - 1
+    );
+  }, [featuredGames]);
+
+  // Manuel olarak sonraki öne çıkan oyuna geç
+  const goToNextFeatured = useCallback(() => {
+    if (featuredGames.length <= 1) return;
+    setCurrentFeaturedIndex(prevIndex => 
+      prevIndex === featuredGames.length - 1 ? 0 : prevIndex + 1
+    );
+  }, [featuredGames]);
 
   // Aktif platform için oyunları filtrele
   const getFilteredGames = () => {
@@ -186,32 +230,66 @@ export default function Home({
       </Head>
 
       <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
-        {/* Hero Banner - Featured Game */}
-        {featuredGame && (
-          <section className="relative w-full h-[500px] md:h-[600px] overflow-hidden">
+        {/* Hero Banner - Featured Games Slider */}
+        {featuredGames.length > 0 && (
+          <section className="relative w-full h-[500px] md:h-[600px] overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 z-10"></div>
-            <div className="absolute inset-0 z-0">
-              {featuredGame.keyImages && featuredGame.keyImages.length > 0 && (
-                <Image 
-                  src={featuredGame.keyImages[0].url || '/placeholder.jpg'} 
-                  alt={featuredGame.title || 'Featured Game'} 
-                  fill 
-                  style={{ objectFit: 'cover' }}
-                  priority
-                />
-              )}
-            </div>
-
+            
+            {/* Slider Görselleri */}
+            {featuredGames.map((game, index) => (
+              <div 
+                key={`hero-${game.id}`} 
+                className={`absolute inset-0 z-0 transition-opacity duration-1000 ${
+                  index === currentFeaturedIndex ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
+                {game.keyImages && game.keyImages.length > 0 && (
+                  <Image 
+                    src={game.keyImages[0].url || '/placeholder.jpg'} 
+                    alt={game.title || 'Featured Game'} 
+                    fill 
+                    style={{ objectFit: 'cover' }}
+                    priority={index === currentFeaturedIndex}
+                  />
+                )}
+              </div>
+            ))}
+            
+            {/* Slider İçeriği */}
             <div className="container mx-auto h-full flex flex-col justify-end pb-8 md:pb-16 relative z-20">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 text-shadow-lg">{featuredGame.title}</h1>
+              {/* Platform Badge */}
+              <div className="mb-4">
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                  featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
+                    ? 'bg-blue-600' 
+                    : 'bg-purple-600'
+                }`}>
+                  {featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
+                    ? <><SiSteam className="mr-1" /> Steam</>
+                    : featuredGames[currentFeaturedIndex]?.distributionPlatform === 'epic'
+                      ? <><SiEpicgames className="mr-1" /> Epic Games</>
+                      : featuredGames[currentFeaturedIndex]?.sourceLabel || 'Ücretsiz Oyun'
+                  }
+                </span>
+              </div>
+              
+              {/* Oyun Başlığı */}
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 text-shadow-lg">
+                {featuredGames[currentFeaturedIndex]?.title}
+              </h1>
+              
+              {/* Oyun Açıklaması */}
               <p className="text-sm md:text-base lg:text-lg max-w-3xl mb-4 md:mb-6 text-shadow-md">
-                {featuredGame.description?.slice(0, 150)}
-                {featuredGame.description && featuredGame.description.length > 150 ? '...' : ''}
+                {featuredGames[currentFeaturedIndex]?.description?.slice(0, 150)}
+                {featuredGames[currentFeaturedIndex]?.description && 
+                  featuredGames[currentFeaturedIndex]?.description.length > 150 ? '...' : ''}
               </p>
+              
+              {/* Butonlar */}
               <div className="flex flex-wrap gap-3">
-                {featuredGame.url && (
+                {featuredGames[currentFeaturedIndex]?.url && (
                   <Link 
-                    href={featuredGame.url} 
+                    href={featuredGames[currentFeaturedIndex].url || '#'} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-all"
@@ -230,6 +308,44 @@ export default function Home({
                   <MdNavigateNext />
                 </Link>
               </div>
+              
+              {/* Slider Kontrolleri */}
+              {featuredGames.length > 1 && (
+                <div className="flex justify-between items-center w-full absolute left-0 top-1/2 -translate-y-1/2 z-30 px-4">
+                  <button 
+                    onClick={goToPrevFeatured}
+                    className="bg-black/30 hover:bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Önceki oyun"
+                  >
+                    <MdNavigateBefore className="text-2xl" />
+                  </button>
+                  <button 
+                    onClick={goToNextFeatured}
+                    className="bg-black/30 hover:bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Sonraki oyun"
+                  >
+                    <MdNavigateNext className="text-2xl" />
+                  </button>
+                </div>
+              )}
+              
+              {/* İndikatörler */}
+              {featuredGames.length > 1 && (
+                <div className="flex justify-center gap-2 absolute bottom-4 left-0 right-0 z-30">
+                  {featuredGames.map((_, index) => (
+                    <button
+                      key={`indicator-${index}`}
+                      onClick={() => setCurrentFeaturedIndex(index)}
+                      className={`h-2 rounded-full transition-all ${
+                        index === currentFeaturedIndex 
+                          ? 'w-6 bg-white' 
+                          : 'w-2 bg-white/50 hover:bg-white/80'
+                      }`}
+                      aria-label={`Oyun ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         )}
