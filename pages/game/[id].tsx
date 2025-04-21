@@ -2,7 +2,7 @@ import { GetServerSideProps } from 'next';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
-import { getGameDetails } from '../../lib/epic-api';
+import { fetchGameDetails } from '../../lib/epic-api';
 import { ExtendedEpicGame } from '../../lib/types';
 
 interface GameDetailProps {
@@ -181,7 +181,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   
   try {
     // Epic Games oyun detaylarını getir
-    const epicGame = await getGameDetails(id);
+    const epicGame = await fetchGameDetails(id);
     
     if (!epicGame) {
       return {

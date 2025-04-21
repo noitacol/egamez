@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getFreeGames } from '@/lib/epic-api';
+import { fetchFreeGames } from '@/lib/epic-api';
 import {
   getFreeGamerPowerGames,
   getGamerPowerGamesByPlatform,
@@ -8,6 +8,7 @@ import {
   getFilteredGamerPowerGames,
   convertGamerPowerToEpicFormat
 } from '@/lib/gamerpower-api';
+import { getFreeSteamGames } from '@/lib/steam-api';
 import { ExtendedEpicGame } from '@/lib/types';
 
 // API sonuç tipi tanımı
@@ -33,10 +34,11 @@ export default async function handler(
     // Ücretsiz oyunları al
     let epicGames: ExtendedEpicGame[] = [];
     let gamerPowerGames: ExtendedEpicGame[] = [];
+    let steamGames: ExtendedEpicGame[] = [];
 
     // Sorgu parametrelerine göre veri getir
     if (source === 'all' || source === 'epic') {
-      epicGames = await getFreeGames() || [];
+      epicGames = await fetchFreeGames() || [];
       
       // Epic oyunlarına kaynak bilgisi ekle
       epicGames = epicGames.map(game => ({
@@ -45,6 +47,10 @@ export default async function handler(
         platform: 'epic',
         distributionPlatform: 'epic'
       }));
+    }
+
+    if (source === 'all' || source === 'steam') {
+      steamGames = await getFreeSteamGames() || [];
     }
 
     if (source === 'all' || source === 'gamerpower') {
@@ -67,7 +73,7 @@ export default async function handler(
     }
 
     // Tüm oyunları birleştir
-    const allGames = [...epicGames, ...gamerPowerGames];
+    const allGames = [...epicGames, ...gamerPowerGames, ...steamGames];
     
     // Sıralama kriterine göre sırala (eğer sortBy parametresi verilmişse ve GamerPower endpointi kullanılmamışsa)
     if (sortBy && !(source === 'gamerpower' && (platform || type))) {

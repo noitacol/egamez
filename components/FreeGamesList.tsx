@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GameCard from "./GameCard";
-import { SiEpicgames, SiSteam } from "react-icons/si";
-import { FaPlaystation, FaXbox, FaDesktop, FaGamepad, FaApple, FaAndroid } from "react-icons/fa";
+import { SiEpicgames, SiSteam, SiPlaystation, SiBox, SiNintendoswitch } from "react-icons/si";
+import { FaWindows, FaAndroid, FaApple } from "react-icons/fa";
 import { ExtendedEpicGame } from "@/lib/types";
 
 interface FreeGamesListProps {
@@ -14,88 +14,63 @@ interface FreeGamesListProps {
 type PlatformType = "all" | "epic" | "steam" | "playstation" | "xbox" | "pc" | "mobile";
 
 const FreeGamesList = ({ epicGames, steamGames, gamerPowerGames }: FreeGamesListProps) => {
-  const [filter, setFilter] = useState<PlatformType>("all");
+  const [platform, setPlatform] = useState<PlatformType>("all");
   const [sortBy, setSortBy] = useState<"name" | "release">("name");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Oyunları platformlarına göre grupla
+  // Platformlara göre oyunları grupla
   const groupGamesByPlatform = () => {
-    // Tüm oyunları birleştir
     const allGames = [...epicGames, ...steamGames, ...gamerPowerGames];
     
     return {
-      epic: allGames.filter(game => 
-        game.distributionPlatform === 'epic' || 
-        (game.source === 'epic') ||
-        (game.platform?.toLowerCase().includes('epic'))
-      ),
-      
-      steam: allGames.filter(game => 
-        game.distributionPlatform === 'steam' || 
-        (game.source === 'steam') ||
-        (game.platform?.toLowerCase().includes('steam'))
-      ),
-      
-      playstation: allGames.filter(game => 
-        game.distributionPlatform === 'playstation' || 
-        game.platform?.toLowerCase().includes('playstation') || 
-        game.platform?.toLowerCase().includes('ps4') || 
-        game.platform?.toLowerCase().includes('ps5')
-      ),
-      
-      xbox: allGames.filter(game => 
-        game.distributionPlatform === 'xbox' || 
-        game.platform?.toLowerCase().includes('xbox')
-      ),
-      
-      pc: allGames.filter(game => 
-        (game.distributionPlatform === 'pc' && 
-         !game.distributionPlatform?.toLowerCase().includes('steam') && 
-         !game.distributionPlatform?.toLowerCase().includes('epic')) || 
-        (game.platform?.toLowerCase().includes('pc') && 
-         !game.platform?.toLowerCase().includes('steam') && 
-         !game.platform?.toLowerCase().includes('epic') && 
-         !game.platform?.toLowerCase().includes('xbox') && 
-         !game.platform?.toLowerCase().includes('playstation'))
-      ),
-      
-      mobile: allGames.filter(game => 
-        game.distributionPlatform === 'android' || 
-        game.distributionPlatform === 'ios' || 
-        game.platform?.toLowerCase().includes('android') || 
-        game.platform?.toLowerCase().includes('ios') || 
-        game.platform?.toLowerCase().includes('mobile')
-      )
+      all: allGames,
+      epic: allGames.filter(game => {
+        const platform = game.distributionPlatform?.toLowerCase() || "";
+        return platform.includes("epic");
+      }),
+      steam: allGames.filter(game => {
+        const platform = game.distributionPlatform?.toLowerCase() || "";
+        return platform.includes("steam");
+      }),
+      playstation: allGames.filter(game => {
+        const platformName = game.platform?.toLowerCase() || "";
+        return platformName.includes("playstation") || platformName.includes("ps4") || platformName.includes("ps5");
+      }),
+      xbox: allGames.filter(game => {
+        const platformName = game.platform?.toLowerCase() || "";
+        return platformName.includes("xbox");
+      }),
+      pc: allGames.filter(game => {
+        const platformName = game.platform?.toLowerCase() || "";
+        return platformName.includes("pc") || platformName.includes("windows");
+      }),
+      mobile: allGames.filter(game => {
+        const platformName = game.platform?.toLowerCase() || "";
+        return platformName.includes("android") || platformName.includes("ios") || platformName.includes("mobile");
+      }),
     };
   };
 
-  // Tüm oyunları filtre ve sıralama ayarlarına göre düzenle
+  // Oyunları filtrele ve sırala
   const getFilteredAndSortedGames = () => {
-    const platforms = groupGamesByPlatform();
-    let games: ExtendedEpicGame[] = [];
-    
-    // Filtreleme
-    if (filter === "all") {
-      games = [...epicGames, ...steamGames, ...gamerPowerGames];
-    } else if (filter === "epic") {
-      games = platforms.epic;
-    } else if (filter === "steam") {
-      games = platforms.steam;
-    } else if (filter === "playstation") {
-      games = platforms.playstation;
-    } else if (filter === "xbox") {
-      games = platforms.xbox;
-    } else if (filter === "pc") {
-      games = platforms.pc;
-    } else if (filter === "mobile") {
-      games = platforms.mobile;
+    const groupedGames = groupGamesByPlatform();
+    let filteredGames = groupedGames[platform];
+
+    // Arama terimine göre filtrele
+    if (searchTerm.trim() !== "") {
+      const term = searchTerm.toLowerCase().trim();
+      filteredGames = filteredGames.filter(game => 
+        game.title.toLowerCase().includes(term) || 
+        (game.description?.toLowerCase().includes(term) || false)
+      );
     }
-    
-    // Sıralama
-    return games.sort((a, b) => {
+
+    // Sırala
+    return [...filteredGames].sort((a, b) => {
       if (sortBy === "name") {
         return a.title.localeCompare(b.title);
       } else {
-        // release date'e göre sırala (yeniden eskiye)
+        // Tarih sıralaması için effectiveDate kullan
         const dateA = new Date(a.effectiveDate || 0);
         const dateB = new Date(b.effectiveDate || 0);
         return dateB.getTime() - dateA.getTime();
@@ -103,150 +78,123 @@ const FreeGamesList = ({ epicGames, steamGames, gamerPowerGames }: FreeGamesList
     });
   };
 
+  const filteredGames = getFilteredAndSortedGames();
+
   // Platform istatistiklerini hesapla
   const getPlatformStats = () => {
-    const platforms = groupGamesByPlatform();
-    const totalCount = epicGames.length + steamGames.length + gamerPowerGames.length;
+    const groupedGames = groupGamesByPlatform();
     
     return {
-      epicCount: platforms.epic.length,
-      steamCount: platforms.steam.length,
-      playstationCount: platforms.playstation.length,
-      xboxCount: platforms.xbox.length,
-      pcCount: platforms.pc.length,
-      mobileCount: platforms.mobile.length,
-      totalCount
+      all: groupedGames.all.length,
+      epic: groupedGames.epic.length,
+      steam: groupedGames.steam.length,
+      playstation: groupedGames.playstation.length,
+      xbox: groupedGames.xbox.length,
+      pc: groupedGames.pc.length,
+      mobile: groupedGames.mobile.length,
     };
   };
 
-  const filteredGames = getFilteredAndSortedGames();
-  const stats = getPlatformStats();
+  const platformStats = getPlatformStats();
 
-  // Platformların gösterip gösterilmeyeceğine karar ver (0 oyun olanları gösterme)
+  // Sadece oyun içeren platformları göster
   const shouldShowPlatform = (count: number) => count > 0;
 
-  return (
-    <div>
-      <div className="flex flex-col md:flex-row md:justify-between mb-6">
-        <div className="flex flex-wrap justify-start gap-2">
+  // Platform ikonlarını belirle
+  const getPlatformIcon = (platform: PlatformType) => {
+    switch (platform) {
+      case "epic":
+        return <SiEpicgames className="h-5 w-5" />;
+      case "steam":
+        return <SiSteam className="h-5 w-5" />;
+      case "playstation":
+        return <SiPlaystation className="h-5 w-5" />;
+      case "xbox":
+        return <SiBox className="h-5 w-5" />;
+      case "pc":
+        return <FaWindows className="h-5 w-5" />;
+      case "mobile":
+        return <FaAndroid className="h-5 w-5" />;
+      default:
+        return null;
+    }
+  };
+
+  // Platform butonları
+  const renderPlatformButtons = () => {
+    return (
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button
+          className={`flex items-center px-4 py-2 rounded-md ${
+            platform === "all"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+          }`}
+          onClick={() => setPlatform("all")}
+        >
+          Tümü <span className="ml-2 text-xs bg-gray-200 dark:bg-gray-600 rounded-full px-2 py-0.5">{platformStats.all}</span>
+        </button>
+        
+        {shouldShowPlatform(platformStats.epic) && (
           <button
-            className={`px-4 py-2 rounded-md flex items-center justify-center ${
-              filter === "all"
+            className={`flex items-center px-4 py-2 rounded-md ${
+              platform === "epic"
                 ? "bg-blue-500 text-white"
                 : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
             }`}
-            onClick={() => setFilter("all")}
+            onClick={() => setPlatform("epic")}
           >
-            <span className="mr-2">Tüm Platformlar</span>
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-              {stats.totalCount}
-            </span>
+            <SiEpicgames className="mr-2" /> Epic <span className="ml-2 text-xs bg-gray-200 dark:bg-gray-600 rounded-full px-2 py-0.5">{platformStats.epic}</span>
           </button>
-          
-          {shouldShowPlatform(stats.epicCount) && (
-            <button
-              className={`px-4 py-2 rounded-md flex items-center justify-center ${
-                filter === "epic"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-              }`}
-              onClick={() => setFilter("epic")}
-            >
-              <SiEpicgames className="mr-2" />
-              <span className="mr-2">Epic Games</span>
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-                {stats.epicCount}
-              </span>
-            </button>
-          )}
-          
-          {shouldShowPlatform(stats.steamCount) && (
-            <button
-              className={`px-4 py-2 rounded-md flex items-center justify-center ${
-                filter === "steam"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-              }`}
-              onClick={() => setFilter("steam")}
-            >
-              <SiSteam className="mr-2" />
-              <span className="mr-2">Steam</span>
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-                {stats.steamCount}
-              </span>
-            </button>
-          )}
-          
-          {shouldShowPlatform(stats.playstationCount) && (
-            <button
-              className={`px-4 py-2 rounded-md flex items-center justify-center ${
-                filter === "playstation"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-              }`}
-              onClick={() => setFilter("playstation")}
-            >
-              <FaPlaystation className="mr-2" />
-              <span className="mr-2">PlayStation</span>
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-                {stats.playstationCount}
-              </span>
-            </button>
-          )}
-          
-          {shouldShowPlatform(stats.xboxCount) && (
-            <button
-              className={`px-4 py-2 rounded-md flex items-center justify-center ${
-                filter === "xbox"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-              }`}
-              onClick={() => setFilter("xbox")}
-            >
-              <FaXbox className="mr-2" />
-              <span className="mr-2">Xbox</span>
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-                {stats.xboxCount}
-              </span>
-            </button>
-          )}
-          
-          {shouldShowPlatform(stats.pcCount) && (
-            <button
-              className={`px-4 py-2 rounded-md flex items-center justify-center ${
-                filter === "pc"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-              }`}
-              onClick={() => setFilter("pc")}
-            >
-              <FaDesktop className="mr-2" />
-              <span className="mr-2">PC</span>
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-                {stats.pcCount}
-              </span>
-            </button>
-          )}
-          
-          {shouldShowPlatform(stats.mobileCount) && (
-            <button
-              className={`px-4 py-2 rounded-md flex items-center justify-center ${
-                filter === "mobile"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-              }`}
-              onClick={() => setFilter("mobile")}
-            >
-              <FaAndroid className="mr-2" />
-              <span className="mr-2">Mobil</span>
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-800 text-xs font-medium text-gray-800 dark:text-white">
-                {stats.mobileCount}
-              </span>
-            </button>
-          )}
-        </div>
+        )}
         
-        <div className="flex space-x-2 mt-4 md:mt-0">
+        {shouldShowPlatform(platformStats.steam) && (
+          <button
+            className={`flex items-center px-4 py-2 rounded-md ${
+              platform === "steam"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+            }`}
+            onClick={() => setPlatform("steam")}
+          >
+            <SiSteam className="mr-2" /> Steam <span className="ml-2 text-xs bg-gray-200 dark:bg-gray-600 rounded-full px-2 py-0.5">{platformStats.steam}</span>
+          </button>
+        )}
+        
+        {shouldShowPlatform(platformStats.pc) && (
+          <button
+            className={`flex items-center px-4 py-2 rounded-md ${
+              platform === "pc"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+            }`}
+            onClick={() => setPlatform("pc")}
+          >
+            <FaWindows className="mr-2" /> PC <span className="ml-2 text-xs bg-gray-200 dark:bg-gray-600 rounded-full px-2 py-0.5">{platformStats.pc}</span>
+          </button>
+        )}
+      </div>
+    );
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Ücretsiz Oyunlar</h2>
+        
+        {/* Platform filtreleri */}
+        {renderPlatformButtons()}
+        
+        {/* Arama ve sıralama */}
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <input
+            type="text"
+            placeholder="Oyun ara..."
+            className="flex-1 px-4 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          
           <button
             className={`px-4 py-2 rounded-md ${
               sortBy === "name"

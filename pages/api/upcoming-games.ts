@@ -1,12 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getUpcomingFreeGames } from '../../lib/epic-api';
+import { fetchUpcomingFreeGames } from '../../lib/epic-api';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   try {
-    const games = await getUpcomingFreeGames();
+    const games = await fetchUpcomingFreeGames();
     
     // 30 dakika için önbelleğe alma, ISR için
     res.setHeader(

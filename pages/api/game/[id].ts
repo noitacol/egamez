@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getGameDetails } from '../../../lib/epic-api';
+import { fetchGameDetails } from '../../../lib/epic-api';
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,7 +12,7 @@ export default async function handler(
   }
   
   try {
-    const game = await getGameDetails(id);
+    const game = await fetchGameDetails(id);
     
     if (!game) {
       return res.status(404).json({ error: 'Oyun bulunamadı' });

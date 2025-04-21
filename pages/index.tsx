@@ -3,13 +3,14 @@ import { useState, useEffect } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
-import { getFreeGames, getUpcomingFreeGames, getTrendingEpicGames } from "@/lib/epic-api";
+import { fetchFreeGames, fetchUpcomingFreeGames, fetchTrendingGames } from "@/lib/epic-api";
 import { 
   getGamerPowerOnlyGamesAsEpicFormat, 
   getGamerPowerLootAsEpicFormat, 
   getGamerPowerBetaAsEpicFormat, 
   getTrendingGamerPowerGames 
 } from "@/lib/gamerpower-api";
+import { getFreeSteamGames, getTrendingSteamGames } from "@/lib/steam-api";
 import FreeGamesList from "@/components/FreeGamesList";
 import GameCard from "@/components/GameCard";
 import { ExtendedEpicGame } from "@/lib/types";
@@ -31,6 +32,7 @@ interface HomeProps {
   gamerPowerGames: ExtendedEpicGame[];
   gamerPowerLoot: ExtendedEpicGame[];
   gamerPowerBeta: ExtendedEpicGame[];
+  steamFreeGames: ExtendedEpicGame[];
   trendingGames: ExtendedEpicGame[];
   totalGames: number;
 }
@@ -41,6 +43,7 @@ export default function Home({
   gamerPowerGames,
   gamerPowerLoot,
   gamerPowerBeta,
+  steamFreeGames,
   trendingGames,
   totalGames 
 }: HomeProps) {
@@ -355,24 +358,47 @@ export default function Home({
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
             </div>
-          ) : filteredGames.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {sortedGames.map((game) => (
-                <GameCard 
-                  key={game.id} 
-                  game={game} 
-                  isFree={activeTab === 'free' ? true : undefined}
-                  isUpcoming={activeTab === 'upcoming' ? true : undefined}
-                  trending={activeTab === 'trending' ? true : undefined}
+          ) : (() => {
+            if (activeTab === 'free') {
+              return (
+                <FreeGamesList 
+                  epicGames={epicFreeGames} 
+                  steamGames={steamFreeGames} 
+                  gamerPowerGames={gamerPowerGames} 
                 />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 bg-gray-800 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">Oyun Bulunamadı</h3>
-              <p className="text-gray-400">Seçilen filtrelerle eşleşen oyun bulunamadı.</p>
-            </div>
-          )}
+              );
+            } else if (filteredGames.length > 0) {
+              const tab = activeTab as any;
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {sortedGames.map((game) => {
+                    // Tip hatalarını önleyen bir yaklaşım
+                    switch (tab) {
+                      case 'free':
+                        return <GameCard key={game.id} game={game} isFree={true} />;
+                      case 'upcoming':
+                        return <GameCard key={game.id} game={game} isUpcoming={true} />;
+                      case 'trending':
+                        return <GameCard key={game.id} game={game} trending={true} />;
+                      case 'loot':
+                        return <GameCard key={game.id} game={game} isLoot={true} />;
+                      case 'beta':
+                        return <GameCard key={game.id} game={game} isBeta={true} />;
+                      default:
+                        return <GameCard key={game.id} game={game} />;
+                    }
+                  })}
+                </div>
+              );
+            } else {
+              return (
+                <div className="text-center py-12 bg-gray-800 rounded-lg">
+                  <h3 className="text-xl font-semibold mb-2">Oyun Bulunamadı</h3>
+                  <p className="text-gray-400">Seçilen filtrelerle eşleşen oyun bulunamadı.</p>
+                </div>
+              );
+            }
+          })()}
         </section>
       </main>
     </>
@@ -382,20 +408,24 @@ export default function Home({
 export const getStaticProps: GetStaticProps = async () => {
   try {
     // Epic Games API'sinden ücretsiz ve yakında ücretsiz olacak oyunları al
-    let epicFreeGames = await getFreeGames();
-    let upcomingEpicGames = await getUpcomingFreeGames();
+    let epicFreeGames = await fetchFreeGames();
+    let upcomingEpicGames = await fetchUpcomingFreeGames();
     
     // GamerPower API'sinden çeşitli içerikleri al
     let gamerPowerGames = await getGamerPowerOnlyGamesAsEpicFormat(); // Sadece 'game' tipindeki oyunlar
     let gamerPowerLoot = await getGamerPowerLootAsEpicFormat();
     let gamerPowerBeta = await getGamerPowerBetaAsEpicFormat();
     
+    // Steam API'sinden ücretsiz oyunları al
+    let steamFreeGames = await getFreeSteamGames();
+    
     // Trend oyunlar için
     const trendingGamerPowerGames = await getTrendingGamerPowerGames();
-    const trendingEpicGames = await getTrendingEpicGames();
+    const trendingEpicGames = await fetchTrendingGames();
+    const trendingSteamGames = await getTrendingSteamGames();
     
     // Tüm trend oyunları birleştir
-    let allTrendingGames = [...trendingEpicGames, ...trendingGamerPowerGames].slice(0, 12);
+    let allTrendingGames = [...trendingEpicGames, ...trendingGamerPowerGames, ...trendingSteamGames].slice(0, 12);
     
     // Serileştirme hatalarını önlemek için veriyi temizleyelim
     const safelySerialize = (data: any) => {
@@ -408,6 +438,7 @@ export const getStaticProps: GetStaticProps = async () => {
     gamerPowerGames = safelySerialize(gamerPowerGames);
     gamerPowerLoot = safelySerialize(gamerPowerLoot);
     gamerPowerBeta = safelySerialize(gamerPowerBeta);
+    steamFreeGames = safelySerialize(steamFreeGames);
     allTrendingGames = safelySerialize(allTrendingGames);
     
     // Oyun verilerini kontrol et ve eksik alanları tamamla
@@ -457,9 +488,10 @@ export const getStaticProps: GetStaticProps = async () => {
     const gpGames = sanitizeEpicGames(gamerPowerGames);
     const gpLoot = sanitizeEpicGames(gamerPowerLoot);
     const gpBeta = sanitizeEpicGames(gamerPowerBeta);
+    const steamGames = sanitizeEpicGames(steamFreeGames);
     const trendingGames = sanitizeEpicGames(allTrendingGames);
     
-    const totalGames = epicGames.length + upcomingGames.length + gpGames.length + gpLoot.length + gpBeta.length;
+    const totalGames = epicGames.length + upcomingGames.length + gpGames.length + gpLoot.length + gpBeta.length + steamGames.length;
 
     return {
       props: {
@@ -468,6 +500,7 @@ export const getStaticProps: GetStaticProps = async () => {
         gamerPowerGames: gpGames,
         gamerPowerLoot: gpLoot,
         gamerPowerBeta: gpBeta,
+        steamFreeGames: steamGames,
         trendingGames: trendingGames,
         totalGames
       },
@@ -483,6 +516,7 @@ export const getStaticProps: GetStaticProps = async () => {
         gamerPowerGames: [] as ExtendedEpicGame[],
         gamerPowerLoot: [] as ExtendedEpicGame[],
         gamerPowerBeta: [] as ExtendedEpicGame[],
+        steamFreeGames: [] as ExtendedEpicGame[],
         trendingGames: [] as ExtendedEpicGame[],
         totalGames: 0
       },
