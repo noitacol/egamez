@@ -150,7 +150,19 @@ const getDynamicEpicUrl = (game: EpicGame | Partial<ExtendedEpicGame>): string =
   // Epic Games URL için temel domain
   const BASE_URL = 'https://store.epicgames.com';
   
+  // Bilinen özel ID-Slug eşleştirmeleri
+  const KNOWN_MAPPINGS: Record<string, string> = {
+    // Firestone Online Idle RPG için özel eşleştirme
+    "1185abfe7c554a1e8c528aba37bf3d0f": "firestone-online-idle-rpg-bfd04b",
+    // Diğer bilinen özel durumlar buraya eklenebilir
+  };
+  
   try {
+    // 0. Bilinen özel ID-Slug eşleştirmesi var mı?
+    if (game.id && KNOWN_MAPPINGS[game.id]) {
+      return `${BASE_URL}/tr/p/${KNOWN_MAPPINGS[game.id]}`;
+    }
+    
     // 1. Direkt API'den alınan URL'yi kullan (TR dilini ayarla)
     if (game.url && typeof game.url === 'string') {
       // URL'yi Türkçe dil ayarına sahip olacak şekilde düzenle
@@ -159,6 +171,14 @@ const getDynamicEpicUrl = (game: EpicGame | Partial<ExtendedEpicGame>): string =
       // Epic Store URL değilse atla
       if (!parsedUrl.hostname.includes('epicgames.com')) {
         throw new Error('Epic Store URL değil');
+      }
+      
+      // URL içinde bilinen ID var mı?
+      const urlParts = parsedUrl.pathname.split('/');
+      const lastPart = urlParts[urlParts.length - 1];
+      
+      if (KNOWN_MAPPINGS[lastPart]) {
+        return `${BASE_URL}/tr/p/${KNOWN_MAPPINGS[lastPart]}`;
       }
       
       // Değiştirilmiş URL oluştur (Dil: TR)
@@ -186,11 +206,21 @@ const getDynamicEpicUrl = (game: EpicGame | Partial<ExtendedEpicGame>): string =
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-');
       
+      // Firestone için özel durum
+      if (game.title.includes("Firestone") || game.title.includes("Idle RPG")) {
+        return `${BASE_URL}/tr/p/firestone-online-idle-rpg-bfd04b`;
+      }
+      
       return `${BASE_URL}/tr/p/${slugifiedTitle}`;
     }
     
     // 5. Son çare: ID'yi kullanarak genel Epic Mağaza sayfası
     if (game.id) {
+      // Bilinen ID eşleştirmesi var mı son bir kontrol
+      if (KNOWN_MAPPINGS[game.id]) {
+        return `${BASE_URL}/tr/p/${KNOWN_MAPPINGS[game.id]}`;
+      }
+      
       // UUID formatını kullanabilen alternatif bir URL biçimi
       return `${BASE_URL}/tr/browse?q=${encodeURIComponent(game.title || '')}`;
     }
