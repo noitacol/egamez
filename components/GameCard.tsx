@@ -60,9 +60,9 @@ export const GameCard = ({
       if (isFree || game.isFree || discountPrice === 0) {
         return (
           <div className="flex flex-col">
-            <span className="text-green-500 font-bold">Ücretsiz</span>
+            <span className="text-green-500 text-sm sm:text-base font-bold">Ücretsiz</span>
             {originalPrice > 0 && (
-              <span className="text-sm text-muted-foreground line-through">
+              <span className="text-xs sm:text-sm text-muted-foreground line-through">
                 {formatPrice(originalPrice, totalPrice?.currencyCode)}
               </span>
             )}
@@ -73,11 +73,11 @@ export const GameCard = ({
       // İndirimli ürün göstergesi
       return (
         <div className="flex flex-col">
-          <span className="font-semibold">
+          <span className="text-sm sm:text-base font-semibold">
             {formatPrice(discountPrice, totalPrice?.currencyCode)}
           </span>
           {discountPrice < originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">
+            <span className="text-xs sm:text-sm text-muted-foreground line-through">
               {formatPrice(originalPrice, totalPrice?.currencyCode)}
             </span>
           )}
@@ -90,8 +90,8 @@ export const GameCard = ({
     if (extendedGame.worth) {
       return (
         <div className="flex flex-col">
-          <span className="text-green-500 font-bold">Ücretsiz</span>
-          <span className="text-sm text-muted-foreground line-through">
+          <span className="text-green-500 text-sm sm:text-base font-bold">Ücretsiz</span>
+          <span className="text-xs sm:text-sm text-muted-foreground line-through">
             {extendedGame.worth}
           </span>
         </div>
@@ -100,7 +100,7 @@ export const GameCard = ({
     
     // Diğer durumlar
     return (
-      <span className="text-green-500 font-bold">
+      <span className="text-green-500 text-sm sm:text-base font-bold">
         {isFree || game.isFree ? "Ücretsiz" : ""}
       </span>
     );
@@ -121,7 +121,7 @@ export const GameCard = ({
   const StatusBadge = () => {
     if (isFree || game.isFree) {
       return (
-        <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+        <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 text-[10px] sm:text-xs py-0.5 h-5 sm:h-6">
           Ücretsiz
         </Badge>
       );
@@ -129,7 +129,7 @@ export const GameCard = ({
     
     if (isUpcoming) {
       return (
-        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-[10px] sm:text-xs py-0.5 h-5 sm:h-6">
           Yakında
         </Badge>
       );
@@ -137,7 +137,7 @@ export const GameCard = ({
     
     if (trending) {
       return (
-        <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20">
+        <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-[10px] sm:text-xs py-0.5 h-5 sm:h-6">
           Trend
         </Badge>
       );
@@ -145,7 +145,7 @@ export const GameCard = ({
     
     if (isLoot) {
       return (
-        <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20">
+        <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20 text-[10px] sm:text-xs py-0.5 h-5 sm:h-6">
           Oyun İçi
         </Badge>
       );
@@ -153,7 +153,7 @@ export const GameCard = ({
     
     if (isBeta) {
       return (
-        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 text-[10px] sm:text-xs py-0.5 h-5 sm:h-6">
           Beta
         </Badge>
       );
@@ -186,45 +186,48 @@ export const GameCard = ({
   };
 
   return (
-    <Card className="overflow-hidden group h-full flex flex-col">
+    <Card className="overflow-hidden group h-full flex flex-col transition-shadow hover:shadow-md">
       <CardHeader className="p-0 aspect-[16/9] relative overflow-hidden">
         <Image
           src={getImageSource()}
           alt={game.title}
           fill
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
           className="object-cover transition-all group-hover:scale-105"
+          loading="lazy"
         />
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 z-10">
           <StatusBadge />
         </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
       </CardHeader>
-      <CardContent className="p-4 flex-grow">
-        <div className="flex justify-between items-start gap-2">
-          <h3 className="font-semibold leading-tight hover:text-primary transition-colors">{game.title}</h3>
+      <CardContent className="p-3 sm:p-4 flex-grow">
+        <div className="flex justify-between items-start gap-1 sm:gap-2">
+          <h3 className="text-sm sm:text-base font-semibold line-clamp-2 leading-tight hover:text-primary transition-colors">{game.title}</h3>
           {showPlatform && (
-            <div className="flex items-center gap-1 text-muted-foreground">
+            <div className="flex items-center gap-1 text-muted-foreground flex-shrink-0 ml-1">
               <SourceIcon />
-              <span className="text-xs">{game.sourceLabel || game.source}</span>
+              <span className="text-[10px] sm:text-xs hidden xs:inline">{game.sourceLabel || game.source}</span>
             </div>
           )}
         </div>
-        <div className="mt-2">
+        <div className="mt-1 sm:mt-2">
           <Pricing />
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-3 sm:p-4 pt-0">
         {game.url && (
           <Link href={game.url} target="_blank" className="w-full">
-            <Button variant="outline" size="sm" className="w-full gap-2 font-normal text-xs">
-              <FaExternalLinkAlt className="h-3 w-3" />
+            <Button variant="outline" size="sm" className="w-full gap-1 sm:gap-2 font-normal text-[10px] sm:text-xs h-8">
+              <FaExternalLinkAlt className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               Detaylar
             </Button>
           </Link>
         )}
         {game.id && !game.url && (
           <Link href={`/games/${game.id}`} className="w-full">
-            <Button variant="outline" size="sm" className="w-full gap-2 font-normal text-xs">
-              <FaExternalLinkAlt className="h-3 w-3" />
+            <Button variant="outline" size="sm" className="w-full gap-1 sm:gap-2 font-normal text-[10px] sm:text-xs h-8">
+              <FaExternalLinkAlt className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               Detaylar
             </Button>
           </Link>

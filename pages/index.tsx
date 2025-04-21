@@ -440,7 +440,7 @@ export default function Home({
             </div>
 
             {/* Games Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
               {sortedGames.length > 0 ? (
                 sortedGames.map((game) => (
                   <GameCard 
@@ -454,8 +454,8 @@ export default function Home({
                   />
                 ))
               ) : (
-                <div className="col-span-full py-12 text-center">
-                  <p className="text-xl text-gray-400">Bu kategoride şu anda oyun bulunmuyor.</p>
+                <div className="col-span-full py-8 sm:py-12 text-center">
+                  <p className="text-lg sm:text-xl text-gray-400">Bu kategoride şu anda oyun bulunmuyor.</p>
                 </div>
               )}
             </div>
