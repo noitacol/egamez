@@ -241,106 +241,106 @@ export default function Home({
               <FaGamepad />
               <span>Platformlar</span>
             </h2>
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-4 mb-10">
+            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-4 mb-6 md:mb-10">
               <button
-                className={`${getPlatformCardClass('all')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                className={`${getPlatformCardClass('all')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
                 onClick={() => setActivePlatform('all')}
                 tabIndex={0}
                 aria-label="Tüm platformlar"
                 onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('all')}
               >
-                <RiGamepadLine className="h-6 w-6 mb-2" />
+                <RiGamepadLine className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
                 <span className="text-xs sm:text-sm">Tümü</span>
               </button>
 
               {/* Epic Games Platformu geçici olarak devre dışı bırakıldı */}
               {/*
               <button
-                className={`${getPlatformCardClass('epic')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                className={`${getPlatformCardClass('epic')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
                 onClick={() => setActivePlatform('epic')}
                 tabIndex={0}
                 aria-label="Epic Games platformu"
                 onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('epic')}
               >
-                <SiEpicgames className="h-6 w-6 mb-2" />
+                <SiEpicgames className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
                 <span className="text-xs sm:text-sm">Epic</span>
               </button>
               */}
 
               <button
-                className={`${getPlatformCardClass('steam')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                className={`${getPlatformCardClass('steam')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
                 onClick={() => setActivePlatform('steam')}
                 tabIndex={0}
                 aria-label="Steam platformu"
                 onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('steam')}
               >
-                <SiSteam className="h-6 w-6 mb-2" />
+                <SiSteam className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
                 <span className="text-xs sm:text-sm">Steam</span>
               </button>
 
               <button
-                className={`${getPlatformCardClass('pc')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                className={`${getPlatformCardClass('pc')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
                 onClick={() => setActivePlatform('pc')}
                 tabIndex={0}
                 aria-label="PC platformu"
                 onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('pc')}
               >
-                <FaWindows className="h-6 w-6 mb-2" />
+                <FaWindows className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
                 <span className="text-xs sm:text-sm">PC</span>
               </button>
 
               <button
-                className={`${getPlatformCardClass('playstation')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                className={`${getPlatformCardClass('playstation')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
                 onClick={() => setActivePlatform('playstation')}
                 tabIndex={0}
                 aria-label="PlayStation platformu"
                 onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('playstation')}
               >
-                <FaPlaystation className="h-6 w-6 mb-2" />
+                <FaPlaystation className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
                 <span className="text-xs sm:text-sm">PlayStation</span>
               </button>
 
               <button
-                className={`${getPlatformCardClass('xbox')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                className={`${getPlatformCardClass('xbox')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
                 onClick={() => setActivePlatform('xbox')}
                 tabIndex={0}
                 aria-label="Xbox platformu"
                 onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('xbox')}
               >
-                <FaXbox className="h-6 w-6 mb-2" />
+                <FaXbox className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
                 <span className="text-xs sm:text-sm">Xbox</span>
               </button>
 
               <button
-                className={`${getPlatformCardClass('switch')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                className={`${getPlatformCardClass('switch')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
                 onClick={() => setActivePlatform('switch')}
                 tabIndex={0}
                 aria-label="Nintendo Switch platformu"
                 onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('switch')}
               >
-                <SiNintendoswitch className="h-6 w-6 mb-2" />
+                <SiNintendoswitch className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
                 <span className="text-xs sm:text-sm">Switch</span>
               </button>
 
               <button
-                className={`${getPlatformCardClass('android')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                className={`${getPlatformCardClass('android')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
                 onClick={() => setActivePlatform('android')}
                 tabIndex={0}
                 aria-label="Android platformu"
                 onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('android')}
               >
-                <SiAndroid className="h-6 w-6 mb-2" />
+                <SiAndroid className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
                 <span className="text-xs sm:text-sm">Android</span>
               </button>
 
               <button
-                className={`${getPlatformCardClass('ios')} flex flex-col items-center justify-center py-3 px-2 rounded-lg transition-all shadow-md`}
+                className={`${getPlatformCardClass('ios')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
                 onClick={() => setActivePlatform('ios')}
                 tabIndex={0}
                 aria-label="iOS platformu"
                 onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('ios')}
               >
-                <SiApple className="h-6 w-6 mb-2" />
+                <SiApple className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
                 <span className="text-xs sm:text-sm">iOS</span>
               </button>
             </div>
