@@ -76,7 +76,7 @@ export default function Home({
       const isLoot = game.isLoot || game.offerType === 'loot';
       const isBeta = game.isBeta || game.offerType === 'beta';
       
-      // Sadece gerçek oyunları dahil et (loot ve beta olmayanlar)
+      // Sadece gerçek oyunları dahil et (loot ve beta olmayanlar) ve video içeren oyunları öncelikle seç
       return (platform === 'steam' || platform === 'epic') && !isLoot && !isBeta;
     });
     
@@ -84,10 +84,19 @@ export default function Home({
     const uniqueGames = steamAndEpicGames.filter((game, index, self) => 
       index === self.findIndex(g => g.id === game.id)
     );
+
+    // Videosu olan oyunları öncelikli olarak al
+    const gamesWithVideos = uniqueGames.filter(game => game.videos && game.videos.length > 0);
+    const gamesWithoutVideos = uniqueGames.filter(game => !game.videos || game.videos.length === 0);
     
-    // Rastgele sırala ve en fazla 10 oyun göster
-    const shuffled = [...uniqueGames].sort(() => 0.5 - Math.random());
-    setFeaturedGames(shuffled.slice(0, 10));
+    // Videosu olan oyunları önce, olmayanları sonra göster
+    // Her iki grubu da rastgele sırala
+    const shuffledWithVideos = [...gamesWithVideos].sort(() => 0.5 - Math.random());
+    const shuffledWithoutVideos = [...gamesWithoutVideos].sort(() => 0.5 - Math.random());
+    
+    // İki listeyi birleştir ve ilk 10 tanesini göster
+    const combinedGames = [...shuffledWithVideos, ...shuffledWithoutVideos].slice(0, 10);
+    setFeaturedGames(combinedGames);
   }, [freebieGames, trendingGames]);
 
   // Bir oyun için en kaliteli kapak görselini seç
@@ -323,11 +332,11 @@ export default function Home({
                   index === currentFeaturedIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
                 }`}
               >
-                {index === currentFeaturedIndex && game.videos && game.videos.length > 0 ? (
+                {game.videos && game.videos.length > 0 ? (
                   // YouTube video varsa göster
                   <div className="relative w-full h-full">
                     <iframe 
-                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(game.videos[0].url)}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${getYouTubeVideoId(game.videos[0].url)}&start=30`}
+                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(game.videos[0].url)}?autoplay=${index === currentFeaturedIndex ? '1' : '0'}&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${getYouTubeVideoId(game.videos[0].url)}&start=30`}
                       title={game.title || 'Featured Game'} 
                       width="100%" 
                       height="100%" 
