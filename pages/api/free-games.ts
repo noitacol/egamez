@@ -79,7 +79,10 @@ export default async function handler(
           // sourceLabel kendi platformunu gösterdiği için burada değiştirmeye gerek yok
           return {
             ...game,
-            source: game.distributionPlatform || 'external'
+            // source için sadece belirli değerler kullanabiliriz: 'epic', 'steam', 'gamerpower' veya 'custom'
+            source: (game.distributionPlatform === 'steam' ? 'steam' : 
+                   game.distributionPlatform === 'epic' ? 'epic' : 
+                   game.distributionPlatform === 'gamerpower' ? 'gamerpower' : 'custom') as 'epic' | 'steam' | 'gamerpower' | 'custom'
           };
         });
       } else {
@@ -90,7 +93,10 @@ export default async function handler(
           // Her oyun kendi platformunun etiketini taşıyacak
           return {
             ...converted,
-            source: converted.distributionPlatform || 'external'
+            // source için sadece belirli değerler kullanabiliriz: 'epic', 'steam', 'gamerpower' veya 'custom'
+            source: (converted.distributionPlatform === 'steam' ? 'steam' : 
+                   converted.distributionPlatform === 'epic' ? 'epic' : 
+                   converted.distributionPlatform === 'gamerpower' ? 'gamerpower' : 'custom') as 'epic' | 'steam' | 'gamerpower' | 'custom'
           };
         });
       }

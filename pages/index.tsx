@@ -15,18 +15,19 @@ import { getFreeSteamGames, getTrendingSteamGames } from "@/lib/steam-api";
 import FreeGamesList from "@/components/FreeGamesList";
 import GameCard from "@/components/GameCard";
 import { ExtendedEpicGame } from "@/lib/types";
-import { SiEpicgames, SiSteam, SiNintendoswitch, SiGogdotcom, SiAndroid, SiApple } from "react-icons/si";
+import { SiEpicgames, SiSteam, SiNintendoswitch, SiGogdotcom, SiAndroid, SiApple, SiPlaystation } from "react-icons/si";
 import { FaPlaystation, FaXbox, FaWindows, FaChevronLeft, FaChevronRight, FaExternalLinkAlt, FaGamepad, FaFire } from "react-icons/fa";
 import { RiGamepadLine } from "react-icons/ri";
 import { GiRaceCar, GiSwordman, GiSpellBook, GiMountainRoad, GiChessKnight } from "react-icons/gi";
 import { Container } from "@/components/Container";
 import { Button } from "@/components/ui/button";
 import { MdNavigateNext, MdNavigateBefore, MdOutlineAccessTime } from "react-icons/md";
-import { BsGift } from "react-icons/bs";
+import { BsGift, BsWindows } from "react-icons/bs";
 import { RiTestTubeFill } from "react-icons/ri";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BiGift } from "react-icons/bi";
+import { AiOutlineAppstore } from "react-icons/ai";
 
 interface HomeProps {
   // Epic API oyunları geçici olarak kaldırıldı
@@ -56,7 +57,7 @@ export default function Home({
   const [activeTab, setActiveTab] = useState<'free' | 'upcoming' | 'trending' | 'loot' | 'beta'>('free');
   const [featuredGames, setFeaturedGames] = useState<ExtendedEpicGame[]>([]);
   const [currentFeaturedIndex, setCurrentFeaturedIndex] = useState(0);
-  const [activePlatform, setActivePlatform] = useState<'all' | 'steam' | 'playstation' | 'xbox' | 'switch' | 'pc' | 'android' | 'ios'>('all');
+  const [activePlatform, setActivePlatform] = useState<"all" | "epic" | "steam" | "playstation" | "xbox" | "switch" | "pc" | "android" | "ios">("all");
   const [filter, setFilter] = useState<"all" | "steam">("all");
   const [sort, setSort] = useState<"none" | "title" | "price">("none");
 
@@ -336,7 +337,7 @@ export default function Home({
                   // YouTube video varsa göster
                   <div className="relative w-full h-full">
                     <iframe 
-                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(game.videos[0].url)}?autoplay=${index === currentFeaturedIndex ? '1' : '0'}&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${getYouTubeVideoId(game.videos[0].url)}&start=30`}
+                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(game.videos[0].url)}?autoplay=${index === currentFeaturedIndex ? '1' : '0'}&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${getYouTubeVideoId(game.videos[0].url)}&start=0`}
                       title={game.title || 'Featured Game'} 
                       width="100%" 
                       height="100%" 
@@ -466,116 +467,222 @@ export default function Home({
         )}
 
         {/* Platform Selection */}
-        <section className="py-8 md:py-16 relative overflow-hidden">
+        <section className="w-full mx-auto py-6 md:py-12 px-4">
+          <h2 className="text-2xl font-bold mb-6">Platformlar</h2>
+          
+          {/* Mobile için yatay kaydırılabilir menü, tablet/desktop için grid */}
+          <div className="flex md:hidden overflow-x-auto scrollbar-hide pb-4 -mx-1 space-x-2">
+            <button
+              onClick={() => setActivePlatform("all")}
+              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
+                activePlatform === "all" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Tüm platformlar için filtrele"
+            >
+              <AiOutlineAppstore className="text-2xl mb-1" />
+              <span className="text-sm">Tümü</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("epic")}
+              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
+                activePlatform === "epic" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Epic Games için filtrele"
+            >
+              <SiEpicgames className="text-2xl mb-1" />
+              <span className="text-sm">Epic</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("steam")}
+              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
+                activePlatform === "steam" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Steam için filtrele"
+            >
+              <SiSteam className="text-2xl mb-1" />
+              <span className="text-sm">Steam</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("pc")}
+              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
+                activePlatform === "pc" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="PC için filtrele"
+            >
+              <BsWindows className="text-2xl mb-1" />
+              <span className="text-sm">PC</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("playstation")}
+              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
+                activePlatform === "playstation" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="PlayStation için filtrele"
+            >
+              <SiPlaystation className="text-2xl mb-1" />
+              <span className="text-sm">PlayStation</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("xbox")}
+              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
+                activePlatform === "xbox" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Xbox için filtrele"
+            >
+              <FaXbox className="text-2xl mb-1" />
+              <span className="text-sm">Xbox</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("switch")}
+              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
+                activePlatform === "switch" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Nintendo Switch için filtrele"
+            >
+              <SiNintendoswitch className="text-2xl mb-1" />
+              <span className="text-sm">Switch</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("android")}
+              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
+                activePlatform === "android" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Android için filtrele"
+            >
+              <SiAndroid className="text-2xl mb-1" />
+              <span className="text-sm">Android</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("ios")}
+              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
+                activePlatform === "ios" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="iOS için filtrele"
+            >
+              <SiApple className="text-2xl mb-1" />
+              <span className="text-sm">iOS</span>
+            </button>
+          </div>
+          
+          {/* Tablet ve Desktop için Grid Layout */}
+          <div className="hidden md:grid grid-cols-4 lg:grid-cols-8 gap-3">
+            <button
+              onClick={() => setActivePlatform("all")}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
+                activePlatform === "all" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Tüm platformlar için filtrele"
+            >
+              <AiOutlineAppstore className="text-3xl mb-2" />
+              <span>Tümü</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("epic")}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
+                activePlatform === "epic" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Epic Games için filtrele"
+            >
+              <SiEpicgames className="text-3xl mb-2" />
+              <span>Epic</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("steam")}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
+                activePlatform === "steam" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Steam için filtrele"
+            >
+              <SiSteam className="text-3xl mb-2" />
+              <span>Steam</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("pc")}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
+                activePlatform === "pc" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="PC için filtrele"
+            >
+              <BsWindows className="text-3xl mb-2" />
+              <span>PC</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("playstation")}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
+                activePlatform === "playstation" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="PlayStation için filtrele"
+            >
+              <SiPlaystation className="text-3xl mb-2" />
+              <span>PlayStation</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("xbox")}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
+                activePlatform === "xbox" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Xbox için filtrele"
+            >
+              <FaXbox className="text-3xl mb-2" />
+              <span>Xbox</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("switch")}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
+                activePlatform === "switch" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Nintendo Switch için filtrele"
+            >
+              <SiNintendoswitch className="text-3xl mb-2" />
+              <span>Switch</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("android")}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
+                activePlatform === "android" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="Android için filtrele"
+            >
+              <SiAndroid className="text-3xl mb-2" />
+              <span>Android</span>
+            </button>
+            
+            <button
+              onClick={() => setActivePlatform("ios")}
+              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
+                activePlatform === "ios" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              }`}
+              aria-label="iOS için filtrele"
+            >
+              <SiApple className="text-3xl mb-2" />
+              <span>iOS</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Game Categories */}
+        <section className="py-6 md:py-12 relative overflow-hidden">
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl lg:text-3xl font-bold mb-6 flex items-center gap-2">
+            <h2 className="text-2xl lg:text-3xl font-bold mb-4 md:mb-6 flex items-center gap-2">
               <FaGamepad />
               <span>Platformlar</span>
             </h2>
-            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 md:gap-4 mb-6 md:mb-10">
-              <button
-                className={`${getPlatformCardClass('all')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
-                onClick={() => setActivePlatform('all')}
-                tabIndex={0}
-                aria-label="Tüm platformlar"
-                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('all')}
-              >
-                <RiGamepadLine className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs sm:text-sm">Tümü</span>
-              </button>
-
-              {/* Epic Games Platformu geçici olarak devre dışı bırakıldı */}
-              {/*
-              <button
-                className={`${getPlatformCardClass('epic')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
-                onClick={() => setActivePlatform('epic')}
-                tabIndex={0}
-                aria-label="Epic Games platformu"
-                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('epic')}
-              >
-                <SiEpicgames className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs sm:text-sm">Epic</span>
-              </button>
-              */}
-
-              <button
-                className={`${getPlatformCardClass('steam')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
-                onClick={() => setActivePlatform('steam')}
-                tabIndex={0}
-                aria-label="Steam platformu"
-                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('steam')}
-              >
-                <SiSteam className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs sm:text-sm">Steam</span>
-              </button>
-
-              <button
-                className={`${getPlatformCardClass('pc')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
-                onClick={() => setActivePlatform('pc')}
-                tabIndex={0}
-                aria-label="PC platformu"
-                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('pc')}
-              >
-                <FaWindows className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs sm:text-sm">PC</span>
-              </button>
-
-              <button
-                className={`${getPlatformCardClass('playstation')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
-                onClick={() => setActivePlatform('playstation')}
-                tabIndex={0}
-                aria-label="PlayStation platformu"
-                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('playstation')}
-              >
-                <FaPlaystation className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs sm:text-sm">PlayStation</span>
-              </button>
-
-              <button
-                className={`${getPlatformCardClass('xbox')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
-                onClick={() => setActivePlatform('xbox')}
-                tabIndex={0}
-                aria-label="Xbox platformu"
-                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('xbox')}
-              >
-                <FaXbox className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs sm:text-sm">Xbox</span>
-              </button>
-
-              <button
-                className={`${getPlatformCardClass('switch')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
-                onClick={() => setActivePlatform('switch')}
-                tabIndex={0}
-                aria-label="Nintendo Switch platformu"
-                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('switch')}
-              >
-                <SiNintendoswitch className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs sm:text-sm">Switch</span>
-              </button>
-
-              <button
-                className={`${getPlatformCardClass('android')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
-                onClick={() => setActivePlatform('android')}
-                tabIndex={0}
-                aria-label="Android platformu"
-                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('android')}
-              >
-                <SiAndroid className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs sm:text-sm">Android</span>
-              </button>
-
-              <button
-                className={`${getPlatformCardClass('ios')} flex flex-col items-center justify-center py-2 md:py-3 px-1 md:px-2 rounded-lg transition-all shadow-md`}
-                onClick={() => setActivePlatform('ios')}
-                tabIndex={0}
-                aria-label="iOS platformu"
-                onKeyDown={(e) => e.key === 'Enter' && setActivePlatform('ios')}
-              >
-                <SiApple className="h-5 w-5 md:h-6 md:w-6 mb-1 md:mb-2" />
-                <span className="text-xs sm:text-sm">iOS</span>
-              </button>
-            </div>
-
+            
             {/* Game Categories */}
             <div className="flex flex-wrap gap-3 mb-6">
               <button

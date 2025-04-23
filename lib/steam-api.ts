@@ -284,7 +284,7 @@ export function convertSteamToEpicFormat(game: SteamGame): ExtendedEpicGame {
   const metacritic = game.metacritic ? {
     score: game.metacritic.score,
     url: game.metacritic.url
-  } : null;
+  } : undefined;
   
   return {
     id: String(game.appid),
@@ -316,8 +316,7 @@ export function convertSteamToEpicFormat(game: SteamGame): ExtendedEpicGame {
     items: [],
     customAttributes: [],
     videos,
-    metacritic: metacritic,
-    isTrending: true,
+    metacritic,
     distributionPlatform: "steam",
     url: `https://store.steampowered.com/app/${game.appid}`
   };

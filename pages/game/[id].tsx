@@ -69,7 +69,7 @@ export default function GameDetail({ game, error }: GameDetailProps) {
   const endDate = offers?.[0]?.endDate ? new Date(offers[0].endDate) : null;
   
   // Ürün bağlantısı
-  const storeLink = game.url || game.storeUrl || `https://store.epicgames.com/tr/p/${game.productSlug || game.urlSlug || game.id}`;
+  const storeLink = game.url || `https://store.epicgames.com/tr/p/${game.productSlug || game.id}`;
   
   // Metacritic puanı (varsa)
   const metacriticScore = game.metacritic?.score;
@@ -137,14 +137,20 @@ export default function GameDetail({ game, error }: GameDetailProps) {
             <div className="mb-6">
               <h2 className="text-xl font-bold mb-2">Kategoriler</h2>
               <div className="flex flex-wrap gap-2">
-                {game.categories.map(category => (
-                  <span 
-                    key={category.path} 
-                    className="bg-gray-200 dark:bg-epicgray px-3 py-1 rounded-full text-sm"
-                  >
-                    {category.name}
-                  </span>
-                ))}
+                {game.categories.map((category, index) => {
+                  // category bir string veya { path: string; name: string } olabilir
+                  const categoryName = typeof category === 'string' ? category : category.name;
+                  const categoryKey = typeof category === 'string' ? `category-${index}` : category.path;
+                  
+                  return (
+                    <span 
+                      key={categoryKey} 
+                      className="bg-gray-200 dark:bg-epicgray px-3 py-1 rounded-full text-sm"
+                    >
+                      {categoryName}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}

@@ -58,4 +58,15 @@
   .highlight::before {
     @apply content-[''] absolute w-full h-3 -z-10 bottom-0 left-0 bg-epicblue/20 dark:bg-epicaccent/30 rounded;
   }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE ve Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari ve Opera */
+  }
 } 
