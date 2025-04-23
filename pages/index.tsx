@@ -100,9 +100,89 @@ export default function Home({
     setFeaturedGames(combinedGames);
   }, [freebieGames, trendingGames]);
 
+  // Daha yüksek çözünürlüklü görsel elde etmek için URL'yi optimize eder
+  const getOptimizedImageUrl = (url: string): string => {
+    if (!url) return '/placeholder.jpg';
+    
+    // Epic Games CDN için iyileştirme
+    if (url.includes('cdn1.epicgames.com') || url.includes('cdn2.epicgames.com')) {
+      // Parametrelerden temizle
+      let cleanUrl = url.split('?')[0];
+      
+      // Epic'in CDN'inde daha yüksek çözünürlük parametreleri ekleme
+      return `${cleanUrl}?h=1080&resize=1&w=1920`;
+    }
+    
+    // Steam CDN için iyileştirme
+    if (url.includes('steamcdn') || url.includes('steamcommunity') || url.includes('steampowered')) {
+      // Steam header görsellerini büyüt
+      if (url.includes('header.jpg')) {
+        return url.replace('header.jpg', 'header_600x.jpg');
+      }
+      
+      // Ekran görüntüleri için daha büyük sürümleri kullan
+      if (url.includes('screenshots') && url.includes('.jpg')) {
+        return url.replace('.jpg', '_2560x1440.jpg');
+      }
+      
+      return url;
+    }
+    
+    // GamerPower görselleri için iyileştirme
+    if (url.includes('gamerpower.com/offers')) {
+      // Küçük görsel URL'lerini büyük sürümleriyle değiştir
+      return url.replace('_med.', '_hd.').replace('_small.', '_hd.');
+    }
+    
+    return url;
+  }
+
+  // Bir oyunun yüksek çözünürlüklü Steam kapak görselini döndürür
+  const getSteamHDImage = (game: ExtendedEpicGame): string | null => {
+    // Steam app ID'sini bulmaya çalış
+    let steamAppId = null;
+    
+    // URL'den Steam AppID çıkarma
+    if (game.url && game.url.includes('store.steampowered.com/app/')) {
+      const matches = game.url.match(/\/app\/(\d+)/);
+      if (matches && matches[1]) {
+        steamAppId = matches[1];
+      }
+    }
+    
+    if (steamAppId) {
+      // Steam'den yüksek çözünürlüklü görsel URL'lerini oluştur
+      return `https://cdn.akamai.steamstatic.com/steam/apps/${steamAppId}/library_hero.jpg`;
+    }
+    
+    return null;
+  }
+
   // Bir oyun için en kaliteli kapak görselini seç
   const getBestGameImage = (game: ExtendedEpicGame): string => {
-    if (!game || !game.keyImages || game.keyImages.length === 0) {
+    if (!game) return '/placeholder.jpg';
+    
+    // 1. Steam için özel HD görsel kontrol et (Steam oyunları için)
+    if (game.distributionPlatform === 'steam') {
+      const steamHDImage = getSteamHDImage(game);
+      if (steamHDImage) {
+        return steamHDImage;
+      }
+    }
+    
+    // 2. Zaten var olan en iyi görseli seç
+    const bestImage = getExistingBestImage(game);
+    
+    // 3. En kaliteli görsel URL'sini optimize et
+    return getOptimizedImageUrl(bestImage);
+  };
+
+  // Verilen oyun için mevcut en iyi görseli seç
+  const getExistingBestImage = (game: ExtendedEpicGame): string => {
+    if (!game) return '/placeholder.jpg';
+    
+    // Görseller yoksa varsayılan döndür
+    if (!game.keyImages || game.keyImages.length === 0) {
       return '/placeholder.jpg';
     }
 
@@ -111,9 +191,9 @@ export default function Home({
       'OfferImageWide', // Geniş banner görsel, genellikle yüksek çözünürlükte olur
       'DieselStoreFrontWide', // Epic Store'da kullanılan geniş görsel, yüksek kaliteli
       'Screenshot', // Ekran görüntüsü - daha detaylı
+      'Thumbnail', // Küçük görsel genelde daha yüksek kalite olur
       'DieselGameBoxTall', // Dikey oyun kutusu - detaylı
       'DieselGameBox', // Oyun kutusu görseli - detaylı
-      'Thumbnail', // Küçük görsel genelde daha yüksek kalite olur
       'VaultClosed', // Epic'in bazı oyunlar için özel banner'ı 
       'DieselGameBoxLogo', // Logo - genelde düşük kalite
       'cover', // GamerPower'dan gelen kapak görseli
@@ -406,6 +486,7 @@ export default function Home({
                   // Video yoksa görseli göster
                   game.keyImages && game.keyImages.length > 0 && (
                     <>
+                      <div className="absolute inset-0 bg-black animate-pulse" /> {/* Yükleme göstergesi */}
                       <Image 
                         src={getBestGameImage(game)} 
                         alt={game.title || 'Featured Game'} 
@@ -415,6 +496,7 @@ export default function Home({
                         sizes="100vw"
                         quality={95}
                         className="transform hover:scale-105 transition-transform duration-10000 filter brightness-[0.85]"
+                        unoptimized={true} // Next.js'in otomatik optimizasyonunu devre dışı bırak
                       />
                       {/* Görüntü üzerine ince ızgara deseni ekle */}
                       <div className="absolute inset-0 bg-[url('/patterns/grid-pattern.png')] opacity-20 mix-blend-multiply"></div>
