@@ -106,23 +106,40 @@ export default function Home({
       return '/placeholder.jpg';
     }
 
-    // Tercih edilen görsel tiplerine göre sırala
-    const preferredTypes = [
-      'OfferImageWide', // Geniş banner görsel
-      'DieselStoreFrontWide', // Epic Store'da kullanılan geniş görsel
+    // Hero banner için en uygun görsel tiplerini tanımla (öncelik sırasına göre)
+    const preferredTypesForHero = [
+      'OfferImageWide', // Geniş banner görsel, genellikle yüksek çözünürlükte olur
+      'DieselStoreFrontWide', // Epic Store'da kullanılan geniş görsel, yüksek kaliteli
       'Screenshot', // Ekran görüntüsü - daha detaylı
+      'DieselGameBoxTall', // Dikey oyun kutusu - detaylı
+      'DieselGameBox', // Oyun kutusu görseli - detaylı
       'Thumbnail', // Küçük görsel genelde daha yüksek kalite olur
       'VaultClosed', // Epic'in bazı oyunlar için özel banner'ı 
-      'DieselGameBox', // Oyun kutusu görseli - detaylı
-      'DieselGameBoxTall', // Dikey oyun kutusu - detaylı
       'DieselGameBoxLogo', // Logo - genelde düşük kalite
       'cover', // GamerPower'dan gelen kapak görseli
       'thumbnail' // GamerPower'dan gelen küçük görsel
     ];
 
-    // Önce tercih edilen tiplere göre ara
-    for (const type of preferredTypes) {
-      const image = game.keyImages.find(img => img.type && img.type.toLowerCase() === type.toLowerCase());
+    // İlk olarak HD (Yüksek Çözünürlüklü) görselleri ara
+    for (const type of preferredTypesForHero) {
+      // Öncelikle "_1920x1080" gibi büyük boyutlu görselleri ara
+      const hdImagePattern = new RegExp(`${type}.*_(1920|3840|2560|1280)`);
+      const hdImage = game.keyImages.find(img => 
+        img.type && hdImagePattern.test(img.type)
+      );
+      
+      if (hdImage && hdImage.url) {
+        console.log(`HD görsel bulundu: ${hdImage.type}`);
+        return hdImage.url;
+      }
+    }
+
+    // HD görsel bulunamadıysa, standart tercih edilen tiplere göre ara
+    for (const type of preferredTypesForHero) {
+      const image = game.keyImages.find(img => 
+        img.type && img.type.toLowerCase() === type.toLowerCase()
+      );
+      
       if (image && image.url) {
         return image.url;
       }
@@ -130,15 +147,50 @@ export default function Home({
 
     // Alternatif olarak, Steam oyunları için bazı özel alanları kontrol et
     if (game.distributionPlatform === 'steam') {
-      // Steam ekran görüntülerini kontrol et
-      if (game.screenshots && game.screenshots.length > 0) {
-        return game.screenshots[0].url;
-      }
-      
-      // Header image'i kontrol et
+      // Steam geniş header resimlerini kontrol et
       if (game.headerImage) {
         return game.headerImage;
       }
+      
+      // En iyi ekran görüntüsünü seç
+      if (game.screenshots && game.screenshots.length > 0) {
+        // Yatay ekran görüntüsünü tercih et (type-safe kontrol)
+        const horizontalScreenshot = game.screenshots.find(ss => {
+          // Type-safe kontrol: width ve height özellikleri var mı?
+          if (ss && typeof ss === 'object' && 'width' in ss && 'height' in ss && 
+              typeof ss.width === 'number' && typeof ss.height === 'number') {
+            return (ss.width / ss.height) > 1.3;
+          }
+          return false;
+        });
+        
+        if (horizontalScreenshot) {
+          return horizontalScreenshot.url;
+        }
+        
+        // Yatay bulunamadıysa ilkini kullan
+        return game.screenshots[0].url;
+      }
+    }
+
+    // Son çare olarak en büyük görseli bul
+    if (game.keyImages.length > 1) {
+      // Görselleri boyuta göre sırala (eğer boyut bilgisi varsa)
+      const sortedBySize = [...game.keyImages].sort((a, b) => {
+        // Type-safe kontrol
+        const aSize = ('width' in a && 'height' in a && 
+                        typeof a.width === 'number' && typeof a.height === 'number') 
+                      ? (a.width * a.height) : 0;
+                          
+        const bSize = ('width' in b && 'height' in b && 
+                        typeof b.width === 'number' && typeof b.height === 'number') 
+                      ? (b.width * b.height) : 0;
+                          
+        return bSize - aSize; // Büyükten küçüğe sırala
+      });
+      
+      // En büyük görsel
+      return sortedBySize[0].url;
     }
 
     // Bulunamadıysa ilk görüntüyü kullan
@@ -361,7 +413,7 @@ export default function Home({
                         style={{ objectFit: 'cover', objectPosition: 'center top' }}
                         priority={index === currentFeaturedIndex}
                         sizes="100vw"
-                        quality={90}
+                        quality={95}
                         className="transform hover:scale-105 transition-transform duration-10000 filter brightness-[0.85]"
                       />
                       {/* Görüntü üzerine ince ızgara deseni ekle */}

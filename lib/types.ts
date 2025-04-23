@@ -247,4 +247,27 @@ export interface Price {
       intermediatePrice?: string;
     };
   };
+}
+
+export interface KeyImage {
+  type: string;
+  url: string;
+  width?: number;
+  height?: number;
+}
+
+export interface Screenshot {
+  id?: string;
+  url: string;
+  thumbnailUrl?: string;
+  width?: number;
+  height?: number;
+}
+
+export interface Video {
+  id?: string;
+  url: string;
+  thumbnailUrl?: string;
+  width?: number;
+  height?: number;
 } 
