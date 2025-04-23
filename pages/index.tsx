@@ -94,8 +94,8 @@ export default function Home({
     const shuffledWithVideos = [...gamesWithVideos].sort(() => 0.5 - Math.random());
     const shuffledWithoutVideos = [...gamesWithoutVideos].sort(() => 0.5 - Math.random());
     
-    // İki listeyi birleştir ve ilk 10 tanesini göster
-    const combinedGames = [...shuffledWithVideos, ...shuffledWithoutVideos].slice(0, 10);
+    // İki listeyi birleştir ve ilk 5 tanesini göster (10 yerine 5 yaparak veri boyutunu azaltıyoruz)
+    const combinedGames = [...shuffledWithVideos, ...shuffledWithoutVideos].slice(0, 5);
     setFeaturedGames(combinedGames);
   }, [freebieGames, trendingGames]);
 
@@ -746,17 +746,33 @@ export const getStaticProps: GetStaticProps = async () => {
       }
     };
 
-    // Epic oyunlarını temizle ve hazırla fonksiyonu şimdilik kullanılmıyor
-    /*
-    const sanitizeEpicGames = (games: any[]): ExtendedEpicGame[] => {
-      return (games || []).map(game => ({
-        ...game,
-        source: 'epic',
-        sourceLabel: 'Epic Games',
-        distributionPlatform: 'epic'
-      }));
+    // Veriyi optimize et - sadece gerekli alanları tut
+    const optimizeGameData = (games: ExtendedEpicGame[]): any[] => {
+      if (!games || !Array.isArray(games)) return [];
+      
+      return games.map(game => {
+        // Sadece gerekli alanları içeren yeni bir nesne oluştur
+        const optimizedGame = {
+          id: game.id,
+          title: game.title,
+          description: game.description?.substring(0, 150), // Açıklamayı kısalt
+          url: game.url,
+          distributionPlatform: game.distributionPlatform,
+          platform: game.platform,
+          isLoot: game.isLoot,
+          isBeta: game.isBeta,
+          offerType: game.offerType,
+          sourceLabel: game.sourceLabel,
+          videos: game.videos,
+          price: game.price,
+          keyImages: game.keyImages?.slice(0, 3), // Sadece ilk 3 görseli al
+          headerImage: game.headerImage,
+          screenshots: game.screenshots?.slice(0, 2), // Sadece ilk 2 ekran görüntüsünü al
+        };
+        
+        return optimizedGame;
+      }).filter(Boolean).slice(0, 20); // En fazla 20 oyun al
     };
-    */
 
     // Tüm oyunları bir araya getir - Epic oyunları dahil edilmedi
     const allGames = [
@@ -773,12 +789,12 @@ export const getStaticProps: GetStaticProps = async () => {
         // Epic API oyunları geçici olarak devre dışı bırakıldı
         // epicFreeGames: safelySerialize(sanitizeEpicGames(epicGames || [])),
         // upcomingEpicGames: safelySerialize(sanitizeEpicGames(upcomingGames || [])),
-        freebieGames: safelySerialize(gpOnlyGames || []),
-        freeLoots: safelySerialize(gpLoot || []),
-        freeBetas: safelySerialize(gpBeta || []),
-        steamFreeGames: safelySerialize(steamGames || []),
+        freebieGames: safelySerialize(optimizeGameData(gpOnlyGames || []).slice(0, 16)),
+        freeLoots: safelySerialize(optimizeGameData(gpLoot || []).slice(0, 12)),
+        freeBetas: safelySerialize(optimizeGameData(gpBeta || []).slice(0, 12)),
+        steamFreeGames: safelySerialize(optimizeGameData(steamGames || []).slice(0, 16)),
         // trendingGames: safelySerialize(trendingGames || []),
-        trendingGames: safelySerialize(trendingGamerPowerGames || []),
+        trendingGames: safelySerialize(optimizeGameData(trendingGamerPowerGames || []).slice(0, 16)),
         totalGames: allGames.length,
       },
       // Her 6 saatte bir yeniden oluştur

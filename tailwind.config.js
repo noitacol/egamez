@@ -3,6 +3,7 @@ module.exports = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx}',
     './components/**/*.{js,ts,jsx,tsx}',
+    './app/**/*.{js,ts,jsx,tsx}',
   ],
   darkMode: 'class',
   theme: {
@@ -64,9 +65,13 @@ module.exports = {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'epic-gradient': 'linear-gradient(145deg, #0078f2, #bc13fe)',
       },
+      screens: {
+        'xs': '480px',
+      },
     },
   },
   plugins: [
-    require('@tailwindcss/line-clamp'),
+    // @tailwindcss/line-clamp eklentisi Tailwind CSS v3.3'ten itibaren varsayılan olarak dahil edildiği için kaldırıldı
+    // require('@tailwindcss/line-clamp'), // Bu satır kaldırıldı
   ],
 } 
