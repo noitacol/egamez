@@ -1,58 +1,83 @@
-import { GetStaticProps } from 'next';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { useState } from 'react';
-import axios from 'axios';
-import UpcomingGames from '@/components/UpcomingGames';
-import { EpicGame } from '@/lib/types';
-import { Container } from '@/components/Container';
+import Layout from '../components/Layout';
+import GameCard from '../components/GameCard';
+import { ExtendedEpicGame } from '../lib/types';
+import { getGamerPowerBetaAsEpicFormat } from "@/lib/gamerpower-api";
 
-interface UpcomingProps {
-  upcomingGames: EpicGame[];
-}
-
-const Upcoming = ({ upcomingGames }: UpcomingProps) => {
-  const [isLoading, setIsLoading] = useState(false);
+export default function UpcomingGames() {
+  const [games, setGames] = useState<ExtendedEpicGame[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    // API'den oyunları getirme işlemi
+    const fetchGames = async () => {
+      try {
+        setLoading(true);
+        
+        // Epic Games API devre dışı bırakıldığı için yerel veri kullanıyoruz
+        // Gerçek bir API çağrısı yerine statik veri ya da başka bir kaynak kullanın
+        setGames([]);
+        setLoading(false);
+      } catch (err) {
+        console.error('Yakında çıkacak oyunlar yüklenirken hata oluştu:', err);
+        setError('Oyunlar yüklenirken bir hata oluştu.');
+        setLoading(false);
+      }
+    };
+
+    fetchGames();
+  }, []);
+
   return (
-    <>
+    <Layout title="Yakında Çıkacak Ücretsiz Oyunlar">
       <Head>
-        <title>Yakında Ücretsiz Olacak Oyunlar | FRPG Gaming</title>
-        <meta name="description" content="Epic Games Store'da yakında ücretsiz olacak oyunların listesi" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <meta name="description" content="Yakında ücretsiz olacak oyunları keşfedin" />
       </Head>
 
-      <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white py-10">
-        <Container>
-          <h1 className="text-3xl font-bold mb-8">Yakında Ücretsiz Olacak Oyunlar</h1>
-          {isLoading ? (
-            <p>Yükleniyor...</p>
-          ) : error ? (
-            <p className="text-red-500">{error}</p>
-          ) : (
-            <UpcomingGames upcomingGames={upcomingGames} />
-          )}
-        </Container>
-      </main>
-    </>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6 pb-2 border-b-2 border-purple-500 inline-block">
+          Yakında Çıkacak Ücretsiz Oyunlar
+        </h1>
+
+        {loading ? (
+          <div className="flex justify-center items-center min-h-[300px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 p-4 rounded-lg">
+            {error}
+          </div>
+        ) : games.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {games.map((game) => (
+              <GameCard key={game.id} game={game} isUpcoming={true} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
+              Şu anda yakında çıkacak ücretsiz oyun bilgisi bulunmuyor. Lütfen daha sonra tekrar kontrol edin.
+            </p>
+          </div>
+        )}
+      </div>
+    </Layout>
   );
-};
+}
 
-export const getStaticProps: GetStaticProps = async () => {
+// Şu anda Epic API devre dışı olduğu için getStaticProps kullanmıyoruz
+// Sayfa tamamen client-side veri alacak veya boş görünecek
+export async function getStaticProps() {
   try {
-    const API_URL = process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:3000/api/upcoming-games'
-      : 'https://epicapi.vercel.app/api/upcoming-games';
-    
-    const response = await axios.get(API_URL);
-    const upcomingGames = response.data;
-
+    // Burada API çağrısı yerine boş bir veri döndür
     return {
       props: {
-        upcomingGames,
+        upcomingGames: [],
       },
-      revalidate: 3600, // 1 saat
+      // Her 6 saatte bir yeniden oluştur
+      revalidate: 21600,
     };
   } catch (error) {
     console.error('getStaticProps error:', error);
@@ -60,9 +85,7 @@ export const getStaticProps: GetStaticProps = async () => {
       props: {
         upcomingGames: [],
       },
-      revalidate: 1800, // 30 dakika
+      revalidate: 3600,
     };
   }
-};
-
-export default Upcoming; 
+} 

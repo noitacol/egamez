@@ -864,17 +864,17 @@ export const getStaticProps: GetStaticProps = async () => {
           title: game.title,
           description: game.description?.substring(0, 150), // Açıklamayı kısalt
           url: game.url,
-          distributionPlatform: game.distributionPlatform,
-          platform: game.platform,
-          isLoot: game.isLoot,
-          isBeta: game.isBeta,
-          offerType: game.offerType,
-          sourceLabel: game.sourceLabel,
-          videos: game.videos,
-          price: game.price,
-          keyImages: game.keyImages?.slice(0, 3), // Sadece ilk 3 görseli al
-          headerImage: game.headerImage,
-          screenshots: game.screenshots?.slice(0, 2), // Sadece ilk 2 ekran görüntüsünü al
+          distributionPlatform: game.distributionPlatform || null,
+          platform: game.platform || null,
+          isLoot: game.isLoot || null,
+          isBeta: game.isBeta || null,
+          offerType: game.offerType || null,
+          sourceLabel: game.sourceLabel || null,
+          videos: game.videos || null,
+          price: game.price || null,
+          keyImages: game.keyImages?.slice(0, 3) || null, // Sadece ilk 3 görseli al
+          headerImage: game.headerImage || null,
+          screenshots: game.screenshots?.slice(0, 2) || null, // Sadece ilk 2 ekran görüntüsünü al
         };
         
         return optimizedGame;
