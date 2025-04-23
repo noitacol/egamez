@@ -1,103 +1,187 @@
-import { EpicGame } from './epic-api';
+/**
+ * Epic Games oyun tip tanımı
+ */
+export interface EpicGame {
+  id: string;
+  namespace?: string;
+  title: string;
+  description?: string;
+  offerType?: string;
+  expiryDate?: string | null;
+  effectiveDate?: string | null;
+  status?: string;
+  isCodeRedemptionOnly?: boolean;
+  keyImages?: Array<{
+    type: string;
+    url: string;
+  }>;
+  seller?: {
+    id: string;
+    name: string;
+  };
+  productSlug?: string;
+  urlSlug?: string;
+  url?: string | null;
+  items?: Array<{
+    id: string;
+    namespace: string;
+  }>;
+  customAttributes?: Array<{
+    key: string;
+    value: string;
+  }>;
+  categories?: Array<{
+    path: string;
+    name: string;
+  }>;
+  price?: {
+    totalPrice: {
+      discountPrice: number;
+      originalPrice: number;
+      voucherDiscount?: number;
+      discount?: number;
+      currencyCode?: string;
+      currencyInfo?: {
+        decimals: number;
+      };
+      fmtPrice?: {
+        originalPrice: string;
+        discountPrice: string;
+        intermediatePrice?: string;
+      };
+    };
+  };
+  promotions?: {
+    promotionalOffers?: Array<{
+      promotionalOffers: Array<{
+        startDate: string;
+        endDate: string;
+        discountSetting: {
+          discountType: string;
+          discountPercentage: number;
+        };
+      }>;
+    }>;
+    upcomingPromotionalOffers?: Array<{
+      promotionalOffers: Array<{
+        startDate: string;
+        endDate: string;
+        discountSetting: {
+          discountType: string;
+          discountPercentage: number;
+        };
+      }>;
+    }>;
+  };
+  releaseDate?: string;
+  sourceLabel?: string;
+}
 
 /**
  * Epic Games ve diğer platformlar için genişletilmiş tip tanımı
  * Temel EpicGame tipine ek özellikler ekler
  */
 export interface ExtendedEpicGame extends Omit<EpicGame, 'categories' | 'isCodeRedemptionOnly' | 'offerType'> {
-  /** Oyunun kaynağı (epic, steam vs.) */
-  source?: string;
+  /** Oyun verisinin kaynağı */
+  source?: 'epic' | 'steam' | 'gamerpower' | 'custom';
   
-  /** Kaynak için gösterilecek etiket */
+  /** Kaynak etiketi (görünür metin) */
   sourceLabel?: string;
   
-  /** Oyunun yayınlandığı platform */
+  /** Dağıtım platformu */
+  distributionPlatform?: string;
+  
+  /** Desteklenen platformlar */
   platform?: string;
   
-  /** Dağıtım platformu (epic, steam, xbox, playstation vs.) */
-  distributionPlatform?: 'epic' | 'steam' | 'xbox' | 'playstation' | 'nintendo' | 'pc' | 'android' | 'ios' | 'other' | string;
-  
-  /** Ücretsiz olup olmadığı */
+  /** Oyun ücretsiz mi? */
   isFree?: boolean;
   
-  /** Yakında ücretsiz olacak mı */
+  /** Oyun yakında ücretsiz mi olacak? */
   isUpcoming?: boolean;
   
-  /** Popüler/trend mi */
-  isTrending?: boolean;
-  
-  /** İndirimde mi */
+  /** Oyun indirimde mi? */
   isOnSale?: boolean;
+  
+  /** Oyun loot mu? */
+  isLoot?: boolean;
+  
+  /** Oyun beta mı? */
+  isBeta?: boolean;
   
   /** Sadece kupon kodu ile mi kullanılabilir - EpicGame'den override ediyoruz */
   isCodeRedemptionOnly?: boolean;
   
-  /** Oyun içi ekstra içerik mi (skin, DLC vs.) */
-  isLoot?: boolean;
+  /** Kalan indirim süresi (milisaniye) */
+  timeLeft?: number;
   
-  /** Beta test için mi */
-  isBeta?: boolean;
+  /** Oyun için hesaplanmış ölçek */
+  scale?: string;
   
   /** Promosyon tipi - EpicGame'den override ediyoruz */
-  offerType?: string;
+  offerType?: string | 'free' | 'loot' | 'beta';
   
-  /** Promosyon bitiş tarihi */
-  endDate?: string | null;
+  /** Oyun süresi */
+  worth?: string;
   
-  /** Oyunun URL'si */
-  url: string | null;
+  /** CPU gereksinimleri */
+  minimumCPU?: string;
   
-  /** Mağaza URL'si */
-  storeUrl?: string;
+  /** RAM gereksinimleri */
+  minimumRAM?: string;
   
-  /** Oyunun yayıncısı */
-  publisher?: string;
+  /** Disk alanı gereksinimleri */
+  minimumStorage?: string;
   
-  /** MetaCritic puanı */
+  /** Ekran kartı gereksinimleri */
+  minimumGraphics?: string;
+  
+  /** İşletim sistemi gereksinimleri */
+  minimumOS?: string;
+  
+  /** Oyun değerlendirme puanı (100 üzerinden) */
+  score?: number;
+  
+  /** Oyun değerlendirmesi (örn: "Çok Olumlu", "Karma") */
+  gameRating?: string;
+  
+  /** Yanıt sayısı */
+  responseCount?: number;
+
+  /** Video içerikleri */
+  videos?: {
+    url: string;
+    type?: string;
+    thumbnailUrl?: string;
+  }[];
+  
+  /** Ekran görüntüleri */
+  screenshots?: {
+    url: string;
+    id?: string;
+    thumbnailUrl?: string;
+  }[];
+  
+  /** Steam için header görseli */
+  headerImage?: string;
+  
+  /** Kategoriler - EpicGame'den devraldık ancak override ediyoruz */
+  categories?: string[] | { path: string; name: string }[];
+  
+  /** Oyun türleri */
+  genres?: {
+    id: string;
+    name: string;
+  }[];
+  
+  /** Oyuncu sayısı */
+  players?: string;
+  
+  /** Metacritic puanı */
   metacritic?: {
     score: number;
     url: string;
-  } | null;
-  
-  /** Oyunun videoları */
-  videos?: Array<{
-    url: string;
-    thumbnail?: string;
-    type?: string;
-  }>;
-  
-  /** İlgili platform için App ID */
-  platformAppId?: string;
-  
-  /** Steam için App ID */
-  steamAppId?: string;
-  
-  /** Başlık resmi */
-  headerImage?: string;
-  
-  /** Ekran görüntüleri */
-  screenshots?: Array<{
-    url: string;
-    type?: string;
-  }>;
-  
-  /** Hangi platformlarda çalıştığı */
-  platformName?: string;
-  
-  /** Geçici ücretsiz oyun mu */
-  temporaryFreeGame?: boolean;
-  
-  /** Platformların listesi */
-  platformList?: string[];
-  
-  /** Harici kaynaklardan gelen oyunun orijinal değeri (örn. $19.99) */
-  worth?: string;
-  
-  /** Kategoriler - EpicGame'den devraldık ancak override ediyoruz */
-  categories?: {
-    path: string;
-    name: string;
-  }[];
+  };
 }
 
 /**
@@ -148,5 +232,19 @@ export interface TotalPrice {
 
 // Fiyat bilgisi
 export interface Price {
-  totalPrice: TotalPrice;
+  totalPrice: {
+    discountPrice: number;
+    originalPrice: number;
+    voucherDiscount?: number;
+    discount?: number;
+    currencyCode?: string;
+    currencyInfo?: {
+      decimals: number;
+    };
+    fmtPrice?: {
+      originalPrice: string;
+      discountPrice: string;
+      intermediatePrice?: string;
+    };
+  };
 } 
