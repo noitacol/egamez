@@ -257,6 +257,20 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
       url: game.image
     }
   ];
+
+  // Video varsa ekle, yoksa boş dizi kullan
+  const videoArray: { url: string; type?: string; thumbnailUrl?: string }[] = [];
+  
+  // Oyun tipine göre offerType'ı belirle
+  const getOfferType = (type: string): string => {
+    if (type.toLowerCase().includes('loot') || type.toLowerCase().includes('dlc')) {
+      return 'loot';
+    } else if (type.toLowerCase().includes('beta')) {
+      return 'beta';
+    } else {
+      return 'free';
+    }
+  };
   
   // Platforma göre dağıtım platformunu belirle
   const getPlatformInfo = (platformStr: string) => {
@@ -269,72 +283,63 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
     if (platformsLower.includes('steam')) {
       return {
         distributionPlatform: 'steam',
-        platform: 'Steam',
-        platformList: platformArray
+        platform: 'Steam'
       };
     } 
     // Epic Games platform kontrolü
     else if (platformsLower.includes('epic')) {
       return {
         distributionPlatform: 'epic',
-        platform: 'Epic Games',
-        platformList: platformArray
+        platform: 'Epic Games'
       };
     } 
     // PlayStation platform kontrolü
     else if (platformsLower.includes('playstation') || platformsLower.includes('ps4') || platformsLower.includes('ps5')) {
       return {
         distributionPlatform: 'playstation',
-        platform: 'PlayStation',
-        platformList: platformArray
+        platform: 'PlayStation'
       };
     } 
     // Xbox platform kontrolü
     else if (platformsLower.includes('xbox')) {
       return {
         distributionPlatform: 'xbox',
-        platform: 'Xbox',
-        platformList: platformArray
+        platform: 'Xbox'
       };
     } 
     // Nintendo kontrolü
     else if (platformsLower.includes('nintendo') || platformsLower.includes('switch')) {
       return {
         distributionPlatform: 'nintendo',
-        platform: 'Nintendo Switch',
-        platformList: platformArray
+        platform: 'Nintendo Switch'
       };
     } 
     // Genel PC kontrolü
     else if (platformsLower.includes('pc')) {
       return {
         distributionPlatform: 'pc',
-        platform: 'PC',
-        platformList: platformArray
+        platform: 'PC'
       };
     } 
     // Android kontrolü
     else if (platformsLower.includes('android')) {
       return {
         distributionPlatform: 'android',
-        platform: 'Android',
-        platformList: platformArray
+        platform: 'Android'
       };
     } 
     // iOS kontrolü
     else if (platformsLower.includes('ios')) {
       return {
         distributionPlatform: 'ios',
-        platform: 'iOS',
-        platformList: platformArray
+        platform: 'iOS'
       };
     } 
     // Diğer platformlar
     else {
       return {
         distributionPlatform: 'other',
-        platform: platformStr || 'Diğer',
-        platformList: platformArray
+        platform: platformStr || 'Diğer'
       };
     }
   };
@@ -357,15 +362,11 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
     intermediatePrice: "$0.00"
   };
   
+  // GamerPower'dan gelen veriyi Epic Games formatına dönüştür
   return {
-    id: `gp-${game.id}`,
+    id: game.id.toString(),
     title: game.title,
-    namespace: `gamerpower-${game.id}`,
     description: game.description,
-    effectiveDate: game.published_date,
-    expiryDate: game.end_date,
-    status: "ACTIVE",
-    offerType: game.type.toLowerCase(),
     keyImages,
     price: {
       totalPrice: {
@@ -380,47 +381,37 @@ export function convertGamerPowerToEpicFormat(game: GamerPowerGame): ExtendedEpi
         fmtPrice
       }
     },
-    source: platformInfo.distributionPlatform,
-    sourceLabel: sourceLabel,
+    source: 'gamerpower', // Kaynak her zaman 'gamerpower' olacak
+    sourceLabel,
     distributionPlatform: platformInfo.distributionPlatform,
-    platformList: platformInfo.platformList,
     platform: platformInfo.platform,
-    endDate: game.end_date,
-    url: game.open_giveaway_url,
+    url: game.open_giveaway_url || game.gamerpower_url,
+    isFree: true,
+    isLoot: game.type === 'Game Loot' || game.type.includes('DLC'),
+    isBeta: game.type === 'Beta' || game.type.includes('Beta'),
+    offerType: getOfferType(game.type),
+    videos: videoArray,
+    worth: game.worth,
+    namespace: '',
+    status: 'ACTIVE',
+    effectiveDate: game.published_date,
+    expiryDate: game.end_date,
     categories: [{
       path: game.type.toLowerCase(),
       name: game.type
     }],
-    isFree: true,
-    isOnSale: true,
-    publisher: '',
     seller: {
-      id: `${platformInfo.distributionPlatform}-${game.id}`,
-      name: sourceLabel
+      id: '1',
+      name: 'GamerPower'
     },
-    productSlug: `${platformInfo.distributionPlatform}-${game.id}`,
-    urlSlug: `${platformInfo.distributionPlatform}-${game.id}`,
-    promotions: {
-      promotionalOffers: [
-        {
-          promotionalOffers: [
-            {
-              startDate: game.published_date,
-              endDate: game.end_date || '',
-              discountSetting: {
-                discountType: "PERCENTAGE",
-                discountPercentage: 100
-              }
-            }
-          ]
-        }
-      ],
-      upcomingPromotionalOffers: []
-    },
-    isCodeRedemptionOnly: false,
+    productSlug: '',
+    urlSlug: '',
     items: [],
     customAttributes: [],
-    worth: game.worth
+    minimumOS: game.platforms.includes('PC') ? 'Windows' : '',
+    timeLeft: game.end_date 
+      ? new Date(game.end_date).getTime() - Date.now() 
+      : undefined
   };
 }
 
