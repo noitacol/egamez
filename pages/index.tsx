@@ -319,11 +319,12 @@ export default function Home({
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
+      <main className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black text-white overflow-hidden">
         {/* Hero Banner - Featured Games Slider */}
         {featuredGames.length > 0 && (
-          <section className="relative w-full h-[500px] md:h-[600px] overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-gray-900 z-10"></div>
+          <section className="hero-banner relative w-full h-[500px] md:h-[600px] overflow-hidden group">
+            {/* Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-gray-900 z-10"></div>
             
             {/* Slider Görselleri ve YouTube Videoları */}
             {featuredGames.map((game, index) => (
@@ -372,10 +373,10 @@ export default function Home({
             ))}
             
             {/* Slider İçeriği */}
-            <div className="container mx-auto h-full flex flex-col justify-end pb-8 md:pb-16 relative z-20">
+            <div className="container mx-auto h-full flex flex-col justify-end pb-8 md:pb-16 relative z-20 px-4">
               {/* Platform Badge */}
-              <div className="mb-4">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-lg ${
+              <div className="mb-4 fade-in-up">
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-lg shadow-lg ${
                   featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
                     ? 'bg-blue-600/80' 
                     : 'bg-purple-600/80'
@@ -390,39 +391,41 @@ export default function Home({
               </div>
               
               {/* Oyun Başlığı */}
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] animate-fade-in-right">
-                {featuredGames[currentFeaturedIndex]?.title}
-              </h1>
-              
-              {/* Oyun Açıklaması */}
-              <p className="text-sm md:text-base lg:text-lg max-w-3xl mb-4 md:mb-6 text-gray-100 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] animate-fade-in-up backdrop-blur-[2px] bg-black/20 p-3 rounded-lg">
-                {featuredGames[currentFeaturedIndex]?.description?.slice(0, 150)}
-                {featuredGames[currentFeaturedIndex]?.description && 
-                  featuredGames[currentFeaturedIndex]?.description.length > 150 ? '...' : ''}
-              </p>
-              
-              {/* Butonlar */}
-              <div className="flex flex-wrap gap-3 animate-fade-in-up">
-                {featuredGames[currentFeaturedIndex]?.url && (
-                  <Link 
-                    href={featuredGames[currentFeaturedIndex].url || '#'} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
+              <div className="hero-content mb-4 max-w-3xl fade-in-up">
+                <h1 className="hero-title text-shadow-lg mb-2 md:mb-4">
+                  {featuredGames[currentFeaturedIndex]?.title}
+                </h1>
+                
+                {/* Oyun Açıklaması */}
+                <p className="text-sm md:text-base lg:text-lg text-gray-100 text-shadow mb-4 md:mb-6 line-clamp-3">
+                  {featuredGames[currentFeaturedIndex]?.description?.slice(0, 200)}
+                  {featuredGames[currentFeaturedIndex]?.description && 
+                    featuredGames[currentFeaturedIndex]?.description.length > 200 ? '...' : ''}
+                </p>
+                
+                {/* Butonlar */}
+                <div className="flex flex-wrap gap-3">
+                  {featuredGames[currentFeaturedIndex]?.url && (
+                    <Link 
+                      href={featuredGames[currentFeaturedIndex].url || '#'} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
+                      tabIndex={0}
+                    >
+                      <span>Görüntüle</span>
+                      <FaExternalLinkAlt />
+                    </Link>
+                  )}
+                  <Link
+                    href="/games"
+                    className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
                     tabIndex={0}
                   >
-                    <span>Görüntüle</span>
-                    <FaExternalLinkAlt />
+                    <span>Tüm Oyunlar</span>
+                    <MdNavigateNext />
                   </Link>
-                )}
-                <Link
-                  href="/games"
-                  className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
-                  tabIndex={0}
-                >
-                  <span>Tüm Oyunlar</span>
-                  <MdNavigateNext />
-                </Link>
+                </div>
               </div>
               
               {/* Slider Kontrolleri */}
@@ -455,7 +458,7 @@ export default function Home({
                       className={`transition-all duration-300 rounded-full shadow-md ${
                         index === currentFeaturedIndex 
                           ? 'w-12 h-3 bg-white/90' 
-                          : 'w-3 h-3 bg-white/40 hover:bg-white/60'
+                        : 'w-3 h-3 bg-white/40 hover:bg-white/60'
                       }`}
                       aria-label={`Oyun ${index + 1}`}
                     />
@@ -467,15 +470,17 @@ export default function Home({
         )}
 
         {/* Platform Selection */}
-        <section className="w-full mx-auto py-6 md:py-12 px-4">
-          <h2 className="text-2xl font-bold mb-6">Platformlar</h2>
+        <section className="modern-section container mx-auto px-4 py-10 lg:py-16">
+          <h2 className="modern-section-title">
+            Platformlar
+          </h2>
           
-          {/* Mobile için yatay kaydırılabilir menü, tablet/desktop için grid */}
+          {/* Mobile için yatay kaydırılabilir menü */}
           <div className="flex md:hidden overflow-x-auto scrollbar-hide pb-4 -mx-1 space-x-2">
             <button
               onClick={() => setActivePlatform("all")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
-                activePlatform === "all" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button min-w-[90px] p-3 ${
+                activePlatform === "all" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Tüm platformlar için filtrele"
             >
@@ -485,8 +490,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("epic")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
-                activePlatform === "epic" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button min-w-[90px] p-3 ${
+                activePlatform === "epic" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Epic Games için filtrele"
             >
@@ -496,8 +501,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("steam")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
-                activePlatform === "steam" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button min-w-[90px] p-3 ${
+                activePlatform === "steam" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Steam için filtrele"
             >
@@ -507,8 +512,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("pc")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
-                activePlatform === "pc" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button min-w-[90px] p-3 ${
+                activePlatform === "pc" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="PC için filtrele"
             >
@@ -518,8 +523,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("playstation")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
-                activePlatform === "playstation" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button min-w-[90px] p-3 ${
+                activePlatform === "playstation" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="PlayStation için filtrele"
             >
@@ -529,8 +534,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("xbox")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
-                activePlatform === "xbox" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button min-w-[90px] p-3 ${
+                activePlatform === "xbox" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Xbox için filtrele"
             >
@@ -540,8 +545,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("switch")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
-                activePlatform === "switch" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button min-w-[90px] p-3 ${
+                activePlatform === "switch" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Nintendo Switch için filtrele"
             >
@@ -551,8 +556,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("android")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
-                activePlatform === "android" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button min-w-[90px] p-3 ${
+                activePlatform === "android" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Android için filtrele"
             >
@@ -562,8 +567,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("ios")}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-colors whitespace-nowrap min-w-[90px] ${
-                activePlatform === "ios" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button min-w-[90px] p-3 ${
+                activePlatform === "ios" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="iOS için filtrele"
             >
@@ -573,11 +578,11 @@ export default function Home({
           </div>
           
           {/* Tablet ve Desktop için Grid Layout */}
-          <div className="hidden md:grid grid-cols-4 lg:grid-cols-8 gap-3">
+          <div className="hidden md:grid grid-cols-4 lg:grid-cols-8 gap-3 lg:gap-4">
             <button
               onClick={() => setActivePlatform("all")}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
-                activePlatform === "all" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button p-4 ${
+                activePlatform === "all" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Tüm platformlar için filtrele"
             >
@@ -587,8 +592,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("epic")}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
-                activePlatform === "epic" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button p-4 ${
+                activePlatform === "epic" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Epic Games için filtrele"
             >
@@ -598,8 +603,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("steam")}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
-                activePlatform === "steam" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button p-4 ${
+                activePlatform === "steam" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Steam için filtrele"
             >
@@ -609,8 +614,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("pc")}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
-                activePlatform === "pc" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button p-4 ${
+                activePlatform === "pc" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="PC için filtrele"
             >
@@ -620,8 +625,8 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("playstation")}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
-                activePlatform === "playstation" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button p-4 ${
+                activePlatform === "playstation" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="PlayStation için filtrele"
             >
@@ -631,181 +636,166 @@ export default function Home({
             
             <button
               onClick={() => setActivePlatform("xbox")}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
-                activePlatform === "xbox" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button p-4 ${
+                activePlatform === "xbox" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Xbox için filtrele"
             >
               <FaXbox className="text-3xl mb-2" />
-              <span>Xbox</span>
+              <span className="text-sm">Xbox</span>
             </button>
             
             <button
               onClick={() => setActivePlatform("switch")}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
-                activePlatform === "switch" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button p-4 ${
+                activePlatform === "switch" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Nintendo Switch için filtrele"
             >
               <SiNintendoswitch className="text-3xl mb-2" />
-              <span>Switch</span>
+              <span className="text-sm">Switch</span>
             </button>
             
             <button
               onClick={() => setActivePlatform("android")}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
-                activePlatform === "android" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button p-4 ${
+                activePlatform === "android" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="Android için filtrele"
             >
               <SiAndroid className="text-3xl mb-2" />
-              <span>Android</span>
+              <span className="text-sm">Android</span>
             </button>
             
             <button
               onClick={() => setActivePlatform("ios")}
-              className={`flex flex-col items-center justify-center p-4 rounded-lg transition-colors ${
-                activePlatform === "ios" ? "bg-gradient-to-r from-blue-600 to-blue-800 text-white" : "bg-gray-800 hover:bg-gray-700"
+              className={`platform-button p-4 ${
+                activePlatform === "ios" ? "platform-button-active" : "platform-button-inactive"
               }`}
               aria-label="iOS için filtrele"
             >
               <SiApple className="text-3xl mb-2" />
-              <span>iOS</span>
+              <span className="text-sm">iOS</span>
             </button>
           </div>
         </section>
 
         {/* Game Categories */}
-        <section className="py-6 md:py-12 relative overflow-hidden">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl lg:text-3xl font-bold mb-4 md:mb-6 flex items-center gap-2">
-              <FaGamepad />
-              <span>Platformlar</span>
-            </h2>
-            
-            {/* Game Categories */}
-            <div className="flex flex-wrap gap-3 mb-6">
-              <button
-                className={`${getTabClass('free')} px-4 py-2 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105 shadow-md`}
-                onClick={() => setActiveTab('free')}
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('free')}
-              >
-                <BiGift className="h-4 w-4" />
-                <span>Ücretsiz Oyunlar</span>
-                <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
-                  {getCategoryCount('free')}
-                </span>
-              </button>
+        <section className="modern-section container mx-auto px-4 py-10 lg:py-16">
+          <h2 className="modern-section-title">
+            <FaGamepad className="inline-block mr-2" />
+            Oyun Kategorileri
+          </h2>
+          
+          {/* Game Categories Buttons */}
+          <div className="flex flex-wrap gap-3 mb-6">
+            <button
+              className={`tab-button ${activeTab === 'free' ? 'tab-button-active' : 'tab-button-inactive'}`}
+              onClick={() => setActiveTab('free')}
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && setActiveTab('free')}
+            >
+              <BiGift className="h-4 w-4" />
+              <span>Ücretsiz Oyunlar</span>
+              <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
+                {getCategoryCount('free')}
+              </span>
+            </button>
 
-              {/* Upcoming Epic Games sekmesi geçici olarak devre dışı bırakıldı */}
-              {/*
-              <button
-                className={`${getTabClass('upcoming')} px-4 py-2 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105 shadow-md`}
-                onClick={() => setActiveTab('upcoming')}
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('upcoming')}
-              >
-                <MdOutlineAccessTime className="h-4 w-4" />
-                <span>Yakında</span>
-                <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
-                  {getCategoryCount('upcoming')}
-                </span>
-              </button>
-              */}
+            <button
+              className={`tab-button ${activeTab === 'trending' ? 'tab-button-active' : 'tab-button-inactive'}`}
+              onClick={() => setActiveTab('trending')}
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && setActiveTab('trending')}
+            >
+              <FaFire className="h-4 w-4" />
+              <span>Trend</span>
+              <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
+                {getCategoryCount('trending')}
+              </span>
+            </button>
 
-              <button
-                className={`${getTabClass('trending')} px-4 py-2 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105 shadow-md`}
-                onClick={() => setActiveTab('trending')}
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('trending')}
-              >
-                <FaFire className="h-4 w-4" />
-                <span>Trend</span>
-                <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
-                  {getCategoryCount('trending')}
-                </span>
-              </button>
+            <button
+              className={`tab-button ${activeTab === 'loot' ? 'tab-button-active' : 'tab-button-inactive'}`}
+              onClick={() => setActiveTab('loot')}
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && setActiveTab('loot')}
+            >
+              <BsGift className="h-4 w-4" />
+              <span>Loot</span>
+              <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
+                {getCategoryCount('loot')}
+              </span>
+            </button>
 
-              <button
-                className={`${getTabClass('loot')} px-4 py-2 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105 shadow-md`}
-                onClick={() => setActiveTab('loot')}
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('loot')}
-              >
-                <BsGift className="h-4 w-4" />
-                <span>Loot</span>
-                <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
-                  {getCategoryCount('loot')}
-                </span>
-              </button>
+            <button
+              className={`tab-button ${activeTab === 'beta' ? 'tab-button-active' : 'tab-button-inactive'}`}
+              onClick={() => setActiveTab('beta')}
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && setActiveTab('beta')}
+            >
+              <RiTestTubeFill className="h-4 w-4" />
+              <span>Beta</span>
+              <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
+                {getCategoryCount('beta')}
+              </span>
+            </button>
+          </div>
 
-              <button
-                className={`${getTabClass('beta')} px-4 py-2 rounded-lg flex items-center gap-2 transition-transform transform hover:scale-105 shadow-md`}
-                onClick={() => setActiveTab('beta')}
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setActiveTab('beta')}
-              >
-                <RiTestTubeFill className="h-4 w-4" />
-                <span>Beta</span>
-                <span className="ml-1 inline-flex items-center justify-center h-5 min-w-5 px-1 rounded-full bg-white/20 text-xs">
-                  {getCategoryCount('beta')}
-                </span>
-              </button>
+          {/* Sorting Controls */}
+          <div className="flex flex-wrap justify-between gap-3 mb-6">
+            <div className="flex gap-2 bg-gray-800 p-1 rounded-lg shadow-inner">
+              <ToggleGroup type="single" value={sort} onValueChange={(value) => setSort(value as any)} className="flex">
+                <ToggleGroupItem 
+                  value="none" 
+                  aria-label="Varsayılan Sıralama" 
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setSort("none")}
+                  className="bg-gray-700 text-xs px-3 py-1 rounded-md data-[state=on]:bg-blue-600"
+                >
+                  <span className="text-xs">Varsayılan</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem 
+                  value="title" 
+                  aria-label="İsme Göre Sırala" 
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setSort("title")}
+                  className="bg-gray-700 text-xs px-3 py-1 rounded-md data-[state=on]:bg-blue-600"
+                >
+                  <span className="text-xs">İsme Göre</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem 
+                  value="price" 
+                  aria-label="Fiyata Göre Sırala" 
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setSort("price")}
+                  className="bg-gray-700 text-xs px-3 py-1 rounded-md data-[state=on]:bg-blue-600"
+                >
+                  <span className="text-xs">Fiyata Göre</span>
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
+          </div>
 
-            {/* Sorting Controls */}
-            <div className="flex flex-wrap justify-between gap-3 mb-6">
-              <div className="flex gap-2">
-                <ToggleGroup type="single" value={sort} onValueChange={(value) => setSort(value as any)}>
-                  <ToggleGroupItem 
-                    value="none" 
-                    aria-label="Varsayılan Sıralama" 
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && setSort("none")}
-                  >
-                    <span className="text-xs">Varsayılan</span>
-                  </ToggleGroupItem>
-                  <ToggleGroupItem 
-                    value="title" 
-                    aria-label="İsme Göre Sırala" 
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && setSort("title")}
-                  >
-                    <span className="text-xs">İsme Göre</span>
-                  </ToggleGroupItem>
-                  <ToggleGroupItem 
-                    value="price" 
-                    aria-label="Fiyata Göre Sırala" 
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && setSort("price")}
-                  >
-                    <span className="text-xs">Fiyata Göre</span>
-                  </ToggleGroupItem>
-                </ToggleGroup>
+          {/* Games Grid */}
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-5 md:gap-6">
+            {sortedGames.length > 0 ? (
+              sortedGames.map((game) => (
+                <GameCard 
+                  key={`${game.id}-${game.title}`} 
+                  game={game} 
+                  isFree={activeTab === 'free'} 
+                  isUpcoming={activeTab === 'upcoming'} 
+                  trending={activeTab === 'trending'}
+                  isLoot={activeTab === 'loot'}
+                  isBeta={activeTab === 'beta'}
+                />
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center">
+                <p className="text-lg sm:text-xl text-gray-400">Bu kategoride şu anda oyun bulunmuyor.</p>
               </div>
-            </div>
-
-            {/* Games Grid */}
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
-              {sortedGames.length > 0 ? (
-                sortedGames.map((game) => (
-                  <GameCard 
-                    key={`${game.id}-${game.title}`} 
-                    game={game} 
-                    isFree={activeTab === 'free'} 
-                    isUpcoming={activeTab === 'upcoming'} 
-                    trending={activeTab === 'trending'}
-                    isLoot={activeTab === 'loot'}
-                    isBeta={activeTab === 'beta'}
-                  />
-                ))
-              ) : (
-                <div className="col-span-full py-8 sm:py-12 text-center">
-                  <p className="text-lg sm:text-xl text-gray-400">Bu kategoride şu anda oyun bulunmuyor.</p>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </section>
       </main>

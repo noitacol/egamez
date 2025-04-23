@@ -58,6 +58,96 @@
   .highlight::before {
     @apply content-[''] absolute w-full h-3 -z-10 bottom-0 left-0 bg-epicblue/20 dark:bg-epicaccent/30 rounded;
   }
+
+  /* Modern Game Card Styling */
+  .game-card {
+    @apply relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1;
+  }
+
+  .game-card-image {
+    @apply relative h-48 overflow-hidden;
+  }
+
+  .game-card-badge {
+    @apply absolute top-2 right-2 px-2 py-1 text-xs font-bold rounded-full z-10 bg-gradient-to-r;
+  }
+
+  .game-card-content {
+    @apply p-4;
+  }
+
+  .game-card-title {
+    @apply font-bold text-lg line-clamp-1 mb-1;
+  }
+
+  .game-card-description {
+    @apply text-sm text-gray-300 line-clamp-2 mb-3;
+  }
+
+  /* Modern Section Styling */
+  .modern-section {
+    @apply relative overflow-hidden py-10 border-b border-gray-800;
+  }
+
+  .modern-section-title {
+    @apply text-2xl md:text-3xl font-bold mb-8 pb-2 relative inline-block;
+  }
+
+  .modern-section-title::after {
+    @apply content-[''] absolute bottom-0 left-0 h-1 w-3/4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full;
+  }
+
+  /* Hero Banner Enhancement */
+  .hero-banner {
+    @apply relative overflow-hidden;
+  }
+
+  .hero-content {
+    @apply relative z-10 backdrop-blur-sm bg-black/30 rounded-lg px-6 py-4 max-w-3xl border border-white/10;
+  }
+
+  .hero-title {
+    @apply text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300;
+  }
+
+  /* Platform Button Styling */
+  .platform-button {
+    @apply flex flex-col items-center justify-center rounded-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1;
+  }
+
+  .platform-button-active {
+    @apply bg-gradient-to-br from-blue-600 to-purple-700 text-white shadow-lg;
+  }
+
+  .platform-button-inactive {
+    @apply bg-gray-800 hover:bg-gray-700 text-white shadow-md;
+  }
+
+  /* Tab Button Styling */
+  .tab-button {
+    @apply px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 shadow-md;
+  }
+
+  .tab-button-active {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 text-white transform scale-105;
+  }
+
+  .tab-button-inactive {
+    @apply bg-gray-800 text-gray-300 hover:bg-gray-700;
+  }
+
+  /* Animations */
+  .fade-in-up {
+    animation: fadeInUp 0.8s ease forwards;
+  }
+
+  .fade-in-right {
+    animation: fadeInRight 0.8s ease forwards;
+  }
+
+  .pulse-slow {
+    animation: pulseSlow 3s infinite;
+  }
 }
 
 @layer utilities {
@@ -68,5 +158,68 @@
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none; /* Chrome, Safari ve Opera */
+  }
+
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
+  }
+
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}
+
+/* Keyframe animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulseSlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
   }
 } 
