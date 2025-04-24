@@ -1,5 +1,5 @@
 import { GetStaticProps } from "next";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,7 +22,7 @@ import { GiRaceCar, GiSwordman, GiSpellBook, GiMountainRoad, GiChessKnight } fro
 import { Container } from "@/components/Container";
 import { Button } from "@/components/ui/button";
 import { MdNavigateNext, MdNavigateBefore, MdOutlineAccessTime } from "react-icons/md";
-import { BsGift, BsWindows } from "react-icons/bs";
+import { BsGift, BsWindows, BsClock } from "react-icons/bs";
 import { RiTestTubeFill } from "react-icons/ri";
 import { Toggle } from "@/components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -40,6 +40,27 @@ interface HomeProps {
   trendingGames: ExtendedEpicGame[];
   totalGames: number;
 }
+
+// Kalan süreyi hesaplama fonksiyonu
+const calculateTimeLeft = (expiryDate: string | null | undefined): { days: number; hours: number; minutes: number; seconds: number; isExpired: boolean } => {
+  if (!expiryDate) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true };
+  }
+
+  const difference = new Date(expiryDate).getTime() - new Date().getTime();
+  
+  if (difference <= 0) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true };
+  }
+
+  return {
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((difference / 1000 / 60) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+    isExpired: false
+  };
+};
 
 export default function Home({ 
   // Epic API oyunları geçici olarak kaldırıldı
@@ -81,16 +102,27 @@ export default function Home({
       return (platform === 'steam' || platform === 'epic') && !isLoot && !isBeta;
     });
     
-    // Öne çıkan oyunların listesini benzersiz olacak şekilde oluştur
-    const uniqueGames = steamAndEpicGames.filter((game, index, self) => 
-      index === self.findIndex(g => g.id === game.id)
-    );
+    // Test amaçlı olarak bazı oyunlara son kullanma tarihi atayalım (gerçek uygulamada burası API'dan gelir)
+    const gamesWithExpiry = steamAndEpicGames.map(game => {
+      // Tüm oyunlara farklı süreler verelim
+      if (!game.expiryDate) {
+        // Rastgele 1-10 gün arasında son kullanma süresi ekleyelim
+        const randomDays = Math.floor(Math.random() * 10) + 1;
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + randomDays);
+        
+        return {
+          ...game,
+          expiryDate: expiryDate.toISOString()
+        };
+      }
+      return game;
+    });
 
     // Videosu olan oyunları öncelikli olarak al
-    const gamesWithVideos = uniqueGames.filter(game => game.videos && game.videos.length > 0);
-    const gamesWithoutVideos = uniqueGames.filter(game => !game.videos || game.videos.length === 0);
+    const gamesWithVideos = gamesWithExpiry.filter(game => game.videos && game.videos.length > 0);
+    const gamesWithoutVideos = gamesWithExpiry.filter(game => !game.videos || game.videos.length === 0);
     
-    // Videosu olan oyunları önce, olmayanları sonra göster
     // Her iki grubu da rastgele sırala
     const shuffledWithVideos = [...gamesWithVideos].sort(() => 0.5 - Math.random());
     const shuffledWithoutVideos = [...gamesWithoutVideos].sort(() => 0.5 - Math.random());
@@ -442,6 +474,74 @@ export default function Home({
     return videoId;
   };
 
+  // CountdownTimer bileşeni - hero banner altında ve Home fonksiyonu dışında tanımla
+  const CountdownTimer = ({ expiryDate }: { expiryDate: string | null | undefined }) => {
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(expiryDate));
+
+    useEffect(() => {
+      if (!expiryDate) return;
+
+      // Her saniye zamanı güncelle
+      const timer = setInterval(() => {
+        setTimeLeft(calculateTimeLeft(expiryDate));
+      }, 1000);
+
+      // Cleanup
+      return () => clearInterval(timer);
+    }, [expiryDate]);
+
+    // Süresi dolmuşsa gösterme
+    if (timeLeft.isExpired) {
+      return null;
+    }
+
+    // Zaman formatlarını iki haneli yap
+    const formatTime = (time: number): string => {
+      return time < 10 ? `0${time}` : `${time}`;
+    };
+
+    return (
+      <div className="mb-5">
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center gap-2 text-amber-400 font-medium">
+            <BsClock className="h-4 w-4" />
+            <span>Kampanya süresi</span>
+          </div>
+          
+          <div className="flex gap-3 text-white">
+            <div className="flex flex-col items-center">
+              <div className="countdown-box">
+                <span className="countdown-value">{formatTime(timeLeft.days)}</span>
+              </div>
+              <span className="countdown-label">Gün</span>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="countdown-box">
+                <span className="countdown-value">{formatTime(timeLeft.hours)}</span>
+              </div>
+              <span className="countdown-label">Saat</span>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="countdown-box">
+                <span className="countdown-value">{formatTime(timeLeft.minutes)}</span>
+              </div>
+              <span className="countdown-label">Dakika</span>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="countdown-box">
+                <span className="countdown-value countdown-seconds">{formatTime(timeLeft.seconds)}</span>
+              </div>
+              <span className="countdown-label">Saniye</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <Head>
@@ -524,27 +624,33 @@ export default function Home({
                 </span>
               </div>
               
-              {/* Oyun Başlığı */}
-              <div className="hero-content mb-4 max-w-3xl fade-in-up">
-                <h1 className="hero-title text-shadow-lg mb-2 md:mb-4">
+              {/* Modern Hero Content - Glass effect */}
+              <div className="hero-content backdrop-blur-md bg-black/40 rounded-xl border border-white/10 p-6 md:p-8 max-w-3xl shadow-2xl fade-in-up">
+                {/* Oyun Başlığı */}
+                <h1 className="hero-title text-shadow-lg mb-3 md:mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-200">
                   {featuredGames[currentFeaturedIndex]?.title}
                 </h1>
                 
                 {/* Oyun Açıklaması */}
-                <p className="text-sm md:text-base lg:text-lg text-gray-100 text-shadow mb-4 md:mb-6 line-clamp-3">
+                <p className="text-sm md:text-base lg:text-lg text-gray-100 text-shadow mb-5 md:mb-6 line-clamp-3">
                   {featuredGames[currentFeaturedIndex]?.description?.slice(0, 200)}
                   {featuredGames[currentFeaturedIndex]?.description && 
                     featuredGames[currentFeaturedIndex]?.description.length > 200 ? '...' : ''}
                 </p>
                 
+                {/* Countdown Timer - Sadece kalan süresi olan oyunlar için */}
+                {featuredGames[currentFeaturedIndex]?.expiryDate && (
+                  <CountdownTimer expiryDate={featuredGames[currentFeaturedIndex]?.expiryDate} />
+                )}
+                
                 {/* Butonlar */}
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3 mt-4 items-center">
                   {featuredGames[currentFeaturedIndex]?.url && (
                     <Link 
                       href={featuredGames[currentFeaturedIndex].url || '#'} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
                       tabIndex={0}
                     >
                       <span>Görüntüle</span>
@@ -553,7 +659,7 @@ export default function Home({
                   )}
                   <Link
                     href="/games"
-                    className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 px-5 py-2 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
+                    className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
                     tabIndex={0}
                   >
                     <span>Tüm Oyunlar</span>
@@ -582,7 +688,7 @@ export default function Home({
                 </div>
               )}
               
-              {/* İndikatörler */}
+              {/* İndikatörler - Slider Noktaları */}
               {featuredGames.length > 1 && (
                 <div className="flex justify-center gap-2 absolute bottom-4 left-0 right-0 z-30">
                   {featuredGames.map((_, index) => (
@@ -591,7 +697,7 @@ export default function Home({
                       onClick={() => setCurrentFeaturedIndex(index)}
                       className={`transition-all duration-300 rounded-full shadow-md ${
                         index === currentFeaturedIndex 
-                          ? 'w-12 h-3 bg-white/90' 
+                          ? 'w-12 h-3 bg-gradient-to-r from-blue-500 to-purple-500' 
                         : 'w-3 h-3 bg-white/40 hover:bg-white/60'
                       }`}
                       aria-label={`Oyun ${index + 1}`}
