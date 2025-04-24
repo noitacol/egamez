@@ -99,7 +99,11 @@
 
   /* Hero Banner Enhancement */
   .hero-banner {
-    @apply relative overflow-hidden;
+    @apply relative overflow-hidden shadow-2xl;
+  }
+  
+  .hero-banner::after {
+    @apply content-[''] absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-black/40 pointer-events-none;
   }
 
   .hero-content {
@@ -112,6 +116,45 @@
 
   .hero-title {
     @apply text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-300 tracking-tight;
+  }
+  
+  /* Hero Önizleme Tooltip */
+  .hero-preview-tooltip {
+    @apply absolute bottom-full mb-3 scale-0 transition-all duration-300 origin-bottom z-40;
+  }
+  
+  .hero-preview-image {
+    @apply w-28 h-16 overflow-hidden rounded-lg shadow-xl border border-white/20;
+  }
+  
+  .hero-preview-arrow {
+    @apply w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white/20 mx-auto -mb-2;
+  }
+  
+  /* Hero İndikatörler */
+  .hero-indicator {
+    @apply transition-all duration-300 flex flex-col items-center;
+  }
+  
+  /* Grup özelliği ayrı olarak tanımlanmalı - @apply ile kullanılamaz */
+  .hero-indicator {
+    position: relative;
+  }
+  
+  .hero-indicator:hover .hero-preview-tooltip {
+    transform: scale(1);
+  }
+  
+  .hero-indicator-dot {
+    @apply h-2 transition-all duration-300 rounded-full shadow-md;
+  }
+  
+  .hero-indicator-dot-active {
+    @apply w-12 bg-gradient-to-r from-blue-500 to-purple-500;
+  }
+  
+  .hero-indicator-dot-inactive {
+    @apply w-2 bg-white/40 group-hover:bg-white/60;
   }
 
   /* Countdown Timer Styling */
@@ -159,6 +202,17 @@
 
   .tab-button-inactive {
     @apply bg-gray-800 text-gray-300 hover:bg-gray-700;
+  }
+
+  /* Yükleme Animasyonları */
+  .loader-spin {
+    @apply w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full;
+    animation: spin 1s linear infinite;
+  }
+  
+  .loader-pulse {
+    @apply w-12 h-12 bg-blue-500 rounded-full;
+    animation: pulse 1.5s ease-in-out infinite;
   }
 
   /* Animations */
@@ -219,6 +273,11 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
   }
+  
+  .image-rendering-crisp {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
 }
 
 /* Keyframe animations */
@@ -270,5 +329,25 @@
   }
   100% {
     background-position: 200% 0;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(0.5);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.8;
   }
 } 

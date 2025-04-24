@@ -555,17 +555,24 @@ export default function Home({
         {/* Hero Banner - Featured Games Slider */}
         {featuredGames.length > 0 && (
           <section className="hero-banner relative w-full h-[500px] md:h-[600px] overflow-hidden group">
-            {/* Overlay Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-gray-900 z-10"></div>
+            {/* Ana Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-gray-900 z-10"></div>
+            
+            {/* Dekoratif Desenler */}
+            <div className="absolute inset-0 bg-[url('/patterns/grid-pattern.png')] opacity-10 mix-blend-multiply z-10"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900 to-transparent z-10"></div>
             
             {/* Slider Görselleri ve YouTube Videoları */}
             {featuredGames.map((game, index) => (
               <div 
                 key={`hero-${game.id}`} 
-                className={`absolute inset-0 z-0 transition-all duration-1500 transform ${
-                  index === currentFeaturedIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+                className={`absolute inset-0 z-0 transition-all duration-1500 ${
+                  index === currentFeaturedIndex ? 'opacity-100' : 'opacity-0'
                 }`}
               >
+                {/* Varsayılan arkaplan - yükleme durumu için */}
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black"></div>
+                
                 {game.videos && game.videos.length > 0 ? (
                   // YouTube video varsa göster
                   <div className="relative w-full h-full">
@@ -579,131 +586,157 @@ export default function Home({
                       className="absolute inset-0 w-full h-full object-cover"
                       style={{ pointerEvents: 'none' }}
                     ></iframe>
-                    {/* Video üzerine ince ızgara deseni ekle */}
-                    <div className="absolute inset-0 bg-[url('/patterns/grid-pattern.png')] opacity-20 mix-blend-multiply"></div>
                   </div>
                 ) : (
-                  // Video yoksa görseli göster
-                  game.keyImages && game.keyImages.length > 0 && (
-                    <>
-                      <div className="absolute inset-0 bg-black animate-pulse" /> {/* Yükleme göstergesi */}
-                      <Image 
-                        src={getBestGameImage(game)} 
-                        alt={game.title || 'Featured Game'} 
-                        fill 
-                        style={{ objectFit: 'cover', objectPosition: 'center top' }}
-                        priority={index === currentFeaturedIndex}
-                        sizes="100vw"
-                        quality={95}
-                        className="transform hover:scale-105 transition-transform duration-10000 filter brightness-[0.85]"
-                        unoptimized={true} // Next.js'in otomatik optimizasyonunu devre dışı bırak
-                      />
-                      {/* Görüntü üzerine ince ızgara deseni ekle */}
-                      <div className="absolute inset-0 bg-[url('/patterns/grid-pattern.png')] opacity-20 mix-blend-multiply"></div>
-                    </>
-                  )
+                  // Video yoksa görseli göster - error handling ile
+                  <div className="relative w-full h-full bg-gradient-to-br from-gray-900 to-black">
+                    {/* Yükleme göstergesi */}
+                    <div className="absolute inset-0 flex items-center justify-center z-0">
+                      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    
+                    {/* Görsel */}
+                    <Image 
+                      src={getBestGameImage(game)}
+                      alt={game.title || 'Featured Game'} 
+                      fill 
+                      style={{ objectFit: 'cover', objectPosition: 'center' }}
+                      priority={index === currentFeaturedIndex}
+                      sizes="100vw"
+                      quality={95}
+                      className={`transition-opacity duration-1000 ${index === currentFeaturedIndex ? 'opacity-100' : 'opacity-0'}`}
+                      unoptimized={true}
+                      onError={(e) => {
+                        // Hata durumunda yedek görsel kullan
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null; // Sonsuz döngüyü engelle
+                        target.src = '/placeholder-hero.jpg'; // Yedek görsel
+                      }}
+                    />
+                    
+                    {/* Görsel overlay - genelde daha iyi kontrast için */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/30 to-black/40 z-5"></div>
+                  </div>
                 )}
               </div>
             ))}
             
             {/* Slider İçeriği */}
             <div className="container mx-auto h-full flex flex-col justify-end pb-8 md:pb-16 relative z-20 px-4">
-              {/* Platform Badge */}
-              <div className="mb-4 fade-in-up">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-lg shadow-lg ${
-                  featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
-                    ? 'bg-blue-600/80' 
-                    : 'bg-purple-600/80'
-                }`}>
-                  {featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
-                    ? <><SiSteam className="mr-1" /> Steam</>
-                    : featuredGames[currentFeaturedIndex]?.distributionPlatform === 'epic'
-                      ? <><SiEpicgames className="mr-1" /> Epic Games</>
-                      : featuredGames[currentFeaturedIndex]?.sourceLabel || 'Ücretsiz Oyun'
-                  }
-                </span>
-              </div>
-              
-              {/* Modern Hero Content - Glass effect */}
-              <div className="hero-content backdrop-blur-md bg-black/40 rounded-xl border border-white/10 p-6 md:p-8 max-w-3xl shadow-2xl fade-in-up">
-                {/* Oyun Başlığı */}
-                <h1 className="hero-title text-shadow-lg mb-3 md:mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-200">
-                  {featuredGames[currentFeaturedIndex]?.title}
-                </h1>
+              <div className="max-w-xl">
+                {/* Platform Badge */}
+                <div className="mb-4 fade-in-up">
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-lg shadow-lg ${
+                    featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
+                      ? 'bg-blue-600/80' 
+                      : 'bg-purple-600/80'
+                  }`}>
+                    {featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
+                      ? <><SiSteam className="mr-1" /> Steam</>
+                      : featuredGames[currentFeaturedIndex]?.distributionPlatform === 'epic'
+                        ? <><SiEpicgames className="mr-1" /> Epic Games</>
+                        : featuredGames[currentFeaturedIndex]?.sourceLabel || 'Ücretsiz Oyun'
+                    }
+                  </span>
+                </div>
                 
-                {/* Oyun Açıklaması */}
-                <p className="text-sm md:text-base lg:text-lg text-gray-100 text-shadow mb-5 md:mb-6 line-clamp-3">
-                  {featuredGames[currentFeaturedIndex]?.description?.slice(0, 200)}
-                  {featuredGames[currentFeaturedIndex]?.description && 
-                    featuredGames[currentFeaturedIndex]?.description.length > 200 ? '...' : ''}
-                </p>
-                
-                {/* Countdown Timer - Sadece kalan süresi olan oyunlar için */}
-                {featuredGames[currentFeaturedIndex]?.expiryDate && (
-                  <CountdownTimer expiryDate={featuredGames[currentFeaturedIndex]?.expiryDate} />
-                )}
-                
-                {/* Butonlar */}
-                <div className="flex flex-wrap gap-3 mt-4 items-center">
-                  {featuredGames[currentFeaturedIndex]?.url && (
-                    <Link 
-                      href={featuredGames[currentFeaturedIndex].url || '#'} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
+                {/* Modern Hero Content */}
+                <div className="hero-content backdrop-blur-md bg-black/40 rounded-xl border border-white/10 p-6 md:p-8 max-w-3xl shadow-2xl fade-in-up">
+                  {/* Oyun Başlığı */}
+                  <h1 className="hero-title text-shadow-lg mb-3 md:mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-200">
+                    {featuredGames[currentFeaturedIndex]?.title}
+                  </h1>
+                  
+                  {/* Oyun Açıklaması */}
+                  <p className="text-sm md:text-base lg:text-lg text-gray-100 text-shadow mb-5 md:mb-6 line-clamp-3">
+                    {featuredGames[currentFeaturedIndex]?.description?.slice(0, 200)}
+                    {featuredGames[currentFeaturedIndex]?.description && 
+                      featuredGames[currentFeaturedIndex]?.description.length > 200 ? '...' : ''}
+                  </p>
+                  
+                  {/* Countdown Timer - Sadece kalan süresi olan oyunlar için */}
+                  {featuredGames[currentFeaturedIndex]?.expiryDate && (
+                    <CountdownTimer expiryDate={featuredGames[currentFeaturedIndex]?.expiryDate} />
+                  )}
+                  
+                  {/* Butonlar */}
+                  <div className="flex flex-wrap gap-3 mt-4 items-center">
+                    {featuredGames[currentFeaturedIndex]?.url && (
+                      <Link 
+                        href={featuredGames[currentFeaturedIndex].url || '#'} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
+                        tabIndex={0}
+                      >
+                        <span>Görüntüle</span>
+                        <FaExternalLinkAlt />
+                      </Link>
+                    )}
+                    <Link
+                      href="/games"
+                      className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
                       tabIndex={0}
                     >
-                      <span>Görüntüle</span>
-                      <FaExternalLinkAlt />
+                      <span>Tüm Oyunlar</span>
+                      <MdNavigateNext />
                     </Link>
-                  )}
-                  <Link
-                    href="/games"
-                    className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
-                    tabIndex={0}
-                  >
-                    <span>Tüm Oyunlar</span>
-                    <MdNavigateNext />
-                  </Link>
+                  </div>
                 </div>
               </div>
               
               {/* Slider Kontrolleri */}
               {featuredGames.length > 1 && (
-                <div className="flex justify-between items-center w-full absolute left-0 top-1/2 -translate-y-1/2 z-30 px-4">
-                  <button 
-                    onClick={goToPrevFeatured}
-                    className="bg-black/40 hover:bg-black/60 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform hover:scale-110 shadow-lg"
-                    aria-label="Önceki oyun"
-                  >
-                    <MdNavigateBefore className="text-3xl" />
-                  </button>
-                  <button 
-                    onClick={goToNextFeatured}
-                    className="bg-black/40 hover:bg-black/60 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform hover:scale-110 shadow-lg"
-                    aria-label="Sonraki oyun"
-                  >
-                    <MdNavigateNext className="text-3xl" />
-                  </button>
-                </div>
-              )}
-              
-              {/* İndikatörler - Slider Noktaları */}
-              {featuredGames.length > 1 && (
-                <div className="flex justify-center gap-2 absolute bottom-4 left-0 right-0 z-30">
-                  {featuredGames.map((_, index) => (
-                    <button
-                      key={`indicator-${index}`}
-                      onClick={() => setCurrentFeaturedIndex(index)}
-                      className={`transition-all duration-300 rounded-full shadow-md ${
-                        index === currentFeaturedIndex 
-                          ? 'w-12 h-3 bg-gradient-to-r from-blue-500 to-purple-500' 
-                        : 'w-3 h-3 bg-white/40 hover:bg-white/60'
-                      }`}
-                      aria-label={`Oyun ${index + 1}`}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="flex justify-between items-center w-full absolute left-0 top-1/2 -translate-y-1/2 z-30 px-4">
+                    <button 
+                      onClick={goToPrevFeatured}
+                      className="bg-black/40 hover:bg-black/60 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform hover:scale-110 shadow-lg"
+                      aria-label="Önceki oyun"
+                    >
+                      <MdNavigateBefore className="text-3xl" />
+                    </button>
+                    <button 
+                      onClick={goToNextFeatured}
+                      className="bg-black/40 hover:bg-black/60 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform hover:scale-110 shadow-lg"
+                      aria-label="Sonraki oyun"
+                    >
+                      <MdNavigateNext className="text-3xl" />
+                    </button>
+                  </div>
+                  
+                  {/* İndikatörler - Slider Noktaları + Küçük Önizleme */}
+                  <div className="flex justify-center gap-3 absolute -bottom-4 left-0 right-0 z-30 px-4 md:px-8 py-4">
+                    {featuredGames.map((game, index) => (
+                      <button
+                        key={`indicator-${index}`}
+                        onClick={() => setCurrentFeaturedIndex(index)}
+                        className="hero-indicator"
+                        aria-label={`Oyun ${index + 1}`}
+                      >
+                        {/* Küçük Önizleme (hover durumunda gösterilir) */}
+                        <div className="hero-preview-tooltip">
+                          <div className="hero-preview-image">
+                            <Image 
+                              src={getBestGameImage(game)}
+                              alt={game.title || `Oyun ${index + 1}`}
+                              width={112}
+                              height={64}
+                              className="object-cover w-full h-full image-rendering-crisp"
+                            />
+                          </div>
+                          <div className="hero-preview-arrow"></div>
+                        </div>
+                        {/* Nokta indikatörü */}
+                        <div className={`hero-indicator-dot ${
+                          index === currentFeaturedIndex 
+                            ? 'hero-indicator-dot-active' 
+                            : 'hero-indicator-dot-inactive'
+                        }`}></div>
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </section>
