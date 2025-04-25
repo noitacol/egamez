@@ -114,6 +114,17 @@ const getRandomStartTime = (): number => {
   return Math.floor(Math.random() * 100) + 20; // 20-120 arası rastgele sayı
 };
 
+// Yardımcı fonksiyon - benzersiz oyunları almak için
+const getUniqueGames = (games: ExtendedEpicGame[]): ExtendedEpicGame[] => {
+  return games.filter((game, index, self) => 
+    index === self.findIndex((g) => (
+      // Title veya ID'ye göre benzersizlik kontrolü
+      g.id === game.id || 
+      (g.title && game.title && g.title.toLowerCase() === game.title.toLowerCase())
+    ))
+  );
+};
+
 export default function Home({ 
   // Epic API oyunları geçici olarak kaldırıldı
   // epicFreeGames, 
@@ -138,8 +149,11 @@ export default function Home({
 
   // Steam ve Epic platformlarındaki oyunları topla ve öne çıkan oyunlar listesini oluştur
   useEffect(() => {
-    // Tüm oyunları içeren bir dizi oluştur - sadece gerçek oyunları al (loot ve beta olmayanlar)
-    const allGames = [...freebieGames, ...trendingGames];
+    // Tüm oyunları içeren bir dizi oluştur
+    let allGames = [...freebieGames, ...trendingGames];
+    
+    // Önce tekrarlanan oyunları kaldır
+    allGames = getUniqueGames(allGames);
     
     // Sadece Steam veya Epic platformundaki ücretsiz oyunları filtrele
     const platformGames = allGames.filter(game => {
@@ -210,6 +224,7 @@ export default function Home({
     
     console.log('Öne çıkan oyun sayısı:', combinedGames.length);
     console.log('Video içeren oyun sayısı:', shuffledWithVideos.length);
+    console.log('Benzersiz oyun sayısı:', platformGames.length);
     
     setFeaturedGames(combinedGames);
   }, [freebieGames, trendingGames]);
@@ -422,58 +437,23 @@ export default function Home({
 
   // Aktif platform için oyunları filtrele
   const getFilteredGames = () => {
-    let games: ExtendedEpicGame[] = [];
-
-    // İlk olarak sekme bazında oyunları seç
-    if (activeTab === 'free') {
-      games = [...freebieGames];
-    } else if (activeTab === 'upcoming') {
-      // Şimdilik hiç yakında çıkacak oyun göstermeyelim çünkü epic oyunları kaldırıldı
-      games = [];
-    } else if (activeTab === 'trending') {
-      games = [...trendingGames];
-    } else if (activeTab === 'loot') {
-      games = [...freeLoots];
-    } else if (activeTab === 'beta') {
-      games = [...freeBetas];
-    }
-
-    // Null ve undefined oyunları temizle
-    games = games.filter(game => game && game.title);
-
-    // Sonra platform bazında filtrele
-    if (activePlatform !== 'all') {
-      return games.filter(game => {
-        // Oyun null veya undefined ise filtrele
-        if (!game) {
-          return false;
-        }
-
-        const platform = game.distributionPlatform?.toLowerCase() || '';
-        const platformName = game.platform?.toLowerCase() || '';
-        
-        switch (activePlatform) {
-          case 'steam':
-            return platform.includes('steam') || platformName.includes('steam');
-          case 'playstation':
-            return platformName.includes('playstation') || platformName.includes('ps4') || platformName.includes('ps5');
-          case 'xbox':
-            return platformName.includes('xbox');
-          case 'switch':
-            return platformName.includes('switch');
-          case 'pc':
-            return platformName.includes('pc') || platformName.includes('windows');
-          case 'android':
-            return platformName.includes('android');
-          case 'ios':
-            return platformName.includes('ios') || platformName.includes('apple');
-          default:
-            return true;
-        }
-      });
-    }
-
-    return games;
+    // Tüm filtreleme mantığını koru, ancak benzersiz oyunları dön
+    const filteredByPlatform = activePlatform === "all" 
+      ? [...freebieGames, ...steamFreeGames] 
+      : [...freebieGames, ...steamFreeGames].filter(game => {
+          const platform = game.distributionPlatform?.toLowerCase() || '';
+          if (activePlatform === "pc") {
+            return platform === "pc" || platform === "epic" || platform === "steam" || platform === "epic-games-store";
+          }
+          // Epic Games Store
+          if (activePlatform === "epic") {
+            return platform === "epic" || platform === "epic-games-store";
+          }
+          return platform === activePlatform;
+        });
+    
+    // Benzersiz oyunları dön
+    return getUniqueGames(filteredByPlatform);
   };
 
   const filteredGames = getFilteredGames();
