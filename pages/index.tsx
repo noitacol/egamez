@@ -598,7 +598,7 @@ export default function Home({
                   
                   <p className="text-gray-200 text-lg mb-8 max-w-xl">
                     {featuredGames[currentFeaturedIndex]?.description?.slice(0, 120)}
-                    {featuredGames[currentFeaturedIndex]?.description?.length > 120 ? '...' : ''}
+                    {featuredGames[currentFeaturedIndex]?.description && featuredGames[currentFeaturedIndex]?.description.length > 120 ? '...' : ''}
                   </p>
                   
                   {/* Zamanlayıcı (eğer son kullanma tarihi varsa) */}
@@ -680,7 +680,7 @@ export default function Home({
                   
                   <p className="text-gray-200 text-lg mb-8 max-w-xl">
                     {featuredGames[currentFeaturedIndex]?.description?.slice(0, 120)}
-                    {featuredGames[currentFeaturedIndex]?.description?.length > 120 ? '...' : ''}
+                    {featuredGames[currentFeaturedIndex]?.description && featuredGames[currentFeaturedIndex]?.description.length > 120 ? '...' : ''}
                   </p>
                   
                   {/* Zamanlayıcı (eğer son kullanma tarihi varsa) */}
