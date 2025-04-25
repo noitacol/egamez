@@ -298,95 +298,70 @@ html, body {
     min-height: 63px;
   }
 
-  .platform-button.active {
-    @apply bg-blue-600 text-white border-blue-500;
-    box-shadow: 0 0 10px rgba(88, 80, 236, 0.5);
+  .platform-button-active {
+    @apply bg-gradient-to-br from-blue-600 to-purple-700 text-white shadow-lg;
   }
 
-  /* Platform Selection Container */
+  .platform-button-inactive {
+    @apply bg-gray-800 hover:bg-gray-700 text-white shadow-md;
+  }
+
+  /* Platform Selection Mobile Scrollbar */
   .platform-scroll-container {
-    @apply grid gap-3 mt-4 mb-8;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    position: relative;
-    width: 100%;
-    overflow: visible;
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 10px 0;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    scroll-behavior: smooth;
+    margin-bottom: 20px;
   }
 
-  @media (max-width: 640px) {
-    .platform-scroll-container {
-      @apply gap-2 overflow-x-auto pb-4 grid-flow-col auto-cols-[90px] mt-2;
-      grid-template-columns: unset;
-      scroll-snap-type: x mandatory;
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-
-    .platform-scroll-container::-webkit-scrollbar {
-      display: none;
-    }
-
-    .platform-button {
-      scroll-snap-align: center;
-      min-height: 58px;
-    }
+  .platform-scroll-container::-webkit-scrollbar {
+    display: none;
   }
 
-  @media (min-width: 641px) and (max-width: 768px) {
-    .platform-scroll-container {
-      grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
-    }
+  .platform-scroll-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    background-color: rgba(28, 28, 28, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: max-content;
+    transition: all 0.2s ease;
+    color: #b8b8b8;
   }
 
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .platform-scroll-container {
-      grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
-    }
-  }
-  
-  /* Platform Icon and Text */
-  .platform-icon {
-    @apply flex items-center justify-center;
-    width: 24px;
-    height: 24px;
-    margin-bottom: 6px;
-    transition: all 0.3s ease;
+  .platform-scroll-item:hover {
+    background-color: rgba(59, 59, 59, 0.5);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: translateY(-2px);
   }
 
-  .platform-button:hover .platform-icon {
-    transform: scale(1.1);
+  .platform-scroll-item.active {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #ffffff;
+    font-weight: 600;
   }
 
-  .platform-button.active .platform-icon {
-    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+  .platform-scroll-item svg {
+    margin-right: 6px;
   }
 
-  .platform-name {
-    @apply font-medium text-center;
-    font-size: 0.75rem;
-    line-height: 1.2;
-    transition: all 0.3s ease;
-  }
-
-  /* Game Grid Styling */
+  /* Responsive Game Grid */
   .game-grid {
     display: grid;
-    gap: 24px;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
     width: 100%;
-  }
-
-  @media (max-width: 768px) {
-    .game-grid {
-      gap: 16px;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    }
-  }
-
-  @media (max-width: 640px) {
-    .game-grid {
-      gap: 14px;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    }
   }
 
   /* Epic Games inspired button hover effect */

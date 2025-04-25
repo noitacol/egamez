@@ -143,12 +143,12 @@ export default function GameDetail({ game, error }: GameDetailProps) {
                   const categoryKey = typeof category === 'string' ? `category-${index}` : category.path;
                   
                   return (
-                    <span 
+                  <span 
                       key={categoryKey} 
-                      className="bg-gray-200 dark:bg-epicgray px-3 py-1 rounded-full text-sm"
-                    >
+                    className="bg-gray-200 dark:bg-epicgray px-3 py-1 rounded-full text-sm"
+                  >
                       {categoryName}
-                    </span>
+                  </span>
                   );
                 })}
               </div>
