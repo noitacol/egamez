@@ -636,7 +636,7 @@
 }
 
 .platform-button.active {
-  @apply bg-primary-600 text-white border-primary-500;
+  @apply bg-blue-600 text-white border-blue-500;
   box-shadow: 0 0 10px rgba(88, 80, 236, 0.5);
 }
 
