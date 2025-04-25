@@ -287,73 +287,106 @@ html, body {
 
   /* Platform Button Styling */
   .platform-button {
-    @apply flex flex-col items-center justify-center rounded-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1;
+    @apply flex flex-col items-center justify-center rounded-xl transition-all duration-300;
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    width: 100%;
+    aspect-ratio: 1 / 0.7;
+    min-height: 63px;
   }
 
-  .platform-button-active {
-    @apply bg-gradient-to-br from-blue-600 to-purple-700 text-white shadow-lg;
+  .platform-button.active {
+    @apply bg-blue-600 text-white border-blue-500;
+    box-shadow: 0 0 10px rgba(88, 80, 236, 0.5);
   }
 
-  .platform-button-inactive {
-    @apply bg-gray-800 hover:bg-gray-700 text-white shadow-md;
-  }
-
-  /* Platform Selection Mobile Scrollbar */
+  /* Platform Selection Container */
   .platform-scroll-container {
-    display: flex;
-    overflow-x: auto;
-    gap: 8px;
-    padding: 10px 0;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-    scroll-behavior: smooth;
-    margin-bottom: 20px;
+    @apply grid gap-3 mt-4 mb-8;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    position: relative;
+    width: 100%;
+    overflow: visible;
   }
 
-  .platform-scroll-container::-webkit-scrollbar {
-    display: none;
+  @media (max-width: 640px) {
+    .platform-scroll-container {
+      @apply gap-2 overflow-x-auto pb-4 grid-flow-col auto-cols-[90px] mt-2;
+      grid-template-columns: unset;
+      scroll-snap-type: x mandatory;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .platform-scroll-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .platform-button {
+      scroll-snap-align: center;
+      min-height: 58px;
+    }
   }
 
-  .platform-scroll-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 12px;
-    background-color: rgba(28, 28, 28, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    white-space: nowrap;
-    min-width: max-content;
-    transition: all 0.2s ease;
-    color: #b8b8b8;
+  @media (min-width: 641px) and (max-width: 768px) {
+    .platform-scroll-container {
+      grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
+    }
   }
 
-  .platform-scroll-item:hover {
-    background-color: rgba(59, 59, 59, 0.5);
-    border-color: rgba(255, 255, 255, 0.2);
-    color: #ffffff;
-    transform: translateY(-2px);
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .platform-scroll-container {
+      grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+    }
+  }
+  
+  /* Platform Icon and Text */
+  .platform-icon {
+    @apply flex items-center justify-center;
+    width: 24px;
+    height: 24px;
+    margin-bottom: 6px;
+    transition: all 0.3s ease;
   }
 
-  .platform-scroll-item.active {
-    background-color: rgba(59, 130, 246, 0.2);
-    border-color: rgba(59, 130, 246, 0.4);
-    color: #ffffff;
-    font-weight: 600;
+  .platform-button:hover .platform-icon {
+    transform: scale(1.1);
   }
 
-  .platform-scroll-item svg {
-    margin-right: 6px;
+  .platform-button.active .platform-icon {
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
   }
 
-  /* Responsive Game Grid */
+  .platform-name {
+    @apply font-medium text-center;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    transition: all 0.3s ease;
+  }
+
+  /* Game Grid Styling */
   .game-grid {
     display: grid;
-    gap: 20px;
-    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     width: 100%;
+  }
+
+  @media (max-width: 768px) {
+    .game-grid {
+      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .game-grid {
+      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
   }
 
   /* Epic Games inspired button hover effect */
@@ -1069,8 +1102,8 @@ html, body {
   overflow: hidden;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   width: 100%;
-  aspect-ratio: 1 / 1;
-  min-height: 90px;
+  aspect-ratio: 1 / 0.7;
+  min-height: 63px;
 }
 
 .platform-button::before {
@@ -1115,9 +1148,9 @@ html, body {
 
 .platform-icon {
   @apply flex items-center justify-center;
-  width: 30px;
-  height: 30px;
-  margin-bottom: 8px;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 6px;
   transition: all 0.3s ease;
 }
 
@@ -1131,7 +1164,7 @@ html, body {
 
 .platform-name {
   @apply font-medium text-center;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   line-height: 1.2;
   transition: all 0.3s ease;
 }
@@ -1144,17 +1177,17 @@ html, body {
   }
   
   .platform-button {
-    min-height: 70px;
+    min-height: 49px;
   }
   
   .platform-icon {
-    width: 24px;
-    height: 24px;
-    margin-bottom: 4px;
+    width: 20px;
+    height: 20px;
+    margin-bottom: 3px;
   }
   
   .platform-name {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
   }
 }
 
@@ -1164,16 +1197,17 @@ html, body {
   }
   
   .platform-button {
-    min-height: 80px;
+    min-height: 56px;
   }
   
   .platform-icon {
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
+    margin-bottom: 4px;
   }
   
   .platform-name {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 }
 
