@@ -141,19 +141,25 @@ export default function Home({
     // Tüm oyunları içeren bir dizi oluştur - sadece gerçek oyunları al (loot ve beta olmayanlar)
     const allGames = [...freebieGames, ...trendingGames];
     
-    // Sadece Steam veya Epic platformundaki oyunları filtrele
+    // Sadece Steam veya Epic platformundaki ücretsiz oyunları filtrele
     const platformGames = allGames.filter(game => {
       if (!game) return false;
       
       // Sadece Steam veya Epic platformundaki oyunları al
       const platform = game.distributionPlatform?.toLowerCase() || '';
+      const isEpicOrSteam = platform === 'steam' || platform === 'epic' || platform === 'epic-games-store';
       
       // loot veya beta olanları hariç tut
       const isLoot = game.isLoot || game.offerType === 'loot';
       const isBeta = game.isBeta || game.offerType === 'beta';
       
-      // Sadece gerçek oyunları dahil et (loot ve beta olmayanlar)
-      return (platform === 'steam' || platform === 'epic' || platform === 'pc') && !isLoot && !isBeta;
+      // Ücretsiz olması şartı
+      const isFree = game.price?.totalPrice?.discountPrice === 0 || 
+                     game.price?.totalPrice?.originalPrice === 0 ||
+                     game.status === 'free';
+      
+      // Sadece ücretsiz Steam veya Epic oyunlarını dahil et
+      return isEpicOrSteam && !isLoot && !isBeta && isFree;
     });
     
     // Test amaçlı olarak bazı oyunlara son kullanma tarihi atayalım (gerçek uygulamada burası API'dan gelir)
@@ -199,7 +205,7 @@ export default function Home({
     const shuffledWithVideos = [...gamesWithValidVideos].sort(() => 0.5 - Math.random());
     const shuffledWithoutVideos = [...gamesWithoutVideos].sort(() => 0.5 - Math.random());
     
-    // İki listeyi birleştir ve ilk 5 tanesini göster (10 yerine 5 yaparak veri boyutunu azaltıyoruz)
+    // İki listeyi birleştir ve ilk 5 tanesini göster
     const combinedGames = [...shuffledWithVideos, ...shuffledWithoutVideos].slice(0, 5);
     
     console.log('Öne çıkan oyun sayısı:', combinedGames.length);
@@ -701,6 +707,17 @@ export default function Home({
                         </h1>
                       )}
                       
+                      {/* Free Tag */}
+                      <div className="flex items-center gap-2">
+                        <span className="bg-blue-600 text-white text-sm px-3 py-1 rounded-md font-semibold shadow-lg">Ücretsiz</span>
+                        {/* Platform Badge */}
+                        <span className="bg-gray-800 text-white text-sm px-3 py-1 rounded-md flex items-center gap-2">
+                          {isPlatformEpic(featuredGames[currentFeaturedIndex]) && <SiEpicgames className="w-4 h-4" />}
+                          {isPlatformSteam(featuredGames[currentFeaturedIndex]) && <SiSteam className="w-4 h-4" />}
+                          <span>{isPlatformEpic(featuredGames[currentFeaturedIndex]) ? 'Epic' : 'Steam'}</span>
+                        </span>
+                      </div>
+                      
                       {/* Developer & Details */}
                       <div className="flex items-center gap-4 text-sm text-gray-300">
                         <span>
@@ -731,7 +748,7 @@ export default function Home({
                           rel="noopener noreferrer"
                           className="epic-hero-button"
                         >
-                          Şimdi Satın Al
+                          Şimdi Al
                         </a>
                         <a 
                           href={`/game/${featuredGames[currentFeaturedIndex]?.id}`}
@@ -760,6 +777,11 @@ export default function Home({
                             <CountdownTimer expiryDate={featuredGames[currentFeaturedIndex]?.expiryDate} />
                           </div>
                         )}
+                        
+                        {/* Free Tag */}
+                        <div className="absolute top-3 left-3 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                          ÜCRETSİZ
+                        </div>
                         
                         {/* Platform */}
                         {(isPlatformEpic(featuredGames[currentFeaturedIndex]) || isPlatformSteam(featuredGames[currentFeaturedIndex])) && (
@@ -810,35 +832,6 @@ export default function Home({
                 </div>
               </div>
             )}
-          </section>
-
-          {/* Thumbnails of featured games - make this prettier */}
-          <section className="my-4">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {featuredGames.map((game, index) => (
-                <button
-                  key={game.id}
-                  onClick={() => setCurrentFeaturedIndex(index)}
-                  className={`relative min-w-[180px] h-24 rounded-md overflow-hidden flex-shrink-0 transition-all duration-300 transform ${
-                    index === currentFeaturedIndex 
-                      ? 'border-2 border-blue-500 scale-105 shadow-lg' 
-                      : 'border border-gray-800 hover:border-blue-400 hover:-translate-y-1'
-                  }`}
-                >
-                  <Image
-                    src={getExistingBestImage(game)}
-                    alt={game.title || 'Game'}
-                    fill
-                    style={{ objectFit: 'cover' }}
-                    className="transition-opacity"
-                  />
-                  <div className={`absolute inset-0 ${index === currentFeaturedIndex ? 'bg-black/30' : 'bg-black/60'}`}></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black to-transparent">
-                    <h3 className="text-white text-xs font-medium line-clamp-1">{game.title}</h3>
-                  </div>
-                </button>
-              ))}
-            </div>
           </section>
 
           {/* Free Games Section */}
