@@ -2,7 +2,6 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ExtendedEpicGame } from '@/lib/types';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SiEpicgames, SiSteam } from 'react-icons/si';
 import { BiGift } from 'react-icons/bi';
 import { FaFire } from 'react-icons/fa';
@@ -38,8 +37,8 @@ const GameCard: React.FC<GameCardProps> = ({
     // Tercih edilen görsel sıralaması
     const preferredTypes = [
       'DieselGameBoxTall',
-      'DieselGameBoxLogo',
       'Thumbnail',
+      'DieselGameBoxLogo',
       'OfferImageTall', 
       'OfferImageWide',
       'DieselStoreFrontWide'
@@ -73,32 +72,27 @@ const GameCard: React.FC<GameCardProps> = ({
     if (isUpcoming) {
       return {
         text: 'Yakında',
-        icon: <MdOutlineAccessTime className="mr-1" />,
-        color: 'bg-gradient-to-r from-yellow-600 to-orange-600'
+        color: 'bg-yellow-600'
       };
     } else if (trending) {
       return {
         text: 'Trend',
-        icon: <FaFire className="mr-1" />,
-        color: 'bg-gradient-to-r from-red-500 to-orange-500'
+        color: 'bg-red-600'
       };
     } else if (isLoot) {
       return {
         text: 'Loot',
-        icon: <BiGift className="mr-1" />,
-        color: 'bg-gradient-to-r from-purple-500 to-pink-500'
+        color: 'bg-purple-600'
       };
     } else if (isBeta) {
       return {
         text: 'Beta',
-        icon: <RiTestTubeFill className="mr-1" />,
-        color: 'bg-gradient-to-r from-blue-500 to-cyan-500'
+        color: 'bg-blue-600'
       };
     } else {
       return {
         text: 'Ücretsiz',
-        icon: <MdLocalOffer className="mr-1" />,
-        color: 'bg-gradient-to-r from-green-500 to-emerald-600'
+        color: 'bg-blue-600'
       };
     }
   };
@@ -107,64 +101,80 @@ const GameCard: React.FC<GameCardProps> = ({
 
   // URL'nin geçerli olup olmadığını kontrol et
   const safeUrl = game.url || '#';
+  
+  // Fiyat bilgisi
+  const originalPrice = game.price?.totalPrice?.originalPrice || 0;
+  const discountPrice = game.price?.totalPrice?.discountPrice || 0;
+  const hasDiscount = originalPrice > discountPrice && discountPrice > 0;
+  const discountPercentage = hasDiscount ? Math.round(((originalPrice - discountPrice) / originalPrice) * 100) : 0;
+  
+  // Fiyat formatı
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('tr-TR', { 
+      style: 'currency', 
+      currency: 'TRY',
+      minimumFractionDigits: 2
+    }).format(price);
+  };
 
   return (
-    <Card className="game-card overflow-hidden group h-full flex flex-col transition-shadow hover:shadow-xl">
-      <CardHeader className="p-0 game-card-image relative overflow-hidden">
-        <Link href={safeUrl} target="_blank" rel="noopener noreferrer" className="block relative h-full overflow-hidden">
+    <div className="epic-game-card">
+      <div className="epic-game-card-image">
+        <Link href={safeUrl} target="_blank" rel="noopener noreferrer">
           <Image
             src={imageUrl}
             alt={title}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="epic-game-card-thumbnail"
             style={{ objectFit: 'cover' }}
-            className="group-hover:scale-110 transition-transform duration-500 ease-in-out"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-70 group-hover:opacity-90 transition-opacity"></div>
+          {isFree && (
+            <span className="epic-free-tag">{badge.text}</span>
+          )}
         </Link>
         
-        {/* Badge */}
-        <div className={`game-card-badge px-2 py-1 text-xs font-bold rounded-full flex items-center ${badge.color}`}>
-          {badge.icon}
-          {badge.text}
-        </div>
-
         {/* Platform Icon */}
         {showPlatform && (
-          <div className="absolute bottom-2 right-2 z-10">
-            {isPlatformEpic && <SiEpicgames className="text-white h-5 w-5" />}
-            {isPlatformSteam && <SiSteam className="text-white h-5 w-5" />}
+          <div className="absolute bottom-2 left-2 z-10 bg-black/60 p-1 rounded">
+            {isPlatformEpic && <SiEpicgames className="text-white h-4 w-4" />}
+            {isPlatformSteam && <SiSteam className="text-white h-4 w-4" />}
           </div>
         )}
-      </CardHeader>
-      <CardContent className="game-card-content p-3 sm:p-4 flex-grow">
-        <h3 className="game-card-title font-bold text-lg line-clamp-1 mb-1">
+      </div>
+      
+      <div className="epic-game-card-content">
+        <h3 className="epic-game-card-title">
           <Link href={safeUrl} target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">
             {title}
           </Link>
         </h3>
         
         {game.description && (
-          <p className="game-card-description text-sm text-gray-300 line-clamp-2 mb-3">
+          <p className="epic-game-card-subtitle line-clamp-2">
             {game.description.substring(0, 80)}
             {game.description.length > 80 ? '...' : ''}
           </p>
         )}
         
-        <Link 
-          href={safeUrl}
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="mt-2 inline-flex items-center text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors"
-        >
-          <span>Görüntüle</span>
-          <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </Link>
-      </CardContent>
-    </Card>
+        <div className="epic-game-card-price flex items-center mt-auto">
+          {hasDiscount ? (
+            <>
+              <span className="epic-game-card-discount mr-2">-{discountPercentage}%</span>
+              <span className="line-through text-gray-400 text-xs mr-2">{formatPrice(originalPrice)}</span>
+              <span className="text-white">{formatPrice(discountPrice)}</span>
+            </>
+          ) : discountPrice > 0 ? (
+            <span>{formatPrice(discountPrice)}</span>
+          ) : isFree ? (
+            <span className="text-blue-500 font-bold">Ücretsiz</span>
+          ) : (
+            <span className="text-gray-400">Yakında</span>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 
