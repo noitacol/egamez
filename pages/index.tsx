@@ -971,9 +971,12 @@ export default function Home({
           </section>
 
           {/* Platform Tabs */}
-          <section className="mt-12">
+          <section className="mt-12 modern-section">
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold">
+              <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-300 to-purple-300 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-blue-500">
+                  <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
+                </svg>
                 {activePlatform === "all" 
                   ? "Tüm Platformlar" 
                   : activePlatform === "pc" 
@@ -994,84 +997,165 @@ export default function Home({
                                   ? "iOS"
                                   : "Tüm Platformlar"}
               </h2>
+              
+              <div className="hidden md:flex space-x-2">
+                <button 
+                  onClick={() => setActivePlatform("all")} 
+                  className="btn-secondary text-sm py-1.5"
+                >
+                  Tümünü Göster
+                </button>
+                <button 
+                  className="btn-primary text-sm py-1.5"
+                  onClick={() => setActiveTab('upcoming')}
+                >
+                  Yakında Gelecekler
+                </button>
+              </div>
             </div>
             
-            <div className="platform-scroll-container">
-              <button 
-                onClick={() => setActivePlatform("all")}
-                className={`platform-button ${activePlatform === "all" ? "active" : ""}`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                  <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
-                </svg>
-                <span>Tümü</span>
-              </button>
-              <button 
-                onClick={() => setActivePlatform("pc")}
-                className={`platform-button ${activePlatform === "pc" ? "active" : ""}`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                  <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
-                </svg>
-                <span>PC</span>
-              </button>
-              <button 
-                onClick={() => setActivePlatform("epic")}
-                className={`platform-button ${activePlatform === "epic" ? "active" : ""}`}
-              >
-                <SiEpicgames className="w-5 h-5" />
-                <span>Epic Games</span>
-              </button>
-              <button 
-                onClick={() => setActivePlatform("steam")}
-                className={`platform-button ${activePlatform === "steam" ? "active" : ""}`}
-              >
-                <SiSteam className="w-5 h-5" />
-                <span>Steam</span>
-              </button>
-              <button 
-                onClick={() => setActivePlatform("playstation")}
-                className={`platform-button ${activePlatform === "playstation" ? "active" : ""}`}
-              >
-                <SiPlaystation className="w-5 h-5" />
-                <span>PlayStation</span>
-              </button>
-              <button 
-                onClick={() => setActivePlatform("xbox")}
-                className={`platform-button ${activePlatform === "xbox" ? "active" : ""}`}
-              >
-                <SiBox className="w-5 h-5" />
-                <span>Xbox</span>
-              </button>
-              <button 
-                onClick={() => setActivePlatform("switch")}
-                className={`platform-button ${activePlatform === "switch" ? "active" : ""}`}
-              >
-                <SiNintendoswitch className="w-5 h-5" />
-                <span>Switch</span>
-              </button>
-              <button 
-                onClick={() => setActivePlatform("android")}
-                className={`platform-button ${activePlatform === "android" ? "active" : ""}`}
-              >
-                <SiAndroid className="w-5 h-5" />
-                <span>Android</span>
-              </button>
-              <button 
-                onClick={() => setActivePlatform("ios")}
-                className={`platform-button ${activePlatform === "ios" ? "active" : ""}`}
-              >
-                <SiApple className="w-5 h-5" />
-                <span>iOS</span>
-              </button>
+            <div className="platform-scroll-container w-full overflow-x-auto pb-4 mb-8">
+              <div className="flex gap-3 items-center min-w-max px-1">
+                <button 
+                  onClick={() => setActivePlatform("all")}
+                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "all" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                  aria-label="Tüm platformlar"
+                >
+                  <span className="platform-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                      <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  <span className="platform-name mt-1 font-medium text-sm">Tümü</span>
+                </button>
+                
+                <button 
+                  onClick={() => setActivePlatform("pc")}
+                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "pc" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                  aria-label="PC oyunları"
+                >
+                  <span className="platform-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                      <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  <span className="platform-name mt-1 font-medium text-sm">PC</span>
+                </button>
+                
+                <button 
+                  onClick={() => setActivePlatform("epic")}
+                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "epic" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                  aria-label="Epic Games"
+                >
+                  <span className="platform-icon">
+                    <SiEpicgames className="w-6 h-6" />
+                  </span>
+                  <span className="platform-name mt-1 font-medium text-sm">Epic Games</span>
+                </button>
+                
+                <button 
+                  onClick={() => setActivePlatform("steam")}
+                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "steam" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                  aria-label="Steam"
+                >
+                  <span className="platform-icon">
+                    <SiSteam className="w-6 h-6" />
+                  </span>
+                  <span className="platform-name mt-1 font-medium text-sm">Steam</span>
+                </button>
+                
+                <button 
+                  onClick={() => setActivePlatform("playstation")}
+                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "playstation" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                  aria-label="PlayStation"
+                >
+                  <span className="platform-icon">
+                    <SiPlaystation className="w-6 h-6" />
+                  </span>
+                  <span className="platform-name mt-1 font-medium text-sm">PlayStation</span>
+                </button>
+                
+                <button 
+                  onClick={() => setActivePlatform("xbox")}
+                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "xbox" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                  aria-label="Xbox"
+                >
+                  <span className="platform-icon">
+                    <SiBox className="w-6 h-6" />
+                  </span>
+                  <span className="platform-name mt-1 font-medium text-sm">Xbox</span>
+                </button>
+                
+                <button 
+                  onClick={() => setActivePlatform("switch")}
+                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "switch" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                  aria-label="Nintendo Switch"
+                >
+                  <span className="platform-icon">
+                    <SiNintendoswitch className="w-6 h-6" />
+                  </span>
+                  <span className="platform-name mt-1 font-medium text-sm">Switch</span>
+                </button>
+                
+                <button 
+                  onClick={() => setActivePlatform("android")}
+                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "android" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                  aria-label="Android"
+                >
+                  <span className="platform-icon">
+                    <SiAndroid className="w-6 h-6" />
+                  </span>
+                  <span className="platform-name mt-1 font-medium text-sm">Android</span>
+                </button>
+                
+                <button 
+                  onClick={() => setActivePlatform("ios")}
+                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "ios" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                  aria-label="iOS"
+                >
+                  <span className="platform-icon">
+                    <SiApple className="w-6 h-6" />
+                  </span>
+                  <span className="platform-name mt-1 font-medium text-sm">iOS</span>
+                </button>
+              </div>
             </div>
 
-            {/* Game Grid */}
-            <div className="epic-game-grid">
-              {filteredGames.slice(0, 10).map(game => (
-                <GameCard key={game.id} game={game} showPlatform />
-              ))}
-            </div>
+            {filteredGames.length > 0 ? (
+              <div className="game-grid">
+                {filteredGames.slice(0, 10).map(game => (
+                  <GameCard key={game.id} game={game} showPlatform />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 px-4 bg-gray-800/50 rounded-xl border border-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-16 h-16 text-gray-400 mb-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <h3 className="text-xl font-bold mb-2">Oyun Bulunamadı</h3>
+                <p className="text-gray-400 text-center max-w-md">Bu platform için şu anda ücretsiz oyun bulunmuyor. Başka bir platform seçmeyi veya daha sonra tekrar kontrol etmeyi deneyin.</p>
+                <button 
+                  onClick={() => setActivePlatform("all")}
+                  className="mt-6 btn-primary"
+                >
+                  Tüm Platformlara Dön
+                </button>
+              </div>
+            )}
+            
+            {filteredGames.length > 10 && (
+              <div className="mt-8 flex justify-center">
+                <button 
+                  className="btn-primary flex items-center gap-2"
+                  onClick={() => setActiveTab('free')}
+                >
+                  <span>Daha Fazla Göster</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </section>
 
           {/* Trending Games Banner */}

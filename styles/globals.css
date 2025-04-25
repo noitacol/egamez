@@ -968,47 +968,128 @@ html, body {
   @apply w-full overflow-x-auto pb-4 mt-2;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  scrollbar-color: rgba(59, 130, 246, 0.3) transparent;
+  position: relative;
+  overflow-y: visible;
+}
+
+.platform-scroll-container::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  background: linear-gradient(to left, rgba(0,0,0,0.8), transparent);
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.8;
+}
+
+.platform-scroll-container::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  background: linear-gradient(to right, rgba(0,0,0,0.8), transparent);
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.8;
 }
 
 .platform-scroll-container::-webkit-scrollbar {
-  height: 4px;
+  height: 5px;
 }
 
 .platform-scroll-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 2px;
+  background: rgba(30, 41, 59, 0.4);
+  border-radius: 5px;
 }
 
 .platform-scroll-container::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
+  background-color: rgba(59, 130, 246, 0.5);
+  border-radius: 5px;
+  border: 2px solid transparent;
 }
 
-.platform-buttons-container {
-  @apply flex space-x-2 px-1 min-w-max;
+.platform-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(59, 130, 246, 0.7);
 }
 
 .platform-button {
-  @apply flex items-center px-3 py-2 bg-gray-800 rounded-md transition-all duration-200
-    border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white;
+  @apply flex flex-col items-center justify-center rounded-xl transition-all duration-300;
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.platform-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: all 0.7s ease;
+}
+
+.platform-button:hover::before {
+  left: 100%;
+}
+
+.platform-button:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .platform-button.active {
-  @apply bg-blue-600 text-white border-blue-500;
-  box-shadow: 0 0 10px rgba(88, 80, 236, 0.5);
+  background: linear-gradient(145deg, #2563eb, #1d4ed8);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+  color: white;
+}
+
+.platform-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 3px;
+  background: linear-gradient(to right, #60a5fa, #3b82f6);
+  border-radius: 3px;
 }
 
 .platform-icon {
-  @apply inline-flex items-center justify-center w-5 h-5 mr-2;
+  @apply flex items-center justify-center;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
 }
 
-.platform-icon svg {
-  @apply w-full h-full;
+.platform-button:hover .platform-icon {
+  transform: scale(1.1);
+}
+
+.platform-button.active .platform-icon {
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
 }
 
 .platform-name {
-  @apply text-sm font-medium;
+  @apply font-medium text-center;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  transition: all 0.3s ease;
 }
 
 /* Game Grid Section */
@@ -1030,4 +1111,119 @@ html, body {
 
 .section-filters {
   @apply flex items-center space-x-2;
+}
+
+/* Responsive Game Grid */
+.game-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .platform-button {
+    width: 70px;
+    height: 80px;
+  }
+
+  .platform-icon {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 6px;
+  }
+
+  .platform-name {
+    font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (min-width: 1536px) {
+  .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+/* Enhanced Game Card */
+.game-card {
+  @apply rounded-xl overflow-hidden flex flex-col transition-all duration-300;
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  height: 100%;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.game-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.game-card-image {
+  @apply relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.game-card-image img {
+  @apply w-full h-full object-cover transition-transform duration-500;
+}
+
+.game-card:hover .game-card-image img {
+  transform: scale(1.05);
+}
+
+.game-card-badge {
+  @apply absolute top-3 right-3 z-10 px-3 py-1 text-xs font-bold rounded-full;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.game-card-platform {
+  @apply absolute top-3 left-3 z-10 bg-black/60 p-2 rounded-full backdrop-blur-sm flex items-center justify-center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.game-card-content {
+  @apply p-4 flex flex-col flex-grow;
+}
+
+.game-card-title {
+  @apply font-bold text-lg text-white mb-2 line-clamp-1;
+}
+
+.game-card-description {
+  @apply text-sm text-gray-300 line-clamp-2 mb-4;
+}
+
+.game-card-footer {
+  @apply flex items-center justify-between mt-auto pt-3 border-t border-gray-700/30;
+}
+
+.game-card-time {
+  @apply text-xs text-gray-400 flex items-center gap-1;
+}
+
+.game-card-action {
+  @apply text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1;
 } 
