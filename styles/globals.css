@@ -191,17 +191,153 @@
     @apply bg-gray-800 hover:bg-gray-700 text-white shadow-md;
   }
 
+  /* Platform Selection Mobile Scrollbar */
+  .platform-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 10px 0;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    scroll-behavior: smooth;
+    margin-bottom: 20px;
+  }
+
+  .platform-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .platform-scroll-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    background-color: rgba(28, 28, 28, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: max-content;
+    transition: all 0.2s ease;
+    color: #b8b8b8;
+  }
+
+  .platform-scroll-item:hover {
+    background-color: rgba(59, 59, 59, 0.5);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: translateY(-2px);
+  }
+
+  .platform-scroll-item.active {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .platform-scroll-item svg {
+    margin-right: 6px;
+  }
+
+  /* Responsive Game Grid */
+  .game-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(1, 1fr);
+    width: 100%;
+  }
+
+  /* Epic Games inspired button hover effect */
+  .epic-button {
+    position: relative;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .epic-button::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, #3b82f6, #8b5cf6);
+    transform: scaleX(0);
+    transform-origin: right center;
+    transition: transform 0.3s ease;
+  }
+
+  .epic-button:hover::after {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+
+  /* Media Queries for Game Grid */
+  @media (min-width: 640px) {
+    .game-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .game-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .platform-scroll-item {
+      padding: 8px 16px;
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .game-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .game-grid {
+      grid-template-columns: repeat(5, 1fr);
+    }
+  }
+
+  /* Enhanced Mobile Responsiveness */
+  .modern-section {
+    @apply relative overflow-hidden py-6 sm:py-8 md:py-10 border-b border-gray-800;
+  }
+
+  .modern-section-title {
+    @apply text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 md:mb-8 pb-2 relative inline-block;
+  }
+
   /* Tab Button Styling */
   .tab-button {
-    @apply px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-300 shadow-md;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .tab-button:hover {
+    transform: translateY(-1px);
+    background-color: rgba(75, 85, 99, 0.5);
   }
 
   .tab-button-active {
-    @apply bg-gradient-to-r from-blue-600 to-purple-600 text-white transform scale-105;
+    background-color: rgba(59, 130, 246, 0.2);
+    color: rgb(59, 130, 246);
   }
 
   .tab-button-inactive {
-    @apply bg-gray-800 text-gray-300 hover:bg-gray-700;
+    background-color: rgba(55, 65, 81, 0.5);
+    color: rgba(229, 231, 235, 0.8);
   }
 
   /* Yükleme Animasyonları */
@@ -396,11 +532,143 @@
 
 @keyframes pulse {
   0%, 100% {
-    transform: scale(0.5);
     opacity: 0.5;
   }
   50% {
-    transform: scale(1);
     opacity: 0.8;
   }
+}
+
+/* Epic Games Store inspired hover effects */
+.platform-button {
+  @apply relative overflow-hidden text-center;
+  transform: translateZ(0);
+}
+
+.platform-button:hover {
+  @apply shadow-lg;
+  transform: translateY(-2px) scale(1.05) translateZ(0);
+}
+
+.platform-button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background: linear-gradient(to top, rgba(59, 130, 246, 0.2), transparent);
+  transition: height 0.3s ease;
+  z-index: -1;
+}
+
+.platform-button:hover::after {
+  height: 100%;
+}
+
+.platform-button-active::before {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  z-index: 1;
+}
+
+/* Loading skeleton animation */
+.loading-skeleton {
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background-color: rgba(75, 85, 99, 0.4);
+}
+
+/* Enhanced Mobile Responsiveness */
+@media (max-width: 639px) {
+  .modern-section {
+    @apply py-4;
+  }
+  
+  .modern-section-title {
+    @apply text-lg mb-3 pb-1;
+  }
+  
+  .platform-button {
+    @apply p-2;
+  }
+  
+  .platform-button span {
+    @apply text-xs;
+  }
+}
+
+/* Platform Selection */
+.platform-scroll-container {
+  @apply w-full overflow-x-auto pb-4 mt-2;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.platform-scroll-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.platform-scroll-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.platform-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.platform-buttons-container {
+  @apply flex space-x-2 px-1 min-w-max;
+}
+
+.platform-button {
+  @apply flex items-center px-3 py-2 bg-gray-800 rounded-md transition-all duration-200
+    border border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white;
+}
+
+.platform-button.active {
+  @apply bg-primary-600 text-white border-primary-500;
+  box-shadow: 0 0 10px rgba(88, 80, 236, 0.5);
+}
+
+.platform-icon {
+  @apply inline-flex items-center justify-center w-5 h-5 mr-2;
+}
+
+.platform-icon svg {
+  @apply w-full h-full;
+}
+
+.platform-name {
+  @apply text-sm font-medium;
+}
+
+/* Game Grid Section */
+.game-grid-section {
+  @apply mt-8 mb-16;
+}
+
+.section-header {
+  @apply flex justify-between items-center mb-6;
+}
+
+.section-title {
+  @apply text-2xl font-bold text-white;
+  background: linear-gradient(90deg, #fff, #8c8cf9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section-filters {
+  @apply flex items-center space-x-2;
 } 
