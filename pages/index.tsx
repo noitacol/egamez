@@ -81,6 +81,39 @@ const calculateTimeLeft = (expiryDate: string | null | undefined): { days: numbe
   };
 };
 
+// Platform belirleme yardımcı fonksiyonları
+const isPlatformEpic = (game: ExtendedEpicGame | null | undefined): boolean => {
+  if (!game) return false;
+  const platform = game.distributionPlatform?.toLowerCase() || '';
+  return platform === 'epic' || platform === 'epic-games-store';
+};
+
+const isPlatformSteam = (game: ExtendedEpicGame | null | undefined): boolean => {
+  if (!game) return false;
+  const platform = game.distributionPlatform?.toLowerCase() || '';
+  return platform === 'steam';
+};
+
+// Tarih formatlama fonksiyonu
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (e) {
+    return '';
+  }
+};
+
+// Rastgele video başlangıç zamanı
+const getRandomStartTime = (): number => {
+  return Math.floor(Math.random() * 100) + 20; // 20-120 arası rastgele sayı
+};
+
 export default function Home({ 
   // Epic API oyunları geçici olarak kaldırıldı
   // epicFreeGames, 
@@ -623,9 +656,9 @@ export default function Home({
           {/* Hero Banner Section */}
           <section className="mt-4">
             {featuredGames && featuredGames[currentFeaturedIndex] && (
-              <div className="epic-hero overflow-hidden rounded">
-                {/* Hero Background */}
-                <div className="absolute inset-0">
+              <div className="epic-hero overflow-hidden rounded relative">
+                {/* Hero Background Layer */}
+                <div className="absolute inset-0 z-0">
                   <Image 
                     src={getBestGameImage(featuredGames[currentFeaturedIndex])}
                     alt={featuredGames[currentFeaturedIndex]?.title || 'Featured Game'}
@@ -634,41 +667,110 @@ export default function Home({
                     style={{ objectFit: 'cover' }}
                     className="transition-transform duration-700 hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30"></div>
+                  {/* Fancy Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90"></div>
+                  
+                  {/* Dynamic Floating Shapes */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    <div className="absolute top-[10%] left-[15%] w-32 h-32 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
+                    <div className="absolute bottom-[20%] right-[10%] w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow" style={{animationDelay: "1s"}}></div>
+                  </div>
                 </div>
                 
                 {/* Hero Content */}
-                <div className="epic-hero-content">
-                  <div className="flex flex-col lg:flex-row max-w-7xl mx-auto">
-                    <div className="w-full lg:w-2/3">
-                      <h1 className="epic-hero-title">{featuredGames[currentFeaturedIndex]?.title}</h1>
-                      <p className="epic-hero-description line-clamp-3 md:line-clamp-none">
+                <div className="relative z-10 pt-16 pb-20 px-4 sm:px-8 max-w-7xl mx-auto">
+                  <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 h-full">
+                    <div className="w-full lg:w-2/3 space-y-6">
+                      {/* Game Logo */}
+                      {featuredGames[currentFeaturedIndex]?.keyImages?.find(img => img.type === 'DieselGameBoxLogo')?.url && (
+                        <div className="h-28 mb-6 relative">
+                          <Image
+                            src={featuredGames[currentFeaturedIndex]?.keyImages?.find(img => img.type === 'DieselGameBoxLogo')?.url || ''}
+                            alt={featuredGames[currentFeaturedIndex]?.title || 'Game Logo'}
+                            fill
+                            style={{ objectFit: 'contain', objectPosition: 'left' }}
+                            className="drop-shadow-xl"
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Game Title - shown if no logo */}
+                      {!featuredGames[currentFeaturedIndex]?.keyImages?.find(img => img.type === 'DieselGameBoxLogo')?.url && (
+                        <h1 className="epic-hero-title text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight drop-shadow-xl">
+                          {featuredGames[currentFeaturedIndex]?.title}
+                        </h1>
+                      )}
+                      
+                      {/* Developer & Details */}
+                      <div className="flex items-center gap-4 text-sm text-gray-300">
+                        <span>
+                          {new Date().getFullYear()}
+                        </span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                        <span>{isPlatformEpic(featuredGames[currentFeaturedIndex]) ? 'Epic Games' : 
+                               isPlatformSteam(featuredGames[currentFeaturedIndex]) ? 'Steam' : 
+                               'PC Oyunu'}</span>
+                        {featuredGames[currentFeaturedIndex]?.expiryDate && (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                            <span>Son Tarih: {formatDate(featuredGames[currentFeaturedIndex]?.expiryDate)}</span>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Description */}
+                      <p className="epic-hero-description text-lg md:text-xl text-gray-200 max-w-3xl line-clamp-3 md:line-clamp-none leading-relaxed">
                         {featuredGames[currentFeaturedIndex]?.description}
                       </p>
-                      <div className="flex items-center gap-4 mt-4">
+                      
+                      {/* CTA Buttons */}
+                      <div className="flex flex-wrap items-center gap-4 mt-6">
                         <a 
                           href={featuredGames[currentFeaturedIndex]?.url || '#'} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="epic-button epic-button-primary"
+                          className="epic-hero-button"
                         >
                           Şimdi Satın Al
                         </a>
                         <a 
                           href={`/game/${featuredGames[currentFeaturedIndex]?.id}`}
-                          className="epic-button epic-button-secondary"
+                          className="epic-hero-button-secondary"
                         >
                           Daha Fazla
                         </a>
                       </div>
                     </div>
                     
-                    <div className="hidden lg:flex lg:w-1/3 justify-end">
-                      {featuredGames[currentFeaturedIndex]?.expiryDate && !isNaN(new Date(featuredGames[currentFeaturedIndex]?.expiryDate).getTime()) && (
-                        <div className="bg-black/70 p-4 rounded">
-                          <CountdownTimer expiryDate={featuredGames[currentFeaturedIndex]?.expiryDate} />
-                        </div>
-                      )}
+                    <div className="lg:w-1/3 flex items-center">
+                      {/* Game Card Preview */}
+                      <div className="w-full aspect-[3/4] relative overflow-hidden rounded-md shadow-2xl transform hover:scale-105 transition-all duration-500 group">
+                        <Image
+                          src={getExistingBestImage(featuredGames[currentFeaturedIndex])}
+                          alt={featuredGames[currentFeaturedIndex]?.title || 'Game Preview'}
+                          fill
+                          style={{ objectFit: 'cover' }}
+                          className="group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-60"></div>
+                        
+                        {/* Countdown */}
+                        {featuredGames[currentFeaturedIndex]?.expiryDate && !isNaN(new Date(featuredGames[currentFeaturedIndex]?.expiryDate).getTime()) && (
+                          <div className="absolute bottom-4 left-4 right-4 bg-black/60 p-3 rounded backdrop-blur-sm border border-white/10 text-center">
+                            <CountdownTimer expiryDate={featuredGames[currentFeaturedIndex]?.expiryDate} />
+                          </div>
+                        )}
+                        
+                        {/* Platform */}
+                        {(isPlatformEpic(featuredGames[currentFeaturedIndex]) || isPlatformSteam(featuredGames[currentFeaturedIndex])) && (
+                          <div className="absolute top-3 right-3 bg-black/50 p-2 rounded-full backdrop-blur-sm">
+                            {isPlatformEpic(featuredGames[currentFeaturedIndex]) && 
+                              <SiEpicgames className="w-5 h-5 text-white" />}
+                            {isPlatformSteam(featuredGames[currentFeaturedIndex]) && 
+                              <SiSteam className="w-5 h-5 text-white" />}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -677,31 +779,51 @@ export default function Home({
                 <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 flex justify-between z-20">
                   <button 
                     onClick={goToPrevFeatured} 
-                    className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
+                    className="bg-black/30 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur transition-all hover:scale-110"
                     aria-label="Previous Game"
                   >
-                    <MdNavigateBefore size={24} />
+                    <MdNavigateBefore size={28} />
                   </button>
                   <button 
                     onClick={goToNextFeatured} 
-                    className="bg-black/50 hover:bg-black/70 text-white p-2 rounded-full"
+                    className="bg-black/30 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur transition-all hover:scale-110"
                     aria-label="Next Game"
                   >
-                    <MdNavigateNext size={24} />
+                    <MdNavigateNext size={28} />
                   </button>
+                </div>
+                
+                {/* Indicator Dots */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                  {featuredGames.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentFeaturedIndex(index)}
+                      className={`w-2.5 h-2.5 rounded-full transition-all ${
+                        index === currentFeaturedIndex 
+                          ? 'bg-blue-500 w-8' 
+                          : 'bg-white/40 hover:bg-white/60'
+                      }`}
+                      aria-label={`Öne çıkan oyun ${index + 1}`}
+                    />
+                  ))}
                 </div>
               </div>
             )}
           </section>
 
-          {/* Thumbnails of featured games */}
-          <section className="mt-4">
+          {/* Thumbnails of featured games - make this prettier */}
+          <section className="my-4">
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {featuredGames.map((game, index) => (
                 <button
                   key={game.id}
                   onClick={() => setCurrentFeaturedIndex(index)}
-                  className={`relative min-w-[200px] h-28 rounded-md overflow-hidden flex-shrink-0 ${index === currentFeaturedIndex ? 'border-2 border-blue-500' : 'border border-transparent'}`}
+                  className={`relative min-w-[180px] h-24 rounded-md overflow-hidden flex-shrink-0 transition-all duration-300 transform ${
+                    index === currentFeaturedIndex 
+                      ? 'border-2 border-blue-500 scale-105 shadow-lg' 
+                      : 'border border-gray-800 hover:border-blue-400 hover:-translate-y-1'
+                  }`}
                 >
                   <Image
                     src={getExistingBestImage(game)}
@@ -711,8 +833,8 @@ export default function Home({
                     className="transition-opacity"
                   />
                   <div className={`absolute inset-0 ${index === currentFeaturedIndex ? 'bg-black/30' : 'bg-black/60'}`}></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-2">
-                    <h3 className="text-white text-sm font-medium line-clamp-1">{game.title}</h3>
+                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black to-transparent">
+                    <h3 className="text-white text-xs font-medium line-clamp-1">{game.title}</h3>
                   </div>
                 </button>
               ))}

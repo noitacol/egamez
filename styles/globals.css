@@ -632,6 +632,25 @@
     background-color: var(--epic-accent);
     @apply text-white;
   }
+
+  /* Epic Hero Button */
+  .epic-hero-button {
+    @apply px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-sm md:text-base flex items-center justify-center gap-1 transform transition-all duration-300 hover:shadow-lg;
+  }
+  
+  .epic-hero-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 116, 228, 0.5);
+  }
+  
+  .epic-hero-button-secondary {
+    @apply px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-medium backdrop-blur-sm border border-white/20 rounded text-sm md:text-base flex items-center justify-center gap-1 transform transition-all duration-300;
+  }
+  
+  .epic-hero-button-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(255, 255, 255, 0.1);
+  }
 }
 
 @layer utilities {
