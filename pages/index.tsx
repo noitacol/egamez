@@ -88,7 +88,7 @@ export default function Home({
     const allGames = [...freebieGames, ...trendingGames];
     
     // Sadece Steam veya Epic platformundaki oyunları filtrele
-    const steamAndEpicGames = allGames.filter(game => {
+    const platformGames = allGames.filter(game => {
       if (!game) return false;
       
       // Sadece Steam veya Epic platformundaki oyunları al
@@ -98,12 +98,12 @@ export default function Home({
       const isLoot = game.isLoot || game.offerType === 'loot';
       const isBeta = game.isBeta || game.offerType === 'beta';
       
-      // Sadece gerçek oyunları dahil et (loot ve beta olmayanlar) ve video içeren oyunları öncelikle seç
-      return (platform === 'steam' || platform === 'epic') && !isLoot && !isBeta;
+      // Sadece gerçek oyunları dahil et (loot ve beta olmayanlar)
+      return (platform === 'steam' || platform === 'epic' || platform === 'pc') && !isLoot && !isBeta;
     });
     
     // Test amaçlı olarak bazı oyunlara son kullanma tarihi atayalım (gerçek uygulamada burası API'dan gelir)
-    const gamesWithExpiry = steamAndEpicGames.map(game => {
+    const gamesWithExpiry = platformGames.map(game => {
       // Tüm oyunlara farklı süreler verelim
       if (!game.expiryDate) {
         // Rastgele 1-10 gün arasında son kullanma süresi ekleyelim
@@ -119,16 +119,38 @@ export default function Home({
       return game;
     });
 
-    // Videosu olan oyunları öncelikli olarak al
-    const gamesWithVideos = gamesWithExpiry.filter(game => game.videos && game.videos.length > 0);
-    const gamesWithoutVideos = gamesWithExpiry.filter(game => !game.videos || game.videos.length === 0);
+    // Videosu olan oyunları öncelikli olarak al ve geçerli YouTube videosu olduğundan emin ol
+    const gamesWithValidVideos = gamesWithExpiry.filter(game => {
+      // Video var mı kontrol et
+      if (!game.videos || !Array.isArray(game.videos) || game.videos.length === 0) return false;
+      
+      // YouTube videosu olduğundan ve ID çıkarılabildiğinden emin ol
+      const youtubeVideo = game.videos.find(video => {
+        const videoUrl = video?.url || '';
+        return (
+          videoUrl.includes('youtube.com/watch') || 
+          videoUrl.includes('youtu.be/') || 
+          videoUrl.includes('youtube.com/embed/')
+        ) && getYouTubeVideoId(videoUrl) !== '';
+      });
+      
+      return !!youtubeVideo;
+    });
+    
+    const gamesWithoutVideos = gamesWithExpiry.filter(game => {
+      return !gamesWithValidVideos.some(g => g.id === game.id);
+    });
     
     // Her iki grubu da rastgele sırala
-    const shuffledWithVideos = [...gamesWithVideos].sort(() => 0.5 - Math.random());
+    const shuffledWithVideos = [...gamesWithValidVideos].sort(() => 0.5 - Math.random());
     const shuffledWithoutVideos = [...gamesWithoutVideos].sort(() => 0.5 - Math.random());
     
     // İki listeyi birleştir ve ilk 5 tanesini göster (10 yerine 5 yaparak veri boyutunu azaltıyoruz)
     const combinedGames = [...shuffledWithVideos, ...shuffledWithoutVideos].slice(0, 5);
+    
+    console.log('Öne çıkan oyun sayısı:', combinedGames.length);
+    console.log('Video içeren oyun sayısı:', shuffledWithVideos.length);
+    
     setFeaturedGames(combinedGames);
   }, [freebieGames, trendingGames]);
 
@@ -577,13 +599,19 @@ export default function Home({
             </div>
 
             {/* Arkaplan Video veya Resim */}
-            <div className="absolute inset-0 z-0">
-              <div className="relative w-full h-full">
-                <iframe
-                  src={`https://www.youtube.com/embed/${getYouTubeVideoId(featuredGames[currentFeaturedIndex]?.videos?.[0]?.url ?? '')}?autoplay=1&mute=1&loop=1&playlist=${getYouTubeVideoId(featuredGames[currentFeaturedIndex]?.videos?.[0]?.url ?? '')}&controls=0&showinfo=0&rel=0&modestbranding=1&start=${getRandomStartTime()}`}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  className="absolute w-[300%] h-[300%] top-[-100%] left-[-100%] opacity-60"
-                ></iframe>
+            <div className="absolute inset-0 z-0 bg-gray-900">
+              <div className="relative w-full h-full overflow-hidden">
+                {featuredGames[currentFeaturedIndex]?.videos?.[0]?.url && getYouTubeVideoId(featuredGames[currentFeaturedIndex]?.videos?.[0]?.url) ? (
+                  <iframe
+                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(featuredGames[currentFeaturedIndex]?.videos?.[0]?.url)}?autoplay=1&mute=1&loop=1&playlist=${getYouTubeVideoId(featuredGames[currentFeaturedIndex]?.videos?.[0]?.url)}&controls=0&showinfo=0&rel=0&modestbranding=1&start=${getRandomStartTime()}`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    className="absolute w-[300%] h-[300%] top-[-100%] left-[-100%] opacity-60"
+                    loading="lazy"
+                    style={{ pointerEvents: 'none' }}
+                  ></iframe>
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-gray-900/40"></div>
+                )}
               </div>
             </div>
 
