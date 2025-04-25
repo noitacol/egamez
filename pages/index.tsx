@@ -1135,9 +1135,9 @@ export default function Home({
                       <p className="game-card-featured-description">
                         {game.description?.substring(0, 100) || 'Bu oyunu hemen ücretsiz alabilirsiniz!'}{game.description && game.description.length > 100 ? '...' : ''}
                       </p>
-                      <a href={`/game/${game.id}`} className="game-card-featured-button">
+                      <a href={game.url || `/game/${game.id}`} target="_blank" rel="noopener noreferrer" className="game-card-featured-button">
                         Mağazada Gör
-                        <svg className="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <svg className="w-4 h-4 ml-1 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
                       </a>
@@ -1223,9 +1223,9 @@ export default function Home({
                     <p className="game-card-featured-description">
                       {game.description?.substring(0, 100) || 'Bu oyunu hemen ücretsiz alabilirsiniz!'}{game.description && game.description.length > 100 ? '...' : ''}
                     </p>
-                    <a href={`/game/${game.id}`} className="game-card-featured-button">
+                    <a href={game.url || `/game/${game.id}`} target="_blank" rel="noopener noreferrer" className="game-card-featured-button">
                       Mağazada Gör
-                      <svg className="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <svg className="w-4 h-4 ml-1 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </a>
@@ -1262,9 +1262,9 @@ export default function Home({
                     <p className="game-card-featured-description">
                       {game.description?.substring(0, 100) || 'Bu oyunu hemen ücretsiz alabilirsiniz!'}{game.description && game.description.length > 100 ? '...' : ''}
                     </p>
-                    <a href={`/game/${game.id}`} className="game-card-featured-button">
+                    <a href={game.url || `/game/${game.id}`} target="_blank" rel="noopener noreferrer" className="game-card-featured-button">
                       Mağazada Gör
-                      <svg className="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <svg className="w-4 h-4 ml-1 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </a>
@@ -1301,9 +1301,9 @@ export default function Home({
                     <p className="game-card-featured-description">
                       {game.description?.substring(0, 100) || 'Bu oyunu hemen ücretsiz alabilirsiniz!'}{game.description && game.description.length > 100 ? '...' : ''}
                     </p>
-                    <a href={`/game/${game.id}`} className="game-card-featured-button">
+                    <a href={game.url || `/game/${game.id}`} target="_blank" rel="noopener noreferrer" className="game-card-featured-button">
                       Mağazada Gör
-                      <svg className="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <svg className="w-4 h-4 ml-1 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </a>

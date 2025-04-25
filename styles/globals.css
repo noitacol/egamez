@@ -1273,13 +1273,31 @@ html, body {
 }
 
 .game-card-featured-button {
-  @apply mt-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-all duration-200 w-full sm:w-auto text-center;
+  @apply mt-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-all duration-200 w-full sm:w-auto text-center relative;
   box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
 }
 
-.game-card-featured-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 10px -1px rgba(59, 130, 246, 0.25);
+.game-card-featured-button::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  right: 12px;
+  top: 12px;
+  opacity: 0;
+  transform: rotate(45deg) translate(-4px, 4px);
+  transition: all 0.2s ease;
+}
+
+.game-card-featured-button:hover::after {
+  opacity: 1;
+  transform: rotate(45deg) translate(0, 0);
+}
+
+.game-card-featured-button:hover svg {
+  transform: translateX(4px);
 }
 
 /* Adjust Game Grid for Featured Cards */
