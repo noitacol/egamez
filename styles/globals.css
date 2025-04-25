@@ -1232,109 +1232,80 @@ html, body {
   }
 }
 
-/* Enhanced Game Card */
-.game-card {
-  @apply rounded-xl overflow-hidden flex flex-col transition-all duration-300;
-  background: linear-gradient(145deg, #1e293b, #0f172a);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+/* Featured Game Card - Like the Example */
+.game-card-featured {
+  @apply bg-gray-900 rounded-lg overflow-hidden flex flex-col shadow-lg;
+  border: 1px solid rgba(55, 65, 81, 0.5);
   height: 100%;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  position: relative;
-  z-index: 1;
+  transition: all 0.3s ease;
 }
 
-.game-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+.game-card-featured:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   border-color: rgba(59, 130, 246, 0.3);
 }
 
-.game-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.8) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 2;
-  pointer-events: none;
+.game-card-featured-image {
+  @apply relative w-full overflow-hidden;
+  height: 280px;
 }
 
-.game-card:hover::before {
-  opacity: 1;
-}
-
-.game-card-image {
-  @apply relative;
-  height: 200px;
-  overflow: hidden;
-}
-
-.game-card-image img {
+.game-card-featured-image img {
   @apply w-full h-full object-cover transition-transform duration-500;
 }
 
-.game-card:hover .game-card-image img {
-  transform: scale(1.08);
+.game-card-featured:hover .game-card-featured-image img {
+  transform: scale(1.05);
 }
 
-.game-card-badge {
-  @apply absolute top-3 right-3 z-10 px-3 py-1 text-xs font-bold rounded-full;
-  background: linear-gradient(45deg, #3b82f6, #8b5cf6);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+.game-card-featured-content {
+  @apply p-5 flex flex-col flex-grow;
+  background: linear-gradient(180deg, #0f172a, #111827);
 }
 
-.game-card-platform {
-  @apply absolute top-3 left-3 z-10 bg-black/60 p-2 rounded-full backdrop-blur-sm flex items-center justify-center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.3s ease;
+.game-card-featured-title {
+  @apply text-xl text-white font-bold mb-2;
 }
 
-.game-card:hover .game-card-platform {
-  transform: scale(1.1);
+.game-card-featured-description {
+  @apply text-gray-300 text-sm mb-4 line-clamp-2;
 }
 
-.game-card-content {
-  @apply p-4 flex flex-col flex-grow;
+.game-card-featured-button {
+  @apply mt-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-all duration-200 w-full sm:w-auto text-center;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
 }
 
-.game-card-title {
-  @apply font-bold text-lg text-white mb-2 line-clamp-1;
-  transition: color 0.3s ease;
+.game-card-featured-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px -1px rgba(59, 130, 246, 0.25);
 }
 
-.game-card:hover .game-card-title {
-  @apply text-blue-300;
+/* Adjust Game Grid for Featured Cards */
+.game-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  width: 100%;
 }
 
-.game-card-description {
-  @apply text-sm text-gray-300 line-clamp-2 mb-4;
-  transition: color 0.3s ease;
+@media (max-width: 768px) {
+  .game-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .game-card-featured-image {
+    height: 220px;
+  }
 }
 
-.game-card:hover .game-card-description {
-  @apply text-gray-200;
-}
-
-.game-card-footer {
-  @apply flex items-center justify-between mt-auto pt-3 border-t border-gray-700/30;
-}
-
-.game-card-time {
-  @apply text-xs text-gray-400 flex items-center gap-1;
-}
-
-.game-card-action {
-  @apply text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1;
-}
-
-.game-card-action-button {
-  @apply absolute bottom-4 right-4 bg-blue-600 text-white p-2 rounded-full opacity-0 transition-all duration-300 shadow-lg transform translate-y-4 z-10;
-}
-
-.game-card:hover .game-card-action-button {
-  opacity: 1;
-  transform: translateY(0);
+@media (max-width: 640px) {
+  .game-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  
+  .game-card-featured-image {
+    height: 200px;
+  }
 } 
