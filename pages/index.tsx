@@ -231,7 +231,7 @@ export default function Home({
     const shuffledWithVideos = [...gamesWithValidVideos].sort(() => 0.5 - Math.random());
     const shuffledWithoutVideos = [...gamesWithoutVideos].sort(() => 0.5 - Math.random());
     
-    // İki listeyi da birleştir ve ilk 5 tanesini göster
+    // İki listeyi birleştir ve ilk 5 tanesini göster
     const combinedGames = [...shuffledWithVideos, ...shuffledWithoutVideos].slice(0, 5);
     
     console.log('Öne çıkan oyun sayısı:', combinedGames.length);
@@ -362,7 +362,7 @@ export default function Home({
     // Hero banner için en uygun görsel tiplerini tanımla (öncelik sırasına göre)
     const preferredTypesForHero = [
       'OfferImageWide', // Geniş banner görsel, genellikle yüksek çözünürlükte olur
-      'DieselStoreFrontWide', // Epic Store'da kullanılan geniş görsel, yüksek kalite
+      'DieselStoreFrontWide', // Epic Store'da kullanılan geniş görsel, yüksek kaliteli
       'Screenshot', // Ekran görüntüsü - daha detaylı
       'Thumbnail', // Küçük görsel genelde daha yüksek kalite olur
       'DieselGameBoxTall', // Dikey oyun kutusu - detaylı
@@ -1145,28 +1145,34 @@ export default function Home({
             </button>
               </div>
             )}
-            
-            {filteredGames.length > 9 && (
-              <div className="mt-8 flex justify-center">
-            <button 
-                  className="btn-primary flex items-center gap-2"
-                  onClick={() => setActiveTab('free')}
-                >
-                  <span>Daha Fazla Göster</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
-                  </svg>
-            </button>
-              </div>
-            )}
           </section>
 
-          {/* Loot Section */}
+          {/* Trending Games Banner */}
+          <section className="epic-banner">
+            <Image
+              src="/images/trending-banner.jpg"
+              alt="Trend Oyunlar"
+              fill
+              style={{ objectFit: 'cover' }}
+            />
+            <div className="epic-banner-content">
+              <h2 className="text-3xl font-bold mb-4">Trend Oyunlar</h2>
+              <p className="text-lg mb-6 max-w-xl">Şu anda oyuncuların en çok ilgisini çeken oyunları keşfedin.</p>
+            <button 
+                onClick={() => setActiveTab('trending')}
+                className="epic-button epic-button-primary"
+            >
+                Tümünü Görüntüle
+            </button>
+          </div>
+        </section>
+
+          {/* Trending Games Section */}
           <section className="epic-section">
             <div className="epic-section-header">
-              <h2 className="epic-section-title">Loot</h2>
+              <h2 className="epic-section-title">Trend Oyunlar</h2>
               <button 
-                onClick={() => setActiveTab('loot')}
+                onClick={() => setActiveTab('trending')}
                 className="epic-section-link"
               >
                 Tümünü Görüntüle
@@ -1174,7 +1180,7 @@ export default function Home({
             </div>
             
             <div className="game-grid">
-              {lootGames.slice(0, 3).map(game => (
+              {trendingGames.slice(0, 3).map(game => (
                 <div key={game.id} className="game-card-featured">
                   <div className="game-card-featured-image">
                     <img 
@@ -1199,14 +1205,6 @@ export default function Home({
               ))}
             </div>
           </section>
-        </div>
-      </main>
-    </>
-  );
-};
-
-export default Home;
-        </section>
 
           {/* Loot Section */}
           <section className="epic-section">
