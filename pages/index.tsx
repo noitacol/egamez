@@ -474,6 +474,13 @@ export default function Home({
     return videoId;
   };
 
+  // Oyun videoları için rastgele bir başlangıç süresini belirle
+  const getRandomStartTime = (): number => {
+    // Oyun tanıtım videolarının genellikle ilk 20-120 saniyesi daha ilgi çekici olur
+    // 20-120 saniye arasında rastgele bir süre belirle
+    return Math.floor(Math.random() * 100) + 20;
+  };
+
   // CountdownTimer bileşeni - hero banner altında ve Home fonksiyonu dışında tanımla
   const CountdownTimer = ({ expiryDate }: { expiryDate: string | null | undefined }) => {
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(expiryDate));
@@ -552,195 +559,187 @@ export default function Home({
       </Head>
 
       <main className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black text-white overflow-hidden">
-        {/* Hero Banner - Featured Games Slider */}
-        {featuredGames.length > 0 && (
-          <section className="hero-banner relative w-full h-[500px] md:h-[600px] overflow-hidden group">
-            {/* Ana Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-gray-900 z-10"></div>
+        {/* Hero Banner */}
+        {featuredGames && 
+         featuredGames[currentFeaturedIndex] && 
+         featuredGames[currentFeaturedIndex]?.videos && 
+         Array.isArray(featuredGames[currentFeaturedIndex]?.videos) && 
+         featuredGames[currentFeaturedIndex]?.videos.length > 0 ? (
+          <section className="hero-banner-qamico relative h-[650px] md:h-[700px] w-full overflow-hidden mb-12">
+            <div className="absolute inset-0 z-10 bg-black/50"></div>
             
-            {/* Dekoratif Desenler */}
-            <div className="absolute inset-0 bg-[url('/patterns/grid-pattern.png')] opacity-10 mix-blend-multiply z-10"></div>
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-900 to-transparent z-10"></div>
-            
-            {/* Slider Görselleri ve YouTube Videoları */}
-            {featuredGames.map((game, index) => (
-              <div 
-                key={`hero-${game.id}`} 
-                className={`absolute inset-0 z-0 transition-all duration-1500 ${
-                  index === currentFeaturedIndex ? 'opacity-100' : 'opacity-0'
-                }`}
-              >
-                {/* Varsayılan arkaplan - yükleme durumu için */}
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black"></div>
-                
-                {game.videos && game.videos.length > 0 ? (
-                  // YouTube video varsa göster
-                  <div className="relative w-full h-full">
-                    <iframe 
-                      src={`https://www.youtube.com/embed/${getYouTubeVideoId(game.videos[0].url)}?autoplay=${index === currentFeaturedIndex ? '1' : '0'}&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${getYouTubeVideoId(game.videos[0].url)}&start=0`}
-                      title={game.title || 'Featured Game'} 
-                      width="100%" 
-                      height="100%" 
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      className="absolute inset-0 w-full h-full object-cover"
-                      style={{ pointerEvents: 'none' }}
-                    ></iframe>
-                  </div>
-                ) : (
-                  // Video yoksa görseli göster - error handling ile
-                  <div className="relative w-full h-full bg-gradient-to-br from-gray-900 to-black">
-                    {/* Yükleme göstergesi */}
-                    <div className="absolute inset-0 flex items-center justify-center z-0">
-                      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                    
-                    {/* Görsel */}
-                    <Image 
-                      src={getBestGameImage(game)}
-                      alt={game.title || 'Featured Game'} 
-                      fill 
-                      style={{ objectFit: 'cover', objectPosition: 'center' }}
-                      priority={index === currentFeaturedIndex}
-                      sizes="100vw"
-                      quality={95}
-                      className={`transition-opacity duration-1000 ${index === currentFeaturedIndex ? 'opacity-100' : 'opacity-0'}`}
-                      unoptimized={true}
-                      onError={(e) => {
-                        // Hata durumunda yedek görsel kullan
-                        const target = e.target as HTMLImageElement;
-                        target.onerror = null; // Sonsuz döngüyü engelle
-                        target.src = '/placeholder-hero.jpg'; // Yedek görsel
-                      }}
-                    />
-                    
-                    {/* Görsel overlay - genelde daha iyi kontrast için */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/30 to-black/40 z-5"></div>
-                  </div>
-                )}
+            {/* Dekoratif Çizgiler */}
+            <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
+              <div className="absolute left-1/4 w-[1px] h-full opacity-20 bg-gradient-to-b from-orange-500/0 via-orange-500 to-orange-500/0"></div>
+              <div className="absolute right-1/4 w-[1px] h-full opacity-20 bg-gradient-to-b from-orange-500/0 via-orange-500 to-orange-500/0"></div>
+              <div className="absolute top-1/3 w-full h-[1px] opacity-20 bg-gradient-to-r from-orange-500/0 via-orange-500 to-orange-500/0"></div>
+              <div className="absolute bottom-1/3 w-full h-[1px] opacity-20 bg-gradient-to-r from-orange-500/0 via-orange-500 to-orange-500/0"></div>
+            </div>
+
+            {/* Arkaplan Video veya Resim */}
+            <div className="absolute inset-0 z-0">
+              <div className="relative w-full h-full">
+                <iframe
+                  src={`https://www.youtube.com/embed/${getYouTubeVideoId(featuredGames[currentFeaturedIndex]?.videos?.[0]?.url ?? '')}?autoplay=1&mute=1&loop=1&playlist=${getYouTubeVideoId(featuredGames[currentFeaturedIndex]?.videos?.[0]?.url ?? '')}&controls=0&showinfo=0&rel=0&modestbranding=1&start=${getRandomStartTime()}`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  className="absolute w-[300%] h-[300%] top-[-100%] left-[-100%] opacity-60"
+                ></iframe>
               </div>
-            ))}
-            
-            {/* Slider İçeriği */}
-            <div className="container mx-auto h-full flex flex-col justify-end pb-8 md:pb-16 relative z-20 px-4">
-              <div className="max-w-xl">
-                {/* Platform Badge */}
-                <div className="mb-4 fade-in-up">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium backdrop-blur-lg shadow-lg ${
-                    featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
-                      ? 'bg-blue-600/80' 
-                      : 'bg-purple-600/80'
-                  }`}>
-                    {featuredGames[currentFeaturedIndex]?.distributionPlatform === 'steam' 
-                      ? <><SiSteam className="mr-1" /> Steam</>
-                      : featuredGames[currentFeaturedIndex]?.distributionPlatform === 'epic'
-                        ? <><SiEpicgames className="mr-1" /> Epic Games</>
-                        : featuredGames[currentFeaturedIndex]?.sourceLabel || 'Ücretsiz Oyun'
-                    }
-                  </span>
-                </div>
-                
-                {/* Modern Hero Content */}
-                <div className="hero-content backdrop-blur-md bg-black/40 rounded-xl border border-white/10 p-6 md:p-8 max-w-3xl shadow-2xl fade-in-up">
-                  {/* Oyun Başlığı */}
-                  <h1 className="hero-title text-shadow-lg mb-3 md:mb-5 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-gray-200">
-                    {featuredGames[currentFeaturedIndex]?.title}
-                  </h1>
+            </div>
+
+            {/* İçerik */}
+            <div className="relative z-20 container mx-auto flex flex-col items-center justify-center h-full px-4">
+              <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-6xl mx-auto">
+                <div className="w-full md:w-1/2 text-center md:text-left">
+                  <h2 className="qamico-hero-title text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4">
+                    <span className="text-outline-qamico">{featuredGames[currentFeaturedIndex]?.title?.split(' ')?.[0] || ''}</span>
+                    <span className="block mt-1 text-white">{featuredGames[currentFeaturedIndex]?.title?.split(' ')?.slice(1).join(' ') || ''}</span>
+                  </h2>
                   
-                  {/* Oyun Açıklaması */}
-                  <p className="text-sm md:text-base lg:text-lg text-gray-100 text-shadow mb-5 md:mb-6 line-clamp-3">
-                    {featuredGames[currentFeaturedIndex]?.description?.slice(0, 200)}
-                    {featuredGames[currentFeaturedIndex]?.description && 
-                      featuredGames[currentFeaturedIndex]?.description.length > 200 ? '...' : ''}
+                  <p className="text-gray-200 text-lg mb-8 max-w-xl">
+                    {featuredGames[currentFeaturedIndex]?.description?.slice(0, 120)}
+                    {featuredGames[currentFeaturedIndex]?.description?.length > 120 ? '...' : ''}
                   </p>
                   
-                  {/* Countdown Timer - Sadece kalan süresi olan oyunlar için */}
+                  {/* Zamanlayıcı (eğer son kullanma tarihi varsa) */}
                   {featuredGames[currentFeaturedIndex]?.expiryDate && (
-                    <CountdownTimer expiryDate={featuredGames[currentFeaturedIndex]?.expiryDate} />
+                    <div className="flex items-center justify-center md:justify-start mb-8 text-orange-400 font-medium">
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <span>Bitiş: {featuredGames[currentFeaturedIndex]?.expiryDate ? new Date(featuredGames[currentFeaturedIndex]?.expiryDate).toLocaleDateString('tr-TR') : ''}</span>
+                    </div>
                   )}
                   
-                  {/* Butonlar */}
-                  <div className="flex flex-wrap gap-3 mt-4 items-center">
-                    {featuredGames[currentFeaturedIndex]?.url && (
-                      <Link 
-                        href={featuredGames[currentFeaturedIndex].url || '#'} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
-                        tabIndex={0}
-                      >
-                        <span>Görüntüle</span>
-                        <FaExternalLinkAlt />
-                      </Link>
-                    )}
-                    <Link
-                      href="/games"
-                      className="bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 shadow-xl transition-all transform hover:translate-y-[-2px] hover:shadow-2xl"
-                      tabIndex={0}
+                  <div className="mt-4">
+                    <a
+                      href={featuredGames[currentFeaturedIndex]?.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="qamico-button inline-flex items-center px-8 py-3 text-lg font-medium text-white rounded-full"
                     >
-                      <span>Tüm Oyunlar</span>
-                      <MdNavigateNext />
-                    </Link>
+                      GÖRÜNTÜLE
+                      <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="w-full md:w-1/2 flex justify-center mt-8 md:mt-0">
+                  <div className="relative w-full max-w-md">
+                    <Image
+                      src={getBestGameImage(featuredGames[currentFeaturedIndex] || {})}
+                      alt={featuredGames[currentFeaturedIndex]?.title || 'Öne Çıkan Oyun'}
+                      width={500}
+                      height={300}
+                      className="rounded-lg shadow-2xl"
+                      priority
+                    />
                   </div>
                 </div>
               </div>
-              
-              {/* Slider Kontrolleri */}
-              {featuredGames.length > 1 && (
-                <>
-                  <div className="flex justify-between items-center w-full absolute left-0 top-1/2 -translate-y-1/2 z-30 px-4">
-                    <button 
-                      onClick={goToPrevFeatured}
-                      className="bg-black/40 hover:bg-black/60 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform hover:scale-110 shadow-lg"
-                      aria-label="Önceki oyun"
-                    >
-                      <MdNavigateBefore className="text-3xl" />
-                    </button>
-                    <button 
-                      onClick={goToNextFeatured}
-                      className="bg-black/40 hover:bg-black/60 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform hover:scale-110 shadow-lg"
-                      aria-label="Sonraki oyun"
-                    >
-                      <MdNavigateNext className="text-3xl" />
-                    </button>
-                  </div>
-                  
-                  {/* İndikatörler - Slider Noktaları + Küçük Önizleme */}
-                  <div className="flex justify-center gap-3 absolute -bottom-4 left-0 right-0 z-30 px-4 md:px-8 py-4">
-                    {featuredGames.map((game, index) => (
-                      <button
-                        key={`indicator-${index}`}
-                        onClick={() => setCurrentFeaturedIndex(index)}
-                        className="hero-indicator"
-                        aria-label={`Oyun ${index + 1}`}
-                      >
-                        {/* Küçük Önizleme (hover durumunda gösterilir) */}
-                        <div className="hero-preview-tooltip">
-                          <div className="hero-preview-image">
-                            <Image 
-                              src={getBestGameImage(game)}
-                              alt={game.title || `Oyun ${index + 1}`}
-                              width={112}
-                              height={64}
-                              className="object-cover w-full h-full image-rendering-crisp"
-                            />
-                          </div>
-                          <div className="hero-preview-arrow"></div>
-                        </div>
-                        {/* Nokta indikatörü */}
-                        <div className={`hero-indicator-dot ${
-                          index === currentFeaturedIndex 
-                            ? 'hero-indicator-dot-active' 
-                            : 'hero-indicator-dot-inactive'
-                        }`}></div>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
+            </div>
+
+            {/* Slider Kontrolleri (Dikey) */}
+            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 z-20 flex flex-col space-y-3">
+              {featuredGames.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentFeaturedIndex(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    index === currentFeaturedIndex 
+                      ? 'bg-orange-500 scale-110' 
+                      : 'bg-gray-400 opacity-60 hover:opacity-100'
+                  }`}
+                  aria-label={`Özellik ${index + 1}`}
+                />
+              ))}
             </div>
           </section>
-        )}
+        ) : featuredGames && featuredGames.length > 0 ? (
+          <section className="hero-banner-qamico relative h-[650px] md:h-[700px] w-full overflow-hidden mb-12">
+            <div className="absolute inset-0 z-10 bg-black/50"></div>
+            
+            {/* Dekoratif Çizgiler */}
+            <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
+              <div className="absolute left-1/4 w-[1px] h-full opacity-20 bg-gradient-to-b from-orange-500/0 via-orange-500 to-orange-500/0"></div>
+              <div className="absolute right-1/4 w-[1px] h-full opacity-20 bg-gradient-to-b from-orange-500/0 via-orange-500 to-orange-500/0"></div>
+              <div className="absolute top-1/3 w-full h-[1px] opacity-20 bg-gradient-to-r from-orange-500/0 via-orange-500 to-orange-500/0"></div>
+              <div className="absolute bottom-1/3 w-full h-[1px] opacity-20 bg-gradient-to-r from-orange-500/0 via-orange-500 to-orange-500/0"></div>
+            </div>
+
+            {/* İçerik */}
+            <div className="relative z-20 container mx-auto flex flex-col items-center justify-center h-full px-4">
+              <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-6xl mx-auto">
+                <div className="w-full md:w-1/2 text-center md:text-left">
+                  <h2 className="qamico-hero-title text-4xl md:text-6xl lg:text-7xl font-extrabold mb-4">
+                    <span className="text-outline-qamico">{featuredGames[currentFeaturedIndex]?.title?.split(' ')?.[0] || ''}</span>
+                    <span className="block mt-1 text-white">{featuredGames[currentFeaturedIndex]?.title?.split(' ')?.slice(1).join(' ') || ''}</span>
+                  </h2>
+                  
+                  <p className="text-gray-200 text-lg mb-8 max-w-xl">
+                    {featuredGames[currentFeaturedIndex]?.description?.slice(0, 120)}
+                    {featuredGames[currentFeaturedIndex]?.description?.length > 120 ? '...' : ''}
+                  </p>
+                  
+                  {/* Zamanlayıcı (eğer son kullanma tarihi varsa) */}
+                  {featuredGames[currentFeaturedIndex]?.expiryDate && (
+                    <div className="flex items-center justify-center md:justify-start mb-8 text-orange-400 font-medium">
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <span>Bitiş: {featuredGames[currentFeaturedIndex]?.expiryDate ? new Date(featuredGames[currentFeaturedIndex]?.expiryDate).toLocaleDateString('tr-TR') : ''}</span>
+                    </div>
+                  )}
+                  
+                  <div className="mt-4">
+                    <a
+                      href={featuredGames[currentFeaturedIndex]?.url || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="qamico-button inline-flex items-center px-8 py-3 text-lg font-medium text-white rounded-full"
+                    >
+                      GÖRÜNTÜLE
+                      <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="w-full md:w-1/2 flex justify-center mt-8 md:mt-0">
+                  <div className="relative w-full max-w-md">
+                    <Image
+                      src={getBestGameImage(featuredGames[currentFeaturedIndex] || {})}
+                      alt={featuredGames[currentFeaturedIndex]?.title || 'Öne Çıkan Oyun'}
+                      layout="fill"
+                      objectFit="cover"
+                      className="opacity-70 transform scale-110 blur-sm"
+                      priority
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Slider Kontrolleri (Dikey) */}
+            <div className="absolute right-6 top-1/2 transform -translate-y-1/2 z-20 flex flex-col space-y-3">
+              {featuredGames.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentFeaturedIndex(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    index === currentFeaturedIndex 
+                      ? 'bg-orange-500 scale-110' 
+                      : 'bg-gray-400 opacity-60 hover:opacity-100'
+                  }`}
+                  aria-label={`Özellik ${index + 1}`}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {/* Platform Selection */}
         <section className="modern-section container mx-auto px-4 py-10 lg:py-16">
@@ -750,7 +749,7 @@ export default function Home({
           
           {/* Mobile için yatay kaydırılabilir menü */}
           <div className="flex md:hidden overflow-x-auto scrollbar-hide pb-4 -mx-1 space-x-2">
-            <button
+            <button 
               onClick={() => setActivePlatform("all")}
               className={`platform-button min-w-[90px] p-3 ${
                 activePlatform === "all" ? "platform-button-active" : "platform-button-inactive"
@@ -761,7 +760,7 @@ export default function Home({
               <span className="text-sm">Tümü</span>
             </button>
             
-            <button
+            <button 
               onClick={() => setActivePlatform("epic")}
               className={`platform-button min-w-[90px] p-3 ${
                 activePlatform === "epic" ? "platform-button-active" : "platform-button-inactive"
@@ -772,7 +771,7 @@ export default function Home({
               <span className="text-sm">Epic</span>
             </button>
             
-            <button
+            <button 
               onClick={() => setActivePlatform("steam")}
               className={`platform-button min-w-[90px] p-3 ${
                 activePlatform === "steam" ? "platform-button-active" : "platform-button-inactive"
@@ -783,7 +782,7 @@ export default function Home({
               <span className="text-sm">Steam</span>
             </button>
             
-            <button
+            <button 
               onClick={() => setActivePlatform("pc")}
               className={`platform-button min-w-[90px] p-3 ${
                 activePlatform === "pc" ? "platform-button-active" : "platform-button-inactive"
@@ -794,7 +793,7 @@ export default function Home({
               <span className="text-sm">PC</span>
             </button>
             
-            <button
+            <button 
               onClick={() => setActivePlatform("playstation")}
               className={`platform-button min-w-[90px] p-3 ${
                 activePlatform === "playstation" ? "platform-button-active" : "platform-button-inactive"
@@ -852,7 +851,7 @@ export default function Home({
           
           {/* Tablet ve Desktop için Grid Layout */}
           <div className="hidden md:grid grid-cols-4 lg:grid-cols-8 gap-3 lg:gap-4">
-            <button
+            <button 
               onClick={() => setActivePlatform("all")}
               className={`platform-button p-4 ${
                 activePlatform === "all" ? "platform-button-active" : "platform-button-inactive"
@@ -863,7 +862,7 @@ export default function Home({
               <span>Tümü</span>
             </button>
             
-            <button
+            <button 
               onClick={() => setActivePlatform("epic")}
               className={`platform-button p-4 ${
                 activePlatform === "epic" ? "platform-button-active" : "platform-button-inactive"
@@ -874,7 +873,7 @@ export default function Home({
               <span>Epic</span>
             </button>
             
-            <button
+            <button 
               onClick={() => setActivePlatform("steam")}
               className={`platform-button p-4 ${
                 activePlatform === "steam" ? "platform-button-active" : "platform-button-inactive"
@@ -885,7 +884,7 @@ export default function Home({
               <span>Steam</span>
             </button>
             
-            <button
+            <button 
               onClick={() => setActivePlatform("pc")}
               className={`platform-button p-4 ${
                 activePlatform === "pc" ? "platform-button-active" : "platform-button-inactive"
@@ -896,7 +895,7 @@ export default function Home({
               <span>PC</span>
             </button>
             
-            <button
+            <button 
               onClick={() => setActivePlatform("playstation")}
               className={`platform-button p-4 ${
                 activePlatform === "playstation" ? "platform-button-active" : "platform-button-inactive"
@@ -907,7 +906,7 @@ export default function Home({
               <span>PlayStation</span>
             </button>
             
-            <button
+            <button 
               onClick={() => setActivePlatform("xbox")}
               className={`platform-button p-4 ${
                 activePlatform === "xbox" ? "platform-button-active" : "platform-button-inactive"
@@ -918,7 +917,7 @@ export default function Home({
               <span className="text-sm">Xbox</span>
             </button>
             
-            <button
+            <button 
               onClick={() => setActivePlatform("switch")}
               className={`platform-button p-4 ${
                 activePlatform === "switch" ? "platform-button-active" : "platform-button-inactive"
@@ -1013,7 +1012,7 @@ export default function Home({
                 {getCategoryCount('beta')}
               </span>
             </button>
-          </div>
+            </div>
 
           {/* Sorting Controls */}
           <div className="flex flex-wrap justify-between gap-3 mb-6">
@@ -1067,9 +1066,9 @@ export default function Home({
             ) : (
               <div className="col-span-full py-12 text-center">
                 <p className="text-lg sm:text-xl text-gray-400">Bu kategoride şu anda oyun bulunmuyor.</p>
-              </div>
+                </div>
             )}
-          </div>
+                </div>
         </section>
       </main>
     </>
