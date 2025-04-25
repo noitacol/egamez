@@ -455,8 +455,11 @@
   
   /* Epic Hero Section */
   .epic-hero {
-    @apply w-full relative overflow-hidden aspect-[21/9] rounded-md;
-    height: 500px;
+    @apply w-full relative overflow-hidden rounded-md;
+    height: 50vh; /* Sayfanın %50'si yüksekliğinde */
+    min-height: 500px; /* Minimum yükseklik */
+    max-height: 800px; /* Maksimum yükseklik */
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
   }
   
   .epic-hero-bg {
@@ -696,6 +699,22 @@
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
   }
+
+  .perspective {
+    perspective: 1000px;
+  }
+  
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .rotate-y-6 {
+    transform: rotateY(6deg);
+  }
+  
+  .shadow-glow {
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+  }
 }
 
 /* Keyframe animations */
@@ -765,6 +784,26 @@
   }
   50% {
     opacity: 0.8;
+  }
+}
+
+@keyframes floatIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }
 
