@@ -14,12 +14,30 @@
   --epic-text-secondary: #999999;
 }
 
+/* Sayfa yüklendiğinde scrollbar pozisyonu sıfırlanması için */
+html, body {
+  scroll-behavior: smooth;
+  scroll-padding-top: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Content padding ayarlamaları */
+#__next {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
 @layer base {
   body {
     @apply bg-black text-white;
     background-color: var(--epic-bg);
     color: var(--epic-text);
     font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
   }
   
   h1, h2, h3, h4, h5, h6 {

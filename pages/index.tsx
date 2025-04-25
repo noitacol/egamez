@@ -147,6 +147,11 @@ export default function Home({
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>("all");
   const [sortOrder, setSortOrder] = useState<'newest' | 'expiry'>('newest');
 
+  // Site her yüklendiğinde en üste scroll yapmak için
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Steam ve Epic platformlarındaki oyunları topla ve öne çıkan oyunlar listesini oluştur
   useEffect(() => {
     // Tüm oyunları içeren bir dizi oluştur
@@ -637,10 +642,10 @@ export default function Home({
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="bg-[#121212] min-h-screen text-white">
-        <div className="epic-container pb-16">
+      <main className="bg-[#121212] min-h-screen text-white scroll-smooth">
+        <div className="epic-container pb-16 pt-4">
           {/* Hero Banner Section */}
-          <section className="mt-8">
+          <section className="mt-0">
             {featuredGames && featuredGames[currentFeaturedIndex] && (
               <div className="epic-hero overflow-hidden rounded-lg relative">
                 {/* Hero Background Layer with Parallax Effect */}
