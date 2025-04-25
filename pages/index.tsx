@@ -1015,115 +1015,113 @@ export default function Home({
             </div>
             
             <div className="platform-scroll-container w-full overflow-x-auto pb-4 mb-8">
-              <div className="flex gap-3 items-center min-w-max px-1">
-                <button 
-                  onClick={() => setActivePlatform("all")}
-                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "all" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
-                  aria-label="Tüm platformlar"
-                >
-                  <span className="platform-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                      <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                  <span className="platform-name mt-1 font-medium text-sm">Tümü</span>
-                </button>
-                
-                <button 
-                  onClick={() => setActivePlatform("pc")}
-                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "pc" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
-                  aria-label="PC oyunları"
-                >
-                  <span className="platform-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                      <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                  <span className="platform-name mt-1 font-medium text-sm">PC</span>
-                </button>
-                
-                <button 
-                  onClick={() => setActivePlatform("epic")}
-                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "epic" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
-                  aria-label="Epic Games"
-                >
-                  <span className="platform-icon">
-                    <SiEpicgames className="w-6 h-6" />
-                  </span>
-                  <span className="platform-name mt-1 font-medium text-sm">Epic Games</span>
-                </button>
-                
-                <button 
-                  onClick={() => setActivePlatform("steam")}
-                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "steam" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
-                  aria-label="Steam"
-                >
-                  <span className="platform-icon">
-                    <SiSteam className="w-6 h-6" />
-                  </span>
-                  <span className="platform-name mt-1 font-medium text-sm">Steam</span>
-                </button>
-                
-                <button 
-                  onClick={() => setActivePlatform("playstation")}
-                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "playstation" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
-                  aria-label="PlayStation"
-                >
-                  <span className="platform-icon">
-                    <SiPlaystation className="w-6 h-6" />
-                  </span>
-                  <span className="platform-name mt-1 font-medium text-sm">PlayStation</span>
-                </button>
-                
-                <button 
-                  onClick={() => setActivePlatform("xbox")}
-                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "xbox" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
-                  aria-label="Xbox"
-                >
-                  <span className="platform-icon">
-                    <SiBox className="w-6 h-6" />
-                  </span>
-                  <span className="platform-name mt-1 font-medium text-sm">Xbox</span>
-                </button>
-                
-                <button 
-                  onClick={() => setActivePlatform("switch")}
-                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "switch" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
-                  aria-label="Nintendo Switch"
-                >
-                  <span className="platform-icon">
-                    <SiNintendoswitch className="w-6 h-6" />
-                  </span>
-                  <span className="platform-name mt-1 font-medium text-sm">Switch</span>
-                </button>
-                
-                <button 
-                  onClick={() => setActivePlatform("android")}
-                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "android" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
-                  aria-label="Android"
-                >
-                  <span className="platform-icon">
-                    <SiAndroid className="w-6 h-6" />
-                  </span>
-                  <span className="platform-name mt-1 font-medium text-sm">Android</span>
-                </button>
-                
-                <button 
-                  onClick={() => setActivePlatform("ios")}
-                  className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "ios" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
-                  aria-label="iOS"
-                >
-                  <span className="platform-icon">
-                    <SiApple className="w-6 h-6" />
-                  </span>
-                  <span className="platform-name mt-1 font-medium text-sm">iOS</span>
-                </button>
-              </div>
+              <button 
+                onClick={() => setActivePlatform("all")}
+                className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "all" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                aria-label="Tüm platformlar"
+              >
+                <span className="platform-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                    <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
+                  </svg>
+                </span>
+                <span className="platform-name mt-1 font-medium text-sm">Tümü</span>
+              </button>
+              
+              <button 
+                onClick={() => setActivePlatform("pc")}
+                className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "pc" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                aria-label="PC oyunları"
+              >
+                <span className="platform-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                    <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
+                  </svg>
+                </span>
+                <span className="platform-name mt-1 font-medium text-sm">PC</span>
+              </button>
+              
+              <button 
+                onClick={() => setActivePlatform("epic")}
+                className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "epic" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                aria-label="Epic Games"
+              >
+                <span className="platform-icon">
+                  <SiEpicgames className="w-6 h-6" />
+                </span>
+                <span className="platform-name mt-1 font-medium text-sm">Epic Games</span>
+              </button>
+              
+              <button 
+                onClick={() => setActivePlatform("steam")}
+                className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "steam" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                aria-label="Steam"
+              >
+                <span className="platform-icon">
+                  <SiSteam className="w-6 h-6" />
+                </span>
+                <span className="platform-name mt-1 font-medium text-sm">Steam</span>
+              </button>
+              
+              <button 
+                onClick={() => setActivePlatform("playstation")}
+                className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "playstation" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                aria-label="PlayStation"
+              >
+                <span className="platform-icon">
+                  <SiPlaystation className="w-6 h-6" />
+                </span>
+                <span className="platform-name mt-1 font-medium text-sm">PlayStation</span>
+              </button>
+              
+              <button 
+                onClick={() => setActivePlatform("xbox")}
+                className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "xbox" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                aria-label="Xbox"
+              >
+                <span className="platform-icon">
+                  <SiBox className="w-6 h-6" />
+                </span>
+                <span className="platform-name mt-1 font-medium text-sm">Xbox</span>
+              </button>
+              
+              <button 
+                onClick={() => setActivePlatform("switch")}
+                className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "switch" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                aria-label="Nintendo Switch"
+              >
+                <span className="platform-icon">
+                  <SiNintendoswitch className="w-6 h-6" />
+                </span>
+                <span className="platform-name mt-1 font-medium text-sm">Switch</span>
+              </button>
+              
+              <button 
+                onClick={() => setActivePlatform("android")}
+                className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "android" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                aria-label="Android"
+              >
+                <span className="platform-icon">
+                  <SiAndroid className="w-6 h-6" />
+                </span>
+                <span className="platform-name mt-1 font-medium text-sm">Android</span>
+              </button>
+              
+              <button 
+                onClick={() => setActivePlatform("ios")}
+                className={`platform-button shadow-lg transition-all duration-300 flex flex-col items-center px-4 py-2 rounded-xl ${activePlatform === "ios" ? "active bg-gradient-to-br from-blue-600 to-blue-700" : "bg-gray-800 hover:bg-gray-700"}`}
+                aria-label="iOS"
+              >
+                <span className="platform-icon">
+                  <SiApple className="w-6 h-6" />
+                </span>
+                <span className="platform-name mt-1 font-medium text-sm">iOS</span>
+              </button>
             </div>
 
             {filteredGames.length > 0 ? (
               <div className="game-grid">
-                {filteredGames.slice(0, 10).map(game => (
+                {filteredGames.slice(0, 9).map(game => (
                   <GameCard key={game.id} game={game} showPlatform />
                 ))}
               </div>
@@ -1143,7 +1141,7 @@ export default function Home({
               </div>
             )}
             
-            {filteredGames.length > 10 && (
+            {filteredGames.length > 9 && (
               <div className="mt-8 flex justify-center">
                 <button 
                   className="btn-primary flex items-center gap-2"
@@ -1190,8 +1188,8 @@ export default function Home({
               </button>
             </div>
             
-            <div className="epic-game-grid">
-              {trendingGames.slice(0, 5).map(game => (
+            <div className="game-grid">
+              {trendingGames.slice(0, 3).map(game => (
                 <GameCard 
                   key={game.id} 
                   game={game} 
@@ -1214,8 +1212,8 @@ export default function Home({
               </button>
             </div>
             
-            <div className="epic-game-grid">
-              {freeLoots.slice(0, 5).map(game => (
+            <div className="game-grid">
+              {freeLoots.slice(0, 3).map(game => (
                 <GameCard 
                   key={game.id} 
                   game={game} 
@@ -1238,8 +1236,8 @@ export default function Home({
               </button>
             </div>
             
-            <div className="epic-game-grid">
-              {freeBetas.slice(0, 5).map(game => (
+            <div className="game-grid">
+              {freeBetas.slice(0, 3).map(game => (
                 <GameCard 
                   key={game.id} 
                   game={game} 
