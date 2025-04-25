@@ -598,20 +598,32 @@ export default function Home({
               <div className="absolute bottom-1/3 w-full h-[1px] opacity-20 bg-gradient-to-r from-orange-500/0 via-orange-500 to-orange-500/0"></div>
             </div>
 
-            {/* Arkaplan Video veya Resim */}
+            {/* Arkaplan Video ve Resim */}
             <div className="absolute inset-0 z-0 bg-gray-900">
+              {/* Arkaplan Resmi */}
+              <div className="absolute inset-0">
+                <Image
+                  src={getBestGameImage(featuredGames[currentFeaturedIndex] || {})}
+                  alt={featuredGames[currentFeaturedIndex]?.title || 'Öne Çıkan Oyun'}
+                  layout="fill"
+                  objectFit="cover"
+                  className="opacity-40"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 via-black/50 to-gray-900/80"></div>
+              </div>
+              
+              {/* Video (eğer varsa) */}
               <div className="relative w-full h-full overflow-hidden">
                 {featuredGames[currentFeaturedIndex]?.videos?.[0]?.url && getYouTubeVideoId(featuredGames[currentFeaturedIndex]?.videos?.[0]?.url) ? (
                   <iframe
                     src={`https://www.youtube.com/embed/${getYouTubeVideoId(featuredGames[currentFeaturedIndex]?.videos?.[0]?.url)}?autoplay=1&mute=1&loop=1&playlist=${getYouTubeVideoId(featuredGames[currentFeaturedIndex]?.videos?.[0]?.url)}&controls=0&showinfo=0&rel=0&modestbranding=1&start=${getRandomStartTime()}`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    className="absolute w-[300%] h-[300%] top-[-100%] left-[-100%] opacity-60"
+                    className="absolute w-[300%] h-[300%] top-[-100%] left-[-100%] opacity-70"
                     loading="lazy"
                     style={{ pointerEvents: 'none' }}
                   ></iframe>
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-gray-900/40"></div>
-                )}
+                ) : null}
               </div>
             </div>
 
@@ -696,6 +708,21 @@ export default function Home({
               <div className="absolute top-1/3 w-full h-[1px] opacity-20 bg-gradient-to-r from-orange-500/0 via-orange-500 to-orange-500/0"></div>
               <div className="absolute bottom-1/3 w-full h-[1px] opacity-20 bg-gradient-to-r from-orange-500/0 via-orange-500 to-orange-500/0"></div>
             </div>
+            
+            {/* Arkaplan Resmi */}
+            <div className="absolute inset-0 z-0">
+              <div className="relative w-full h-full">
+                <Image
+                  src={getBestGameImage(featuredGames[currentFeaturedIndex] || {})}
+                  alt={featuredGames[currentFeaturedIndex]?.title || 'Öne Çıkan Oyun'}
+                  layout="fill"
+                  objectFit="cover"
+                  className="opacity-40"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 via-black/50 to-gray-900/80"></div>
+              </div>
+            </div>
 
             {/* İçerik */}
             <div className="relative z-20 container mx-auto flex flex-col items-center justify-center h-full px-4">
@@ -737,15 +764,22 @@ export default function Home({
                 </div>
                 
                 <div className="w-full md:w-1/2 flex justify-center mt-8 md:mt-0">
-                  <div className="relative w-full max-w-md">
+                  <div className="relative w-full max-w-md shadow-2xl rounded-lg overflow-hidden border border-white/10">
                     <Image
                       src={getBestGameImage(featuredGames[currentFeaturedIndex] || {})}
                       alt={featuredGames[currentFeaturedIndex]?.title || 'Öne Çıkan Oyun'}
-                      layout="fill"
-                      objectFit="cover"
-                      className="opacity-70 transform scale-110 blur-sm"
+                      width={500}
+                      height={300}
+                      className="w-full h-auto rounded-lg"
                       priority
                     />
+                    
+                    {/* Platform badge */}
+                    {featuredGames[currentFeaturedIndex]?.distributionPlatform && (
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                        {featuredGames[currentFeaturedIndex].distributionPlatform}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
