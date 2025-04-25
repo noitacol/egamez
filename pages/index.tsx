@@ -15,7 +15,7 @@ import { getFreeSteamGames, getTrendingSteamGames } from "@/lib/steam-api";
 import FreeGamesList from "@/components/FreeGamesList";
 import GameCard from "@/components/GameCard";
 import { ExtendedEpicGame } from "@/lib/types";
-import { SiEpicgames, SiSteam, SiNintendoswitch, SiGogdotcom, SiAndroid, SiApple, SiPlaystation } from "react-icons/si";
+import { SiEpicgames, SiSteam, SiNintendoswitch, SiGogdotcom, SiAndroid, SiApple, SiPlaystation, SiBox } from "react-icons/si";
 import { FaPlaystation, FaXbox, FaWindows, FaChevronLeft, FaChevronRight, FaExternalLinkAlt, FaGamepad, FaFire } from "react-icons/fa";
 import { RiGamepadLine } from "react-icons/ri";
 import { GiRaceCar, GiSwordman, GiSpellBook, GiMountainRoad, GiChessKnight } from "react-icons/gi";
@@ -29,6 +29,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BiGift } from "react-icons/bi";
 import { AiOutlineAppstore } from "react-icons/ai";
 import { SmartphoneIcon, Globe, Monitor } from "lucide-react";
+import { GiftIcon } from "lucide-react";
+import { sourcePlatformIcon } from "../lib/utils";
 
 interface HomeProps {
   // Epic API oyunları geçici olarak kaldırıldı
@@ -146,6 +148,11 @@ export default function Home({
   const [sort, setSort] = useState<"none" | "title" | "price">("none");
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>("all");
   const [sortOrder, setSortOrder] = useState<'newest' | 'expiry'>('newest');
+  
+  // Ücretsiz oyunlar sliderı için state
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [freeGamesForSlider, setFreeGamesForSlider] = useState<ExtendedEpicGame[]>([]);
+  const sliderItemsCount = 3; // Bir sayfada görüntülenecek oyun sayısı
 
   // Site her yüklendiğinde en üste scroll yapmak için
   useEffect(() => {
@@ -233,6 +240,38 @@ export default function Home({
     
     setFeaturedGames(combinedGames);
   }, [freebieGames, trendingGames]);
+
+  // Ücretsiz oyunlar sliderı için otomatik geçiş
+  useEffect(() => {
+    const autoSlideInterval = setInterval(() => {
+      if (freeGamesForSlider.length > sliderItemsCount) {
+        setCurrentSlideIndex(prev => 
+          prev >= Math.ceil(freeGamesForSlider.length / sliderItemsCount) - 1 ? 0 : prev + 1
+        );
+      }
+    }, 10000); // 10 saniyede bir
+    
+    return () => clearInterval(autoSlideInterval);
+  }, [freeGamesForSlider.length]);
+  
+  // Ücretsiz oyunlar ve Steam oyunlarını birleştir ve benzersiz olanları al
+  useEffect(() => {
+    const combinedFreeGames = getUniqueGames([...freebieGames, ...steamFreeGames]);
+    setFreeGamesForSlider(combinedFreeGames);
+  }, [freebieGames, steamFreeGames]);
+  
+  // Slider navigasyon fonksiyonları
+  const goToNextSlide = () => {
+    setCurrentSlideIndex(prev => 
+      prev >= Math.ceil(freeGamesForSlider.length / sliderItemsCount) - 1 ? 0 : prev + 1
+    );
+  };
+  
+  const goToPrevSlide = () => {
+    setCurrentSlideIndex(prev => 
+      prev <= 0 ? Math.ceil(freeGamesForSlider.length / sliderItemsCount) - 1 : prev - 1
+    );
+  };
 
   // Daha yüksek çözünürlüklü görsel elde etmek için URL'yi optimize eder
   const getOptimizedImageUrl = (url: string): string => {
@@ -841,76 +880,193 @@ export default function Home({
             )}
           </section>
 
-          {/* Free Games Section */}
-          <section className="epic-section">
-            <div className="epic-section-header">
-              <h2 className="epic-section-title">Ücretsiz Oyunlar</h2>
-              <Link href="/all-free-games" className="epic-section-link">Tümünü Görüntüle</Link>
-            </div>
-            
-            <div className="epic-game-grid">
-              {freebieGames.slice(0, 5).map(game => (
-                <GameCard 
-                  key={game.id} 
-                  game={game} 
-                  isFree 
-                  showPlatform 
-                />
-              ))}
+          {/* Ücretsiz Oyunlar Slider */}
+          <section className="mt-16">
+            <div className="game-slider-container">
+              <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                <GiftIcon className="h-8 w-8 text-red-500" />
+                Ücretsiz Oyunlar
+              </h2>
+              
+              <div className="slider-navigation">
+                <button 
+                  onClick={goToPrevSlide} 
+                  className="slider-arrow"
+                  aria-label="Önceki oyunlar"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                    <path fillRule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                <button 
+                  onClick={goToNextSlide} 
+                  className="slider-arrow"
+                  aria-label="Sonraki oyunlar"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                    <path fillRule="evenodd" d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="overflow-hidden">
+                <div 
+                  className="game-slider"
+                  style={{ 
+                    transform: `translateX(-${currentSlideIndex * (100 / sliderItemsCount)}%)`,
+                  }}
+                >
+                  {freeGamesForSlider.map((game) => (
+                    <div key={game.id} className="game-slide">
+                      <div className="game-slide-image">
+                        <img 
+                          src={game.keyImages?.[0]?.url || getBestGameImage(game)} 
+                          alt={game.title} 
+                          className="w-full h-full object-cover"
+                          loading="lazy" 
+                        />
+                        <div className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-md">
+                          ÜCRETSİZ
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+                      </div>
+                      <div className="game-slide-content">
+                        <div className="flex items-center gap-2 mb-2">
+                          <img 
+                            src={sourcePlatformIcon(game.platform || '')} 
+                            alt={game.platform || 'Platform'} 
+                            className="w-5 h-5" 
+                          />
+                          <span className="text-xs text-gray-400">{game.platform || 'Bilinmeyen Platform'}</span>
+                        </div>
+                        <h3 className="game-slide-title">{game.title}</h3>
+                        <p className="game-slide-description">{game.description?.substring(0, 100) || 'Bu oyunu kaçırma! Sınırlı süre için ücretsiz.'}</p>
+                        <Link href={`/game/${game.id}`}>
+                          <a className="game-slide-button">
+                            İncele
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 ml-2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                            </svg>
+                          </a>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="slider-dots">
+                {Array.from({ length: Math.ceil(freeGamesForSlider.length / sliderItemsCount) }).map((_, index) => (
+                  <div 
+                    key={index} 
+                    className={`slider-dot ${currentSlideIndex === index ? 'slider-dot-active' : ''}`}
+                    onClick={() => setCurrentSlideIndex(index)}
+                    aria-label={`Sayfa ${index + 1}`}
+                    role="button"
+                    tabIndex={0}
+                  />
+                ))}
+              </div>
             </div>
           </section>
 
           {/* Platform Tabs */}
-          <section className="epic-section">
-            <div className="epic-section-header">
-              <h2 className="epic-section-title">Platformlar</h2>
+          <section className="mt-12">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold">
+                {activePlatform === "all" 
+                  ? "Tüm Platformlar" 
+                  : activePlatform === "pc" 
+                    ? "PC Oyunları"
+                    : activePlatform === "epic" 
+                      ? "Epic Games" 
+                      : activePlatform === "steam" 
+                        ? "Steam" 
+                        : activePlatform === "playstation" 
+                          ? "PlayStation" 
+                          : activePlatform === "xbox" 
+                            ? "Xbox" 
+                            : activePlatform === "switch" 
+                              ? "Nintendo Switch"
+                              : activePlatform === "android"
+                                ? "Android"
+                                : activePlatform === "ios"
+                                  ? "iOS"
+                                  : "Tüm Platformlar"}
+              </h2>
             </div>
             
-            <div className="epic-tabs">
+            <div className="platform-scroll-container">
               <button 
                 onClick={() => setActivePlatform("all")}
-                className={`epic-tab ${activePlatform === "all" ? "epic-tab-active" : ""}`}
+                className={`platform-button ${activePlatform === "all" ? "active" : ""}`}
               >
-                Tüm Platformlar
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                  <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
+                </svg>
+                <span>Tümü</span>
               </button>
               <button 
                 onClick={() => setActivePlatform("pc")}
-                className={`epic-tab ${activePlatform === "pc" ? "epic-tab-active" : ""}`}
+                className={`platform-button ${activePlatform === "pc" ? "active" : ""}`}
               >
-                PC
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                  <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
+                </svg>
+                <span>PC</span>
               </button>
               <button 
                 onClick={() => setActivePlatform("epic")}
-                className={`epic-tab ${activePlatform === "epic" ? "epic-tab-active" : ""}`}
+                className={`platform-button ${activePlatform === "epic" ? "active" : ""}`}
               >
-                Epic Games Store
+                <SiEpicgames className="w-5 h-5" />
+                <span>Epic Games</span>
               </button>
               <button 
                 onClick={() => setActivePlatform("steam")}
-                className={`epic-tab ${activePlatform === "steam" ? "epic-tab-active" : ""}`}
+                className={`platform-button ${activePlatform === "steam" ? "active" : ""}`}
               >
-                Steam
+                <SiSteam className="w-5 h-5" />
+                <span>Steam</span>
               </button>
               <button 
                 onClick={() => setActivePlatform("playstation")}
-                className={`epic-tab ${activePlatform === "playstation" ? "epic-tab-active" : ""}`}
+                className={`platform-button ${activePlatform === "playstation" ? "active" : ""}`}
               >
-                PlayStation
+                <SiPlaystation className="w-5 h-5" />
+                <span>PlayStation</span>
               </button>
               <button 
                 onClick={() => setActivePlatform("xbox")}
-                className={`epic-tab ${activePlatform === "xbox" ? "epic-tab-active" : ""}`}
+                className={`platform-button ${activePlatform === "xbox" ? "active" : ""}`}
               >
-                Xbox
+                <SiBox className="w-5 h-5" />
+                <span>Xbox</span>
               </button>
               <button 
                 onClick={() => setActivePlatform("switch")}
-                className={`epic-tab ${activePlatform === "switch" ? "epic-tab-active" : ""}`}
+                className={`platform-button ${activePlatform === "switch" ? "active" : ""}`}
               >
-                Nintendo
+                <SiNintendoswitch className="w-5 h-5" />
+                <span>Switch</span>
+              </button>
+              <button 
+                onClick={() => setActivePlatform("android")}
+                className={`platform-button ${activePlatform === "android" ? "active" : ""}`}
+              >
+                <SiAndroid className="w-5 h-5" />
+                <span>Android</span>
+              </button>
+              <button 
+                onClick={() => setActivePlatform("ios")}
+                className={`platform-button ${activePlatform === "ios" ? "active" : ""}`}
+              >
+                <SiApple className="w-5 h-5" />
+                <span>iOS</span>
               </button>
             </div>
-            
+
+            {/* Game Grid */}
             <div className="epic-game-grid">
               {filteredGames.slice(0, 10).map(game => (
                 <GameCard key={game.id} game={game} showPlatform />

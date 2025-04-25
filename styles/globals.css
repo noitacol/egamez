@@ -672,6 +672,79 @@ html, body {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px -5px rgba(255, 255, 255, 0.1);
   }
+
+  /* Ücretsiz Oyunlar Slider */
+  .game-slider-container {
+    @apply w-full relative overflow-hidden my-8;
+  }
+  
+  .game-slider {
+    @apply flex gap-6 transition-transform duration-500 ease-in-out;
+    width: 100%;
+  }
+  
+  .game-slide {
+    @apply flex-shrink-0 relative rounded-lg overflow-hidden flex flex-col;
+    width: calc(33.33% - 1rem);
+    min-width: 300px;
+    background-color: #0e0e0e;
+  }
+  
+  .game-slide-image {
+    @apply relative w-full overflow-hidden;
+    height: 180px;
+  }
+  
+  .game-slide-content {
+    @apply p-4 flex flex-col flex-grow;
+    background-color: #181818;
+  }
+  
+  .game-slide-title {
+    @apply font-bold text-lg mb-2;
+  }
+  
+  .game-slide-description {
+    @apply text-sm text-gray-300 mb-5 line-clamp-2;
+  }
+  
+  .game-slide-button {
+    @apply mt-auto bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white py-2 px-4 rounded-md inline-flex items-center justify-center transition-all font-medium text-sm;
+  }
+  
+  .slider-navigation {
+    @apply absolute top-1/2 -translate-y-1/2 w-full flex justify-between z-10 px-2 pointer-events-none;
+  }
+  
+  .slider-arrow {
+    @apply w-12 h-12 flex items-center justify-center bg-black/60 text-white rounded-full backdrop-blur-sm transition-all hover:bg-black/80 border border-white/20 cursor-pointer shadow-xl pointer-events-auto;
+  }
+  
+  .slider-dots {
+    @apply flex gap-2 justify-center mt-4;
+  }
+  
+  .slider-dot {
+    @apply w-2 h-2 rounded-full bg-gray-600 transition-all cursor-pointer;
+  }
+  
+  .slider-dot-active {
+    @apply w-8 bg-blue-500;
+  }
+  
+  @media (max-width: 1024px) {
+    .game-slide {
+      width: calc(50% - 1rem);
+      min-width: 240px;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .game-slide {
+      width: 100%;
+      min-width: 280px;
+    }
+  }
 }
 
 @layer utilities {
