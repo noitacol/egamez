@@ -1147,26 +1147,6 @@ export default function Home({
             )}
           </section>
 
-          {/* Trending Games Banner */}
-          <section className="epic-banner">
-            <Image
-              src="/images/trending-banner.jpg"
-              alt="Trend Oyunlar"
-              fill
-              style={{ objectFit: 'cover' }}
-            />
-            <div className="epic-banner-content">
-              <h2 className="text-3xl font-bold mb-4">Trend Oyunlar</h2>
-              <p className="text-lg mb-6 max-w-xl">Şu anda oyuncuların en çok ilgisini çeken oyunları keşfedin.</p>
-            <button 
-                onClick={() => setActiveTab('trending')}
-                className="epic-button epic-button-primary"
-            >
-                Tümünü Görüntüle
-            </button>
-          </div>
-        </section>
-
           {/* Trending Games Section */}
           <section className="epic-section">
             <div className="epic-section-header">
